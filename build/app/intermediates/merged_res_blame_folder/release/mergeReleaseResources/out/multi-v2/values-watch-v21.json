@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.roadpapattes.escape_city_client_clean.app-mergeReleaseResources-44:/values-watch-v21/values-watch-v21.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\lougi\\.gradle\\caches\\8.12\\transforms\\210bb542128be41e9375e7e70847760f\\transformed\\appcompat-1.1.0\\res\\values-watch-v21\\values-watch-v21.xml",
+                    "from": {
+                        "startLines": "2,6,10",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "55,271,499",
+                        "endLines": "5,9,13",
+                        "endColumns": "12,12,12",
+                        "endOffsets": "266,494,724"
+                    }
+                }
+            ]
+        }
+    ]
+}

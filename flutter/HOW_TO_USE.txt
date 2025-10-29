@@ -1,0 +1,9 @@
+
+Ce dossier contient uniquement les sources Flutter (lib/, pubspec.yaml, ...).
+Pour en faire un projet Flutter complet, exécute :
+  flutter create .
+puis :
+  flutter pub get
+  flutter run
+
+Assure-toi d'ajuster 'baseUrl' dans lib/main.dart selon ton environnement.

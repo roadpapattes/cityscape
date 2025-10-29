@@ -1,0 +1,17 @@
+﻿# Python / Django
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+# Django collectstatic
+/static/
+/media/
+# Environnements & secrets
+.env
+.env.*
+env/
+venv/
+.venv/
+# IDE
+.vscode/
+.idea/

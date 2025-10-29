@@ -1,0 +1,235 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.roadpapattes.escape_city_client_clean"
+4    android:versionCode="1"
+5    android:versionName="0.1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="36" />
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:3:5-66
+11-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:3:22-64
+12    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+12-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:4:5-78
+12-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:4:22-76
+13    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+13-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:5:5-80
+13-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:5:22-78
+14    <uses-permission android:name="android.permission.CAMERA" />
+14-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:6:2-62
+14-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:6:19-59
+15    <!-- Include required permissions for Google Maps API to run. -->
+16    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+16-->[com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:20:5-78
+16-->[com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:20:22-76
+17
+18    <uses-feature
+18-->[com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:22:5-24:33
+19        android:glEsVersion="0x00020000"
+19-->[com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:23:8-40
+20        android:required="true" />
+20-->[com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:24:8-31
+21
+22    <queries>
+22-->[com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:27:5-30:15
+23
+24        <!-- Needs to be explicitly declared on Android R+ -->
+25        <package android:name="com.google.android.apps.maps" />
+25-->[com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:29:7-61
+25-->[com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:29:16-59
+26    </queries>
+27
+28    <permission
+28-->[androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
+29        android:name="com.roadpapattes.escape_city_client_clean.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+29-->[androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
+30        android:protectionLevel="signature" />
+30-->[androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
+31
+32    <uses-permission android:name="com.roadpapattes.escape_city_client_clean.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+32-->[androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
+32-->[androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
+33
+34    <application
+35        android:name="android.app.Application"
+35-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:12:9-42
+36        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+36-->[androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
+37        android:extractNativeLibs="false"
+38        android:icon="@mipmap/ic_launcher"
+38-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:13:9-43
+39        android:label="escape_city_client_clean"
+39-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:9:9-49
+40        android:networkSecurityConfig="@xml/network_security_config"
+40-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:11:3-63
+41        android:usesCleartextTraffic="true" >
+41-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:10:3-38
+42
+43        <!-- Clé API Google Maps -->
+44        <meta-data
+45            android:name="com.google.android.geo.API_KEY"
+45-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:16:13-58
+46            android:value="" />
+46-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:17:13-44
+47
+48        <activity
+48-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:18:9-33:20
+49            android:name="com.roadpapattes.escape_city_client_clean.MainActivity"
+49-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:19:13-41
+50            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+50-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:23:13-163
+51            android:exported="true"
+51-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:20:13-36
+52            android:hardwareAccelerated="true"
+52-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:24:13-47
+53            android:launchMode="singleTop"
+53-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:21:13-43
+54            android:theme="@style/LaunchTheme"
+54-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:22:13-47
+55            android:windowSoftInputMode="adjustResize" >
+55-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:25:13-55
+56            <meta-data
+56-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:26:13-28:66
+57                android:name="io.flutter.embedding.android.SplashScreenDrawable"
+57-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:27:17-81
+58                android:resource="@drawable/launch_background" />
+58-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:28:17-63
+59
+60            <intent-filter>
+60-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:29:13-32:29
+61                <action android:name="android.intent.action.MAIN" />
+61-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:30:17-68
+61-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:30:25-66
+62
+63                <category android:name="android.intent.category.LAUNCHER" />
+63-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:31:17-76
+63-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:31:27-74
+64            </intent-filter>
+65        </activity>
+66
+67        <meta-data
+67-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:34:9-36:33
+68            android:name="flutterEmbedding"
+68-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:35:13-44
+69            android:value="2" />
+69-->C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:36:13-30
+70
+71        <service
+71-->[:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:9-12:56
+72            android:name="com.baseflow.geolocator.GeolocatorLocationService"
+72-->[:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:13-77
+73            android:enabled="true"
+73-->[:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:13-35
+74            android:exported="false"
+74-->[:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:13-37
+75            android:foregroundServiceType="location" />
+75-->[:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:12:13-53
+76
+77        <activity
+77-->[:url_launcher_android] C:\Users\lougi\escape_city\build\url_launcher_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:9-11:74
+78            android:name="io.flutter.plugins.urllauncher.WebViewActivity"
+78-->[:url_launcher_android] C:\Users\lougi\escape_city\build\url_launcher_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:13-74
+79            android:exported="false"
+79-->[:url_launcher_android] C:\Users\lougi\escape_city\build\url_launcher_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:13-37
+80            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
+80-->[:url_launcher_android] C:\Users\lougi\escape_city\build\url_launcher_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:13-71
+81
+82        <uses-library
+82-->[androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:23:9-25:40
+83            android:name="androidx.window.extensions"
+83-->[androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:24:13-54
+84            android:required="false" />
+84-->[androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:25:13-37
+85        <uses-library
+85-->[androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:26:9-28:40
+86            android:name="androidx.window.sidecar"
+86-->[androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:27:13-51
+87            android:required="false" /> <!-- Needs to be explicitly declared on P+ -->
+87-->[androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:28:13-37
+88        <uses-library
+88-->[com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:33:7-86
+89            android:name="org.apache.http.legacy"
+89-->[com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:33:21-58
+90            android:required="false" />
+90-->[com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:33:59-83
+91
+92        <activity
+92-->[com.google.android.gms:play-services-base:18.5.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d22f1c95abad4bd2e955d74dd7590a3f\transformed\jetified-play-services-base-18.5.0\AndroidManifest.xml:5:9-173
+93            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+93-->[com.google.android.gms:play-services-base:18.5.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d22f1c95abad4bd2e955d74dd7590a3f\transformed\jetified-play-services-base-18.5.0\AndroidManifest.xml:5:19-85
+94            android:exported="false"
+94-->[com.google.android.gms:play-services-base:18.5.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d22f1c95abad4bd2e955d74dd7590a3f\transformed\jetified-play-services-base-18.5.0\AndroidManifest.xml:5:146-170
+95            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+95-->[com.google.android.gms:play-services-base:18.5.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d22f1c95abad4bd2e955d74dd7590a3f\transformed\jetified-play-services-base-18.5.0\AndroidManifest.xml:5:86-145
+96
+97        <meta-data
+97-->[com.google.android.gms:play-services-basement:18.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\93f61e9ca18986df82b6c4bcea1db79e\transformed\jetified-play-services-basement-18.4.0\AndroidManifest.xml:6:9-122
+98            android:name="com.google.android.gms.version"
+98-->[com.google.android.gms:play-services-basement:18.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\93f61e9ca18986df82b6c4bcea1db79e\transformed\jetified-play-services-basement-18.4.0\AndroidManifest.xml:6:20-65
+99            android:value="@integer/google_play_services_version" />
+99-->[com.google.android.gms:play-services-basement:18.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\93f61e9ca18986df82b6c4bcea1db79e\transformed\jetified-play-services-basement-18.4.0\AndroidManifest.xml:6:66-119
+100
+101        <provider
+101-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:24:9-32:20
+102            android:name="androidx.startup.InitializationProvider"
+102-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:25:13-67
+103            android:authorities="com.roadpapattes.escape_city_client_clean.androidx-startup"
+103-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:26:13-68
+104            android:exported="false" >
+104-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:27:13-37
+105            <meta-data
+105-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:29:13-31:52
+106                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+106-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:30:17-78
+107                android:value="androidx.startup" />
+107-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:31:17-49
+108            <meta-data
+108-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
+109                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+109-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
+110                android:value="androidx.startup" />
+110-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
+111        </provider>
+112
+113        <receiver
+113-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
+114            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+114-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
+115            android:directBootAware="false"
+115-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
+116            android:enabled="true"
+116-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
+117            android:exported="true"
+117-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
+118            android:permission="android.permission.DUMP" >
+118-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
+119            <intent-filter>
+119-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
+120                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+120-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
+120-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
+121            </intent-filter>
+122            <intent-filter>
+122-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
+123                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+123-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
+123-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
+124            </intent-filter>
+125            <intent-filter>
+125-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
+126                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+126-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
+126-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
+127            </intent-filter>
+128            <intent-filter>
+128-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
+129                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+129-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
+129-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:50:25-92
+130            </intent-filter>
+131        </receiver>
+132    </application>
+133
+134</manifest>

@@ -1,0 +1,123 @@
+# C:\Users\lougi\escape_city\games\views_creator.py
+from typing import Any, Dict, Set
+
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets, permissions, status, serializers
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from .models import EscapeGame
+
+
+def _field_names(model) -> Set[str]:
+    """Retourne les noms de champs 'simples' du modèle (évite les reverse M2M)."""
+    names: Set[str] = set()
+    for f in model._meta.get_fields():
+        if getattr(f, "concrete", False) and getattr(f, "attname", None):
+            names.add(f.name)
+        elif hasattr(f, "name"):
+            names.add(f.name)
+    return names
+
+
+# Champs présents sur le modèle (calculé à l'import)
+EG_FIELD_NAMES = _field_names(EscapeGame)
+
+
+class EscapeGameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EscapeGame
+        fields = "__all__"
+        # Marque en read-only seulement si le champ existe réellement
+        read_only_fields = tuple(
+            n for n in ("id", "created_at", "rating", "owner") if n in EG_FIELD_NAMES
+        )
+
+
+class CreatorEscapeViewSet(viewsets.ModelViewSet):
+    """
+    /api/creator/escapes/              [GET, POST]
+    /api/creator/escapes/{pk}/         [GET, PATCH, PUT, DELETE]
+    /api/creator/escapes/{pk}/publish/ [POST]  -> admin uniquement
+    """
+    serializer_class = EscapeGameSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        qs = EscapeGame.objects.all()
+        # Si le modèle a un champ owner, ne montrer que les siens
+        if "owner" in EG_FIELD_NAMES:
+            qs = qs.filter(owner=self.request.user)
+        return qs
+    
+
+    # ---------- utils ----------
+    def _filtered_payload(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Ignorer les champs inconnus (ex: 'steps' envoyé par le front)."""
+        return {k: v for k, v in data.items() if k in EG_FIELD_NAMES}
+
+    def _incoming_dict(self, request) -> Dict[str, Any]:
+        """
+        Normalise request.data en dict simple (évite les QueryDict/lists).
+        On prend la première valeur si liste.
+        """
+        d: Dict[str, Any] = {}
+        for k in request.data.keys():
+            v = request.data.get(k)
+            d[k] = v[0] if isinstance(v, list) and len(v) == 1 else v
+        return d
+
+    # ---------- CRUD ----------
+    def create(self, request, *args, **kwargs):
+        raw = self._incoming_dict(request)
+        raw.pop("steps", None)  # toléré côté client
+        data = self._filtered_payload(raw)
+
+        ser = self.get_serializer(data=data)
+        ser.is_valid(raise_exception=True)
+
+        extra = {}
+        if "status" in EG_FIELD_NAMES and not ser.validated_data.get("status"):
+            extra["status"] = "draft"
+        if "owner" in EG_FIELD_NAMES:
+            extra["owner"] = request.user
+
+        obj = ser.save(**extra)
+        return Response(self.get_serializer(obj).data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+
+        raw = self._incoming_dict(request)
+        raw.pop("steps", None)
+        data = self._filtered_payload(raw)
+        # retire les champs read-only s'ils ont été envoyés
+        for ro in ("id", "created_at", "rating", "owner"):
+            data.pop(ro, None)
+
+        ser = self.get_serializer(instance, data=data, partial=partial)
+        ser.is_valid(raise_exception=True)
+        obj = ser.save()
+        return Response(self.get_serializer(obj).data)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return self.update(request, *args, **kwargs)
+
+    @action(detail=True, methods=["post"], url_path="publish")
+    def publish(self, request, pk=None):
+        obj = get_object_or_404(EscapeGame, pk=pk)
+
+        # Admin-only (comme souhaité)
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response({"detail": "Only admins can publish."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        if "status" not in EG_FIELD_NAMES:
+            return Response({"detail": "Le champ 'status' n'existe pas sur EscapeGame."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        setattr(obj, "status", "published")
+        obj.save(update_fields=["status"])
+        return Response({"ok": True, "status": getattr(obj, "status", None)})

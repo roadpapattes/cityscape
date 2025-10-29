@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.roadpapattes.escape_city_client_clean.app-mergeReleaseResources-44:/values-hdpi-v4/values-hdpi-v4.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\lougi\\.gradle\\caches\\8.12\\transforms\\210bb542128be41e9375e7e70847760f\\transformed\\appcompat-1.1.0\\res\\values-hdpi-v4\\values-hdpi-v4.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "6",
+                        "endColumns": "13",
+                        "endOffsets": "327"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,1 @@
+start cmd /c "cd /d C:\Users\lougi\escape_city\flutter\escape_city_client_clean && flutter clean && flutter pub get && flutter build apk --release --dart-define=API_BASE_URL=https://roadpapattes.synology.me"

@@ -1,0 +1,30 @@
+Quels outils pour créer des escape games :
+
+Escapes privés 
+
+Orientation / boussole
+But : se placer face au Nord/à un azimut.
+Validation : cap device ± tolérance.
+--> A conserver avec l'esprit du multijoueur
+
+type Narration : OK
+
+Pouvoir ajouter plusieurs indices par étape, le dernier indice est la solution 
+
+Séquence / ordre / arrangement
+But : ordonner des éléments (A→B→C), trier des pictos, composer un code couleur.
+Validation : liste ordonnée correcte (exact match).
+--> A travailler
+
+Pouvoir implémenter des images ou des sons dans les réponses / questions aux énigmes
+
+Revoir les étapes déjà validées : OK
+
+Parcours multi-checkpoints
+But : suivre un itinéraire (A→B→C) avec validations de proximité à chaque point.
+Validation : suite de géofences + ordre imposé.
+
+
+Espace communautaire pour faire des retours d'expérience
+
+Signaler un escape en tant que joueur

@@ -1,0 +1,474 @@
+-- Merging decision tree log ---
+application
+INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:8:5-37:19
+INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:8:5-37:19
+MERGED from [:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:7:5-13:19
+MERGED from [:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:7:5-13:19
+MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\a2016113402e0894d0bc3807f3202b1d\transformed\jetified-play-services-location-21.2.0\AndroidManifest.xml:7:5-20
+MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\a2016113402e0894d0bc3807f3202b1d\transformed\jetified-play-services-location-21.2.0\AndroidManifest.xml:7:5-20
+MERGED from [:url_launcher_android] C:\Users\lougi\escape_city\build\url_launcher_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:7:5-12:19
+MERGED from [:url_launcher_android] C:\Users\lougi\escape_city\build\url_launcher_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:7:5-12:19
+MERGED from [androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:22:5-29:19
+MERGED from [androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:22:5-29:19
+MERGED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:31:5-34:19
+MERGED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:31:5-34:19
+MERGED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d22f1c95abad4bd2e955d74dd7590a3f\transformed\jetified-play-services-base-18.5.0\AndroidManifest.xml:4:5-6:19
+MERGED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d22f1c95abad4bd2e955d74dd7590a3f\transformed\jetified-play-services-base-18.5.0\AndroidManifest.xml:4:5-6:19
+MERGED from [com.google.android.gms:play-services-tasks:18.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d82999997e8bdabffaba54768e95778d\transformed\jetified-play-services-tasks-18.2.0\AndroidManifest.xml:4:5-20
+MERGED from [com.google.android.gms:play-services-tasks:18.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d82999997e8bdabffaba54768e95778d\transformed\jetified-play-services-tasks-18.2.0\AndroidManifest.xml:4:5-20
+MERGED from [com.google.android.gms:play-services-basement:18.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\93f61e9ca18986df82b6c4bcea1db79e\transformed\jetified-play-services-basement-18.4.0\AndroidManifest.xml:5:5-7:19
+MERGED from [com.google.android.gms:play-services-basement:18.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\93f61e9ca18986df82b6c4bcea1db79e\transformed\jetified-play-services-basement-18.4.0\AndroidManifest.xml:5:5-7:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:28:5-89
+MERGED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:28:5-89
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\lougi\.gradle\caches\8.12\transforms\832d1f825346ca2fdcec1dede0243727\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\lougi\.gradle\caches\8.12\transforms\832d1f825346ca2fdcec1dede0243727\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\lougi\.gradle\caches\8.12\transforms\2fe6b255c4fcd42a0bd2d3f9cc7dd890\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\lougi\.gradle\caches\8.12\transforms\2fe6b255c4fcd42a0bd2d3f9cc7dd890\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [com.google.maps.android:android-maps-utils:3.6.0] C:\Users\lougi\.gradle\caches\8.12\transforms\40e8fc8c82441749449e0e9e61f4b54b\transformed\jetified-android-maps-utils-3.6.0\AndroidManifest.xml:7:5-11:19
+MERGED from [com.google.maps.android:android-maps-utils:3.6.0] C:\Users\lougi\.gradle\caches\8.12\transforms\40e8fc8c82441749449e0e9e61f4b54b\transformed\jetified-android-maps-utils-3.6.0\AndroidManifest.xml:7:5-11:19
+	android:extractNativeLibs
+		INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml
+	android:appComponentFactory
+		ADDED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:28:18-86
+	android:label
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:9:9-49
+	android:icon
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:13:9-43
+	android:networkSecurityConfig
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:11:3-63
+	android:usesCleartextTraffic
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:10:3-38
+	android:name
+		INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:12:9-42
+meta-data#com.google.android.geo.API_KEY
+INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:15:9-17:46
+	android:value
+		INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:17:13-44
+	android:name
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:16:13-58
+manifest
+ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:1:1-38:12
+INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:1:1-38:12
+INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:1:1-38:12
+INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:1:1-38:12
+MERGED from [:shared_preferences_android] C:\Users\lougi\escape_city\build\shared_preferences_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:2:1-7:12
+MERGED from [:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:2:1-15:12
+MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\a2016113402e0894d0bc3807f3202b1d\transformed\jetified-play-services-location-21.2.0\AndroidManifest.xml:2:1-9:12
+MERGED from [:url_launcher_android] C:\Users\lougi\escape_city\build\url_launcher_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:2:1-14:12
+MERGED from [:google_maps_flutter_android] C:\Users\lougi\escape_city\build\google_maps_flutter_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:2:1-7:12
+MERGED from [:flutter_plugin_android_lifecycle] C:\Users\lougi\escape_city\build\flutter_plugin_android_lifecycle\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.preference:preference:1.2.1] C:\Users\lougi\.gradle\caches\8.12\transforms\25304d0d91eff6e53f7530bf0f9772e8\transformed\preference-1.2.1\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.browser:browser:1.8.0] C:\Users\lougi\.gradle\caches\8.12\transforms\3d0dabce7e4774ae1b88c68846e72921\transformed\browser-1.8.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.recyclerview:recyclerview:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\a7734484d3c0de25203417a094b6816f\transformed\recyclerview-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.legacy:legacy-support-core-ui:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\09eae7c6388abddfe3856fd4cdbae9c5\transformed\legacy-support-core-ui-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.slidingpanelayout:slidingpanelayout:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\6382dc9d697e30cf57d479266f4af52e\transformed\slidingpanelayout-1.2.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:17:1-31:12
+MERGED from [androidx.window:window-java:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\2713fed4fa66aab54edc3f40d24cba5f\transformed\jetified-window-java-1.2.0\AndroidManifest.xml:17:1-21:12
+MERGED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:16:1-35:12
+MERGED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d22f1c95abad4bd2e955d74dd7590a3f\transformed\jetified-play-services-base-18.5.0\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.gms:play-services-tasks:18.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d82999997e8bdabffaba54768e95778d\transformed\jetified-play-services-tasks-18.2.0\AndroidManifest.xml:2:1-5:12
+MERGED from [com.google.android.gms:play-services-basement:18.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\93f61e9ca18986df82b6c4bcea1db79e\transformed\jetified-play-services-basement-18.4.0\AndroidManifest.xml:2:1-9:12
+MERGED from [androidx.appcompat:appcompat:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\210bb542128be41e9375e7e70847760f\transformed\appcompat-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.fragment:fragment-ktx:1.7.1] C:\Users\lougi\.gradle\caches\8.12\transforms\e42d1ff49021e954e608ac8e4b68b8f8\transformed\jetified-fragment-ktx-1.7.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.fragment:fragment:1.7.1] C:\Users\lougi\.gradle\caches\8.12\transforms\df104370204d6f73bddc8d757655b422\transformed\fragment-1.7.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.activity:activity-ktx:1.8.1] C:\Users\lougi\.gradle\caches\8.12\transforms\cbb36678819ff3083e3541ef6b00a332\transformed\jetified-activity-ktx-1.8.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.activity:activity:1.8.1] C:\Users\lougi\.gradle\caches\8.12\transforms\26b53576e32802059e453170832b841d\transformed\jetified-activity-1.8.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\381be2deaa14bd5783ab5b7841ecc0ee\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\351a56c780310a1141d36298cbaf4e4e\transformed\loader-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d144e6585f37de91779c451628299aa8\transformed\viewpager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.appcompat:appcompat-resources:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\60936a00099a90688457e5b35c570155\transformed\jetified-appcompat-resources-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d7afe909e0d2bcf0234e013aaff7342d\transformed\drawerlayout-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\473c0c0b56d00097ce6c8c24ae99c62d\transformed\coordinatorlayout-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\75d7274178c4b64b78479f15f6caaa26\transformed\customview-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.transition:transition:1.4.1] C:\Users\lougi\.gradle\caches\8.12\transforms\9defe5ddc203fb6a2ff99b4fc359331e\transformed\transition-1.4.1\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\ee1afd2bba42e99febc085a6b62a1817\transformed\jetified-lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d07c704ce88d1338f46882b528090b79\transformed\lifecycle-livedata-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\58f3ab6d70f4dffea2dbe8d5f6db3424\transformed\jetified-lifecycle-livedata-core-ktx-2.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\3ee1b6a00c4f5125fa0589d97f89b07e\transformed\jetified-lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\f67accb42148273cb637a68c7df17dc6\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\86ff970a241e706159206b2ad926e626\transformed\lifecycle-livedata-core-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\lougi\.gradle\caches\8.12\transforms\871e711aa3311d1b14752a968d3eee6b\transformed\jetified-savedstate-ktx-1.2.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\lougi\.gradle\caches\8.12\transforms\d4d69cd4063662f4870b4bb3bcda6c2b\transformed\jetified-savedstate-1.2.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\fcc999463ce5662267ea14174d4f23fb\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\9e886ba7c389b40e56027af31f063ba9\transformed\jetified-lifecycle-viewmodel-savedstate-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.core:core-ktx:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\f5355c68a2a787597a2b015354a20d1d\transformed\jetified-core-ktx-1.13.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\8d73b8e71929ffb9c7d60cc3b4c6dac0\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\cd20a74b31c54b7f69301ea800caa583\transformed\vectordrawable-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\8985063b8751659d4ec36137596691d0\transformed\swiperefreshlayout-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.asynclayoutinflater:asynclayoutinflater:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d6cbbc907adfb8ffd0e8079c0d252f46\transformed\asynclayoutinflater-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:17:1-30:12
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\lougi\.gradle\caches\8.12\transforms\832d1f825346ca2fdcec1dede0243727\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
+MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\2893b0fb28862295880118f21f1257d0\transformed\jetified-tracing-1.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.datastore:datastore-core-android:1.1.3] C:\Users\lougi\.gradle\caches\8.12\transforms\10ab876f9c343655467112fd5bc00a84\transformed\jetified-datastore-core-release\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.datastore:datastore-preferences-android:1.1.3] C:\Users\lougi\.gradle\caches\8.12\transforms\af60b32d12eb69a6024009efc47d0396\transformed\jetified-datastore-preferences-release\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.datastore:datastore-android:1.1.3] C:\Users\lougi\.gradle\caches\8.12\transforms\8f1489b0612e6c860d331ab3f03782b3\transformed\jetified-datastore-release\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\79c0101043b26270770e9291782162cf\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\lougi\.gradle\caches\8.12\transforms\2fe6b255c4fcd42a0bd2d3f9cc7dd890\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d63e695ab6449f52060710d73a07e528\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\3cc3bade8241be21e9b0b61a86a6089c\transformed\cursoradapter-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.window.extensions.core:core:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\4083b6b45805d895aa5b691b8f04b964\transformed\jetified-core-1.0.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\be256df089d77e59bc704d1c127c373a\transformed\documentfile-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\575c45066ffedd5c9284b45d83774c1f\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.print:print:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\f4ab96d5ea87ddfa2f023e53c2832566\transformed\print-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.annotation:annotation-experimental:1.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\5f2d2d4bf5534ba7f14697293515c933\transformed\jetified-annotation-experimental-1.4.0\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.maps.android:android-maps-utils:3.6.0] C:\Users\lougi\.gradle\caches\8.12\transforms\40e8fc8c82441749449e0e9e61f4b54b\transformed\jetified-android-maps-utils-3.6.0\AndroidManifest.xml:2:1-13:12
+MERGED from [com.getkeepsafe.relinker:relinker:1.4.5] C:\Users\lougi\.gradle\caches\8.12\transforms\c7fbacbe5c16a8615e555b5b7aeb8a39\transformed\jetified-relinker-1.4.5\AndroidManifest.xml:2:1-7:12
+	package
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:2:5-56
+		INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml
+	android:versionName
+		INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml
+	android:versionCode
+		INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:1:11-69
+uses-permission#android.permission.INTERNET
+ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:3:5-66
+MERGED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:21:5-66
+MERGED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:21:5-66
+	android:name
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:3:22-64
+uses-permission#android.permission.ACCESS_FINE_LOCATION
+ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:4:5-78
+	android:name
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:4:22-76
+uses-permission#android.permission.ACCESS_COARSE_LOCATION
+ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:5:5-80
+	android:name
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:5:22-78
+uses-permission#android.permission.CAMERA
+ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:6:2-62
+	android:name
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:6:19-59
+activity#com.roadpapattes.escape_city_client_clean.MainActivity
+ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:18:9-33:20
+	android:launchMode
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:21:13-43
+	android:hardwareAccelerated
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:24:13-47
+	android:windowSoftInputMode
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:25:13-55
+	android:exported
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:20:13-36
+	android:configChanges
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:23:13-163
+	android:theme
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:22:13-47
+	android:name
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:19:13-41
+meta-data#io.flutter.embedding.android.SplashScreenDrawable
+ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:26:13-28:66
+	android:resource
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:28:17-63
+	android:name
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:27:17-81
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:29:13-32:29
+action#android.intent.action.MAIN
+ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:30:17-68
+	android:name
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:30:25-66
+category#android.intent.category.LAUNCHER
+ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:31:17-76
+	android:name
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:31:27-74
+meta-data#flutterEmbedding
+ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:34:9-36:33
+	android:value
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:36:13-30
+	android:name
+		ADDED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml:35:13-44
+uses-sdk
+INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml
+INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml
+MERGED from [:shared_preferences_android] C:\Users\lougi\escape_city\build\shared_preferences_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:5:5-44
+MERGED from [:shared_preferences_android] C:\Users\lougi\escape_city\build\shared_preferences_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:5:5-44
+MERGED from [:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:5:5-44
+MERGED from [:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\a2016113402e0894d0bc3807f3202b1d\transformed\jetified-play-services-location-21.2.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-location:21.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\a2016113402e0894d0bc3807f3202b1d\transformed\jetified-play-services-location-21.2.0\AndroidManifest.xml:5:5-44
+MERGED from [:url_launcher_android] C:\Users\lougi\escape_city\build\url_launcher_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:5:5-44
+MERGED from [:url_launcher_android] C:\Users\lougi\escape_city\build\url_launcher_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:5:5-44
+MERGED from [:google_maps_flutter_android] C:\Users\lougi\escape_city\build\google_maps_flutter_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:5:5-44
+MERGED from [:google_maps_flutter_android] C:\Users\lougi\escape_city\build\google_maps_flutter_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:5:5-44
+MERGED from [:flutter_plugin_android_lifecycle] C:\Users\lougi\escape_city\build\flutter_plugin_android_lifecycle\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:5:5-44
+MERGED from [:flutter_plugin_android_lifecycle] C:\Users\lougi\escape_city\build\flutter_plugin_android_lifecycle\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:5:5-44
+MERGED from [androidx.preference:preference:1.2.1] C:\Users\lougi\.gradle\caches\8.12\transforms\25304d0d91eff6e53f7530bf0f9772e8\transformed\preference-1.2.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.preference:preference:1.2.1] C:\Users\lougi\.gradle\caches\8.12\transforms\25304d0d91eff6e53f7530bf0f9772e8\transformed\preference-1.2.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.browser:browser:1.8.0] C:\Users\lougi\.gradle\caches\8.12\transforms\3d0dabce7e4774ae1b88c68846e72921\transformed\browser-1.8.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.browser:browser:1.8.0] C:\Users\lougi\.gradle\caches\8.12\transforms\3d0dabce7e4774ae1b88c68846e72921\transformed\browser-1.8.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.recyclerview:recyclerview:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\a7734484d3c0de25203417a094b6816f\transformed\recyclerview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.recyclerview:recyclerview:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\a7734484d3c0de25203417a094b6816f\transformed\recyclerview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-ui:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\09eae7c6388abddfe3856fd4cdbae9c5\transformed\legacy-support-core-ui-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-ui:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\09eae7c6388abddfe3856fd4cdbae9c5\transformed\legacy-support-core-ui-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.slidingpanelayout:slidingpanelayout:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\6382dc9d697e30cf57d479266f4af52e\transformed\slidingpanelayout-1.2.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.slidingpanelayout:slidingpanelayout:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\6382dc9d697e30cf57d479266f4af52e\transformed\slidingpanelayout-1.2.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.window:window-java:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\2713fed4fa66aab54edc3f40d24cba5f\transformed\jetified-window-java-1.2.0\AndroidManifest.xml:19:5-44
+MERGED from [androidx.window:window-java:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\2713fed4fa66aab54edc3f40d24cba5f\transformed\jetified-window-java-1.2.0\AndroidManifest.xml:19:5-44
+MERGED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:26:5-43
+MERGED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:26:5-43
+MERGED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d22f1c95abad4bd2e955d74dd7590a3f\transformed\jetified-play-services-base-18.5.0\AndroidManifest.xml:3:5-44
+MERGED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d22f1c95abad4bd2e955d74dd7590a3f\transformed\jetified-play-services-base-18.5.0\AndroidManifest.xml:3:5-44
+MERGED from [com.google.android.gms:play-services-tasks:18.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d82999997e8bdabffaba54768e95778d\transformed\jetified-play-services-tasks-18.2.0\AndroidManifest.xml:3:5-44
+MERGED from [com.google.android.gms:play-services-tasks:18.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d82999997e8bdabffaba54768e95778d\transformed\jetified-play-services-tasks-18.2.0\AndroidManifest.xml:3:5-44
+MERGED from [com.google.android.gms:play-services-basement:18.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\93f61e9ca18986df82b6c4bcea1db79e\transformed\jetified-play-services-basement-18.4.0\AndroidManifest.xml:3:5-44
+MERGED from [com.google.android.gms:play-services-basement:18.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\93f61e9ca18986df82b6c4bcea1db79e\transformed\jetified-play-services-basement-18.4.0\AndroidManifest.xml:3:5-44
+MERGED from [androidx.appcompat:appcompat:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\210bb542128be41e9375e7e70847760f\transformed\appcompat-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.appcompat:appcompat:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\210bb542128be41e9375e7e70847760f\transformed\appcompat-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment-ktx:1.7.1] C:\Users\lougi\.gradle\caches\8.12\transforms\e42d1ff49021e954e608ac8e4b68b8f8\transformed\jetified-fragment-ktx-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.fragment:fragment-ktx:1.7.1] C:\Users\lougi\.gradle\caches\8.12\transforms\e42d1ff49021e954e608ac8e4b68b8f8\transformed\jetified-fragment-ktx-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.fragment:fragment:1.7.1] C:\Users\lougi\.gradle\caches\8.12\transforms\df104370204d6f73bddc8d757655b422\transformed\fragment-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.fragment:fragment:1.7.1] C:\Users\lougi\.gradle\caches\8.12\transforms\df104370204d6f73bddc8d757655b422\transformed\fragment-1.7.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-ktx:1.8.1] C:\Users\lougi\.gradle\caches\8.12\transforms\cbb36678819ff3083e3541ef6b00a332\transformed\jetified-activity-ktx-1.8.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-ktx:1.8.1] C:\Users\lougi\.gradle\caches\8.12\transforms\cbb36678819ff3083e3541ef6b00a332\transformed\jetified-activity-ktx-1.8.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity:1.8.1] C:\Users\lougi\.gradle\caches\8.12\transforms\26b53576e32802059e453170832b841d\transformed\jetified-activity-1.8.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.8.1] C:\Users\lougi\.gradle\caches\8.12\transforms\26b53576e32802059e453170832b841d\transformed\jetified-activity-1.8.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\381be2deaa14bd5783ab5b7841ecc0ee\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\381be2deaa14bd5783ab5b7841ecc0ee\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\351a56c780310a1141d36298cbaf4e4e\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\351a56c780310a1141d36298cbaf4e4e\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d144e6585f37de91779c451628299aa8\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d144e6585f37de91779c451628299aa8\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\60936a00099a90688457e5b35c570155\transformed\jetified-appcompat-resources-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.appcompat:appcompat-resources:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\60936a00099a90688457e5b35c570155\transformed\jetified-appcompat-resources-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d7afe909e0d2bcf0234e013aaff7342d\transformed\drawerlayout-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d7afe909e0d2bcf0234e013aaff7342d\transformed\drawerlayout-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\473c0c0b56d00097ce6c8c24ae99c62d\transformed\coordinatorlayout-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\473c0c0b56d00097ce6c8c24ae99c62d\transformed\coordinatorlayout-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\75d7274178c4b64b78479f15f6caaa26\transformed\customview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\75d7274178c4b64b78479f15f6caaa26\transformed\customview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.transition:transition:1.4.1] C:\Users\lougi\.gradle\caches\8.12\transforms\9defe5ddc203fb6a2ff99b4fc359331e\transformed\transition-1.4.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.transition:transition:1.4.1] C:\Users\lougi\.gradle\caches\8.12\transforms\9defe5ddc203fb6a2ff99b4fc359331e\transformed\transition-1.4.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\ee1afd2bba42e99febc085a6b62a1817\transformed\jetified-lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\ee1afd2bba42e99febc085a6b62a1817\transformed\jetified-lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d07c704ce88d1338f46882b528090b79\transformed\lifecycle-livedata-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d07c704ce88d1338f46882b528090b79\transformed\lifecycle-livedata-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\58f3ab6d70f4dffea2dbe8d5f6db3424\transformed\jetified-lifecycle-livedata-core-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\58f3ab6d70f4dffea2dbe8d5f6db3424\transformed\jetified-lifecycle-livedata-core-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\3ee1b6a00c4f5125fa0589d97f89b07e\transformed\jetified-lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\3ee1b6a00c4f5125fa0589d97f89b07e\transformed\jetified-lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\f67accb42148273cb637a68c7df17dc6\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\f67accb42148273cb637a68c7df17dc6\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\86ff970a241e706159206b2ad926e626\transformed\lifecycle-livedata-core-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\86ff970a241e706159206b2ad926e626\transformed\lifecycle-livedata-core-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\lougi\.gradle\caches\8.12\transforms\871e711aa3311d1b14752a968d3eee6b\transformed\jetified-savedstate-ktx-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] C:\Users\lougi\.gradle\caches\8.12\transforms\871e711aa3311d1b14752a968d3eee6b\transformed\jetified-savedstate-ktx-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\lougi\.gradle\caches\8.12\transforms\d4d69cd4063662f4870b4bb3bcda6c2b\transformed\jetified-savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\lougi\.gradle\caches\8.12\transforms\d4d69cd4063662f4870b4bb3bcda6c2b\transformed\jetified-savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\fcc999463ce5662267ea14174d4f23fb\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\fcc999463ce5662267ea14174d4f23fb\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\9e886ba7c389b40e56027af31f063ba9\transformed\jetified-lifecycle-viewmodel-savedstate-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\9e886ba7c389b40e56027af31f063ba9\transformed\jetified-lifecycle-viewmodel-savedstate-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core-ktx:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\f5355c68a2a787597a2b015354a20d1d\transformed\jetified-core-ktx-1.13.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-ktx:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\f5355c68a2a787597a2b015354a20d1d\transformed\jetified-core-ktx-1.13.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\8d73b8e71929ffb9c7d60cc3b4c6dac0\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\8d73b8e71929ffb9c7d60cc3b4c6dac0\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\cd20a74b31c54b7f69301ea800caa583\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\lougi\.gradle\caches\8.12\transforms\cd20a74b31c54b7f69301ea800caa583\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\8985063b8751659d4ec36137596691d0\transformed\swiperefreshlayout-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\8985063b8751659d4ec36137596691d0\transformed\swiperefreshlayout-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.asynclayoutinflater:asynclayoutinflater:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d6cbbc907adfb8ffd0e8079c0d252f46\transformed\asynclayoutinflater-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.asynclayoutinflater:asynclayoutinflater:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d6cbbc907adfb8ffd0e8079c0d252f46\transformed\asynclayoutinflater-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\lougi\.gradle\caches\8.12\transforms\832d1f825346ca2fdcec1dede0243727\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\lougi\.gradle\caches\8.12\transforms\832d1f825346ca2fdcec1dede0243727\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\2893b0fb28862295880118f21f1257d0\transformed\jetified-tracing-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\2893b0fb28862295880118f21f1257d0\transformed\jetified-tracing-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-core-android:1.1.3] C:\Users\lougi\.gradle\caches\8.12\transforms\10ab876f9c343655467112fd5bc00a84\transformed\jetified-datastore-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.datastore:datastore-core-android:1.1.3] C:\Users\lougi\.gradle\caches\8.12\transforms\10ab876f9c343655467112fd5bc00a84\transformed\jetified-datastore-core-release\AndroidManifest.xml:5:5-44
+MERGED from [androidx.datastore:datastore-preferences-android:1.1.3] C:\Users\lougi\.gradle\caches\8.12\transforms\af60b32d12eb69a6024009efc47d0396\transformed\jetified-datastore-preferences-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-preferences-android:1.1.3] C:\Users\lougi\.gradle\caches\8.12\transforms\af60b32d12eb69a6024009efc47d0396\transformed\jetified-datastore-preferences-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-android:1.1.3] C:\Users\lougi\.gradle\caches\8.12\transforms\8f1489b0612e6c860d331ab3f03782b3\transformed\jetified-datastore-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.datastore:datastore-android:1.1.3] C:\Users\lougi\.gradle\caches\8.12\transforms\8f1489b0612e6c860d331ab3f03782b3\transformed\jetified-datastore-release\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\79c0101043b26270770e9291782162cf\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\79c0101043b26270770e9291782162cf\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\lougi\.gradle\caches\8.12\transforms\2fe6b255c4fcd42a0bd2d3f9cc7dd890\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\lougi\.gradle\caches\8.12\transforms\2fe6b255c4fcd42a0bd2d3f9cc7dd890\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d63e695ab6449f52060710d73a07e528\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d63e695ab6449f52060710d73a07e528\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\3cc3bade8241be21e9b0b61a86a6089c\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\3cc3bade8241be21e9b0b61a86a6089c\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.window.extensions.core:core:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\4083b6b45805d895aa5b691b8f04b964\transformed\jetified-core-1.0.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.window.extensions.core:core:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\4083b6b45805d895aa5b691b8f04b964\transformed\jetified-core-1.0.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\be256df089d77e59bc704d1c127c373a\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\be256df089d77e59bc704d1c127c373a\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\575c45066ffedd5c9284b45d83774c1f\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\575c45066ffedd5c9284b45d83774c1f\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\f4ab96d5ea87ddfa2f023e53c2832566\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\lougi\.gradle\caches\8.12\transforms\f4ab96d5ea87ddfa2f023e53c2832566\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\5f2d2d4bf5534ba7f14697293515c933\transformed\jetified-annotation-experimental-1.4.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\5f2d2d4bf5534ba7f14697293515c933\transformed\jetified-annotation-experimental-1.4.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.maps.android:android-maps-utils:3.6.0] C:\Users\lougi\.gradle\caches\8.12\transforms\40e8fc8c82441749449e0e9e61f4b54b\transformed\jetified-android-maps-utils-3.6.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.maps.android:android-maps-utils:3.6.0] C:\Users\lougi\.gradle\caches\8.12\transforms\40e8fc8c82441749449e0e9e61f4b54b\transformed\jetified-android-maps-utils-3.6.0\AndroidManifest.xml:5:5-44
+MERGED from [com.getkeepsafe.relinker:relinker:1.4.5] C:\Users\lougi\.gradle\caches\8.12\transforms\c7fbacbe5c16a8615e555b5b7aeb8a39\transformed\jetified-relinker-1.4.5\AndroidManifest.xml:5:5-43
+MERGED from [com.getkeepsafe.relinker:relinker:1.4.5] C:\Users\lougi\.gradle\caches\8.12\transforms\c7fbacbe5c16a8615e555b5b7aeb8a39\transformed\jetified-relinker-1.4.5\AndroidManifest.xml:5:5-43
+	android:targetSdkVersion
+		INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from C:\Users\lougi\escape_city\android\app\src\main\AndroidManifest.xml
+service#com.baseflow.geolocator.GeolocatorLocationService
+ADDED from [:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:9-12:56
+	android:enabled
+		ADDED from [:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:13-35
+	android:exported
+		ADDED from [:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:13-37
+	android:foregroundServiceType
+		ADDED from [:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:12:13-53
+	android:name
+		ADDED from [:geolocator_android] C:\Users\lougi\escape_city\build\geolocator_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:13-77
+activity#io.flutter.plugins.urllauncher.WebViewActivity
+ADDED from [:url_launcher_android] C:\Users\lougi\escape_city\build\url_launcher_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:8:9-11:74
+	android:exported
+		ADDED from [:url_launcher_android] C:\Users\lougi\escape_city\build\url_launcher_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:10:13-37
+	android:theme
+		ADDED from [:url_launcher_android] C:\Users\lougi\escape_city\build\url_launcher_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:11:13-71
+	android:name
+		ADDED from [:url_launcher_android] C:\Users\lougi\escape_city\build\url_launcher_android\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml:9:13-74
+uses-library#androidx.window.extensions
+ADDED from [androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:23:9-25:40
+	android:required
+		ADDED from [androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:25:13-37
+	android:name
+		ADDED from [androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:24:13-54
+uses-library#androidx.window.sidecar
+ADDED from [androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:26:9-28:40
+	android:required
+		ADDED from [androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:28:13-37
+	android:name
+		ADDED from [androidx.window:window:1.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\e049e7f9ae1205a5f948ad90564674a9\transformed\jetified-window-1.2.0\AndroidManifest.xml:27:13-51
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:20:5-78
+	android:name
+		ADDED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:20:22-76
+uses-feature#0x00020000
+ADDED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:22:5-24:33
+	android:glEsVersion
+		ADDED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:23:8-40
+	android:required
+		ADDED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:24:8-31
+queries
+ADDED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:27:5-30:15
+package#com.google.android.apps.maps
+ADDED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:29:7-61
+	android:name
+		ADDED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:29:16-59
+uses-library#org.apache.http.legacy
+ADDED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:33:7-86
+	android:required
+		ADDED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:33:59-83
+	android:name
+		ADDED from [com.google.android.gms:play-services-maps:19.2.0] C:\Users\lougi\.gradle\caches\8.12\transforms\000234a8105bbfc1248d5160011cdd4a\transformed\jetified-play-services-maps-19.2.0\AndroidManifest.xml:33:21-58
+activity#com.google.android.gms.common.api.GoogleApiActivity
+ADDED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d22f1c95abad4bd2e955d74dd7590a3f\transformed\jetified-play-services-base-18.5.0\AndroidManifest.xml:5:9-173
+	android:exported
+		ADDED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d22f1c95abad4bd2e955d74dd7590a3f\transformed\jetified-play-services-base-18.5.0\AndroidManifest.xml:5:146-170
+	android:theme
+		ADDED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d22f1c95abad4bd2e955d74dd7590a3f\transformed\jetified-play-services-base-18.5.0\AndroidManifest.xml:5:86-145
+	android:name
+		ADDED from [com.google.android.gms:play-services-base:18.5.0] C:\Users\lougi\.gradle\caches\8.12\transforms\d22f1c95abad4bd2e955d74dd7590a3f\transformed\jetified-play-services-base-18.5.0\AndroidManifest.xml:5:19-85
+meta-data#com.google.android.gms.version
+ADDED from [com.google.android.gms:play-services-basement:18.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\93f61e9ca18986df82b6c4bcea1db79e\transformed\jetified-play-services-basement-18.4.0\AndroidManifest.xml:6:9-122
+MERGED from [com.google.maps.android:android-maps-utils:3.6.0] C:\Users\lougi\.gradle\caches\8.12\transforms\40e8fc8c82441749449e0e9e61f4b54b\transformed\jetified-android-maps-utils-3.6.0\AndroidManifest.xml:8:9-10:69
+MERGED from [com.google.maps.android:android-maps-utils:3.6.0] C:\Users\lougi\.gradle\caches\8.12\transforms\40e8fc8c82441749449e0e9e61f4b54b\transformed\jetified-android-maps-utils-3.6.0\AndroidManifest.xml:8:9-10:69
+	android:value
+		ADDED from [com.google.android.gms:play-services-basement:18.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\93f61e9ca18986df82b6c4bcea1db79e\transformed\jetified-play-services-basement-18.4.0\AndroidManifest.xml:6:66-119
+	android:name
+		ADDED from [com.google.android.gms:play-services-basement:18.4.0] C:\Users\lougi\.gradle\caches\8.12\transforms\93f61e9ca18986df82b6c4bcea1db79e\transformed\jetified-play-services-basement-18.4.0\AndroidManifest.xml:6:20-65
+provider#androidx.startup.InitializationProvider
+ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\lougi\.gradle\caches\8.12\transforms\832d1f825346ca2fdcec1dede0243727\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\lougi\.gradle\caches\8.12\transforms\832d1f825346ca2fdcec1dede0243727\transformed\jetified-startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+	tools:node
+		ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:28:13-31
+	android:authorities
+		ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:26:13-68
+	android:exported
+		ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:27:13-37
+	android:name
+		ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:25:13-67
+meta-data#androidx.lifecycle.ProcessLifecycleInitializer
+ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\lougi\.gradle\caches\8.12\transforms\34f6252b1e4a0aa69eb1533ba689ffc3\transformed\jetified-lifecycle-process-2.7.0\AndroidManifest.xml:30:17-78
+permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
+permission#com.roadpapattes.escape_city_client_clean.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
+uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
+uses-permission#com.roadpapattes.escape_city_client_clean.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.13.1] C:\Users\lougi\.gradle\caches\8.12\transforms\59254a2f7bbdb25d31ef8ae939e6a13c\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
+meta-data#androidx.profileinstaller.ProfileInstallerInitializer
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
+receiver#androidx.profileinstaller.ProfileInstallReceiver
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
+	android:enabled
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
+	android:exported
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
+	android:permission
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
+	android:directBootAware
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
+intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
+action#androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
+intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
+action#androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
+intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
+action#androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
+intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
+action#androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\lougi\.gradle\caches\8.12\transforms\ce136fd7dcf1eed745ade07f04b9cdda\transformed\jetified-profileinstaller-1.3.1\AndroidManifest.xml:50:25-92
