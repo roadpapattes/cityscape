@@ -15,3 +15,27 @@ venv/
 # IDE
 .vscode/
 .idea/
+# --- Python ---
+__pycache__/
+*.py[cod]
+.env
+.venv/
+env/
+venv/
+*.sqlite3
+
+# --- Flutter / Android ---
+mobile/**/build/
+mobile/**/.dart_tool/
+mobile/**/.gradle/
+mobile/**/.idea/
+mobile/**/local.properties
+mobile/**/ios/Flutter/.last_build_id
+mobile/**/.flutter-plugins
+mobile/**/.flutter-plugins-dependencies
+mobile/**/.metadata
+
+# --- Android signing (secrets à ne JAMAIS pousser) ---
+mobile/**/android/key.properties
+*.jks
+*.keystore

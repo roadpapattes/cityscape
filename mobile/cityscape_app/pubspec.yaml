@@ -1,0 +1,51 @@
+# pubspec.yaml — Escape City (auth + favoris + maps)
+
+name: escape_city_client_clean
+description: Client Flutter pour Escape City (liste, carte, favoris, auth, notes, commentaires, mode créateur)
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI
+  cupertino_icons: ^1.0.8
+
+  # Réseau & stockage
+  http: ^1.2.2
+  shared_preferences: ^2.2.3
+  url_launcher: ^6.3.0
+  image_picker: ^1.0.7
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Géolocalisation & Google Maps
+  geolocator: ^11.0.0
+  google_maps_flutter: ^2.9.0
+
+  # Génération d’icônes/bitmaps (ex : marqueurs ou clusters personnalisés)
+  image: ^4.5.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.2
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+  # Ajoute ici des assets si besoin plus tard
+  assets:
+  - assets/logo.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/app_icon/app_icon.png"  # ton image carrée (1024x1024 recommandé)
+  min_sdk_android: 21
+  remove_alpha_ios: true
