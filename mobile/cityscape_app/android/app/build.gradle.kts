@@ -11,11 +11,17 @@ plugins {
 
 // --- Keystore (release) ---
 val keystoreProperties = Properties()
-val hasKeystore = keystorePropertiesFile.exists()
 val keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
-}
+val hasKeystore = keystorePropertiesFile.exists()
+if (hasKeystore) keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+
+val storeFileProp = keystoreProperties.getProperty("storeFile")?.trim()
+val storePass     = keystoreProperties.getProperty("storePassword")?.trim()
+val keyAliasProp  = keystoreProperties.getProperty("keyAlias")?.trim()
+val keyPass       = keystoreProperties.getProperty("keyPassword")?.trim()
+
+val hasAllKeystoreProps = hasKeystore &&
+    listOf(storeFileProp, storePass, keyAliasProp, keyPass).all { !it.isNullOrBlank() }
 
 // Lire android/local.properties en priorité
 val localProps = Properties().apply {
@@ -29,12 +35,12 @@ val mapsApiKey = (localProps.getProperty("MAPS_API_KEY")
 println(">>> Gradle: MAPS_API_KEY length = ${mapsApiKey.length}") // trace utile
 
 android {
-    namespace = "com.roadpapattes.escape_city_client_clean"
+    namespace = "com.roadpapattes.cityscape"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     defaultConfig {
-        applicationId = "com.roadpapattes.escape_city_client_clean"
+        applicationId = "com.roadpapattes.cityscape"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = 1
@@ -52,27 +58,27 @@ android {
     }
 
     signingConfigs {
-        if (hasKeystore) {
-            create("release") {
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-            }
-        }
-    }
+		if (hasAllKeystoreProps) {
+			create("release") {
+				storeFile = file(storeFileProp!!)
+				storePassword = storePass!!
+				keyAlias = keyAliasProp!!
+				keyPassword = keyPass!!
+			}
+		}
+	}
 
     buildTypes {
-        getByName("release") {
-            if (hasKeystore) {
-                signingConfig = signingConfigs.getByName("release")
-            } else {
-                println(">>> WARN: key.properties absent — la release ne sera pas signée ici.")
-            }
-            isMinifyEnabled = false
-            isShrinkResources = false
-        }
-    }
+		getByName("release") {
+			if (hasAllKeystoreProps) {
+				signingConfig = signingConfigs.getByName("release")
+			} else {
+				println(">>> WARN: key.properties absent ou incomplet — release non signée.")
+			}
+			isMinifyEnabled = false
+			isShrinkResources = false
+		}
+	}
 }
 
 flutter {

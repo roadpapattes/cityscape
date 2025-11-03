@@ -1,4 +1,4 @@
-package com.roadpapattes.escape_city_client_clean
+package com.roadpapattes.cityscape
 
 import io.flutter.embedding.android.FlutterActivity
 

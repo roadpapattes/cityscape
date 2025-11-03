@@ -1,0 +1,1 @@
+start cmd /c "cd /d C:\Users\lougi\escape_city && .\Publish-CityscapeApk.ps1"

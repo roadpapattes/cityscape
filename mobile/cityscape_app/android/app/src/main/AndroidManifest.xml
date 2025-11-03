@@ -1,5 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.roadpapattes.escape_city_client_clean">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Permissions réseau + géoloc + caméra -->
     <uses-permission android:name="android.permission.INTERNET"/>
