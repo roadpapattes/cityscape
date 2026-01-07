@@ -141,6 +141,7 @@ Future<void> login(String username, String password) async {
   // Google Sign-In
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email'],
+    serverClientId: '622564437605-fludcb1jo2157oi7ejbg25jju9d6qeht.apps.googleusercontent.com',
   );
 
   Future<void> signInWithGoogle() async {
