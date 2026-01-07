@@ -1,6 +1,6 @@
 {
-    "name": "escape_city_client_clean",
-    "short_name": "escape_city_client_clean",
+    "name": "cityscape",
+    "short_name": "cityscape",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

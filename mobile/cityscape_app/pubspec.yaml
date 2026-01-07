@@ -1,6 +1,6 @@
 # pubspec.yaml — Escape City (auth + favoris + maps)
 
-name: escape_city_client_clean
+name: cityscape
 description: Client Flutter pour Escape City (liste, carte, favoris, auth, notes, commentaires, mode créateur)
 publish_to: "none"
 version: 0.1.0+1
@@ -27,6 +27,9 @@ dependencies:
   # Géolocalisation & Google Maps
   geolocator: ^11.0.0
   google_maps_flutter: ^2.9.0
+
+  # Google Sign-In
+  google_sign_in: ^6.2.1
 
   # Génération d’icônes/bitmaps (ex : marqueurs ou clusters personnalisés)
   image: ^4.5.4
