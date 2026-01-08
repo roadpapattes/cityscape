@@ -128,9 +128,6 @@ EMAIL_HOST_PASSWORD = "nzvfzwujgbgymsrh"   # <-- 16 caractères générés par G
 DEFAULT_FROM_EMAIL = "Escape City <toncompte@gmail.com>"
 SERVER_EMAIL = DEFAULT_FROM_EMAIL  # emails d'erreur Django (optionnel)
 
-try:
-except Exception:
-	pass
 
 
 
