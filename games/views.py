@@ -146,7 +146,7 @@ class CreatorImageUploadView(APIView):
         path = default_storage.save(os.path.join(subdir, name), f)
 
         # URL publique
-        url = request.build_absolute_uri(os.path.join(settings.MEDIA_URL, path).replace('\', '/'))
+        url = request.build_absolute_uri(os.path.join(settings.MEDIA_URL, path).replace('\\\\', '/'))
         return Response({"url": url}, status=status.HTTP_201_CREATED)
 
 
