@@ -14,9 +14,15 @@ def privacy_policy(_):
     with open(html_path, 'r', encoding='utf-8') as f:
         return HttpResponse(f.read(), content_type='text/html')
 
+def delete_account(_):
+    html_path = os.path.join(settings.BASE_DIR, 'static_html', 'delete-account.html')
+    with open(html_path, 'r', encoding='utf-8') as f:
+        return HttpResponse(f.read(), content_type='text/html')
+
 urlpatterns = [
     path('api/health', health),
     path('privacy-policy', privacy_policy),
+    path('delete-account', delete_account),
     path('admin/', admin.site.urls),
     path('api/', include('games.urls')),       # puis games (catalogue)
     path('api/', include('engagement.urls')),  # engagement D'ABORD

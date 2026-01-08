@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supprimer mon compte - CityScape</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #1a3a52 0%, #2c5f7f 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #1a3a52;
+        }
+
+        .header h1 {
+            color: #1a3a52;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .warning-box h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .warning-box ul {
+            margin-left: 20px;
+            color: #856404;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1a3a52;
+            font-weight: 600;
+        }
+
+        input[type="email"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        input[type="email"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #1a3a52;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            margin: 20px 0;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #c82333;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .success-message,
+        .error-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #1a3a52;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗑️ Supprimer mon compte</h1>
+            <p>CityScape</p>
+        </div>
+
+        <div class="warning-box">
+            <h3>⚠️ Attention : Cette action est irréversible</h3>
+            <p>La suppression de votre compte entraînera :</p>
+            <ul>
+                <li>La suppression définitive de votre profil</li>
+                <li>La perte de tout votre historique de jeu</li>
+                <li>La suppression de vos favoris</li>
+                <li>La suppression de vos avis et notes</li>
+                <li>La suppression des escape games que vous avez créés</li>
+            </ul>
+        </div>
+
+        <form id="deleteForm">
+            <div class="form-group">
+                <label for="email">Adresse email de votre compte *</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    placeholder="votre-email@example.com"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="reason">Raison de la suppression (optionnel)</label>
+                <textarea
+                    id="reason"
+                    name="reason"
+                    placeholder="Aidez-nous à améliorer CityScape en nous expliquant pourquoi vous supprimez votre compte..."
+                ></textarea>
+            </div>
+
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" id="confirm" required>
+                    Je comprends que cette action est irréversible et que toutes mes données seront définitivement supprimées.
+                </label>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                Demander la suppression de mon compte
+            </button>
+        </form>
+
+        <div class="success-message" id="successMessage">
+            <strong>✓ Demande envoyée avec succès !</strong>
+            <p>Nous avons bien reçu votre demande de suppression de compte. Un email de confirmation vous a été envoyé. Votre compte et toutes vos données seront supprimés dans un délai de 30 jours.</p>
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            <strong>✗ Erreur</strong>
+            <p id="errorText">Une erreur s'est produite. Veuillez réessayer ou nous contacter à feedback.enigmapolis@gmail.com</p>
+        </div>
+
+        <div class="info-box">
+            <h3>📧 Besoin d'aide ?</h3>
+            <p>Si vous rencontrez un problème ou avez des questions, contactez-nous à :</p>
+            <p><strong><a href="mailto:feedback.enigmapolis@gmail.com">feedback.enigmapolis@gmail.com</a></strong></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('deleteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+
+            // Reset messages
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Envoi en cours...';
+
+            const formData = {
+                email: document.getElementById('email').value,
+                reason: document.getElementById('reason').value
+            };
+
+            try {
+                const response = await fetch('https://api.cityscape.ovh/api/auth/delete-account-request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    successMessage.style.display = 'block';
+                    document.getElementById('deleteForm').style.display = 'none';
+                } else {
+                    errorText.textContent = data.detail || 'Une erreur s\'est produite.';
+                    errorMessage.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Demander la suppression de mon compte';
+                }
+            } catch (error) {
+                errorText.textContent = 'Erreur de connexion. Veuillez réessayer.';
+                errorMessage.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Demander la suppression de mon compte';
+            }
+        });
+    </script>
+</body>
+</html>

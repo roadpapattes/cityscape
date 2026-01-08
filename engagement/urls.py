@@ -5,6 +5,7 @@ from .views import (
     RegisterView, LoginView, LogoutView, MeView,
     PasswordResetRequestView, PasswordResetConfirmView,
     GoogleSignInView,
+    AccountDeletionRequestView,
     StartSessionView,
     SessionStateView, SessionHistoryView, SessionHintView, SessionAnswerView,
     CanRateView, ReportEscapeView, RatingsListCreateView,
@@ -22,6 +23,7 @@ urlpatterns = [
     path('auth/password-reset/request', PasswordResetRequestView.as_view()),
     path('auth/password-reset/confirm', PasswordResetConfirmView.as_view()),
     path('auth/google',   GoogleSignInView.as_view()),
+    path('auth/delete-account-request', AccountDeletionRequestView.as_view()),
 
     # Gameplay (sessions)
     path('escapes/<int:escape_id>/sessions/start',  StartSessionView.as_view()),

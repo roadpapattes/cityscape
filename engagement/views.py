@@ -1035,3 +1035,94 @@ class GoogleSignInView(APIView):
                 {"error": "Erreur lors de l'authentification Google"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+# ---------------- Account Deletion ----------------
+class AccountDeletionRequestView(APIView):
+    """Handle account deletion requests from users"""
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email', '').strip().lower()
+        reason = request.data.get('reason', '').strip()
+
+        if not email:
+            return Response(
+                {"detail": "L'adresse email est requise"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if user exists
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # Don't reveal if user exists or not (security)
+            # Always return success to prevent email enumeration
+            return Response(
+                {"detail": "Si un compte existe avec cette adresse, un email de confirmation a été envoyé."},
+                status=status.HTTP_200_OK
+            )
+
+        # Send confirmation email
+        try:
+            subject = "Demande de suppression de compte - CityScape"
+            message = f"""Bonjour {user.username},
+
+Nous avons reçu une demande de suppression de votre compte CityScape.
+
+Votre compte et toutes vos données associées seront supprimés dans un délai de 30 jours.
+
+Si vous n'avez pas demandé cette suppression, veuillez nous contacter immédiatement à feedback.enigmapolis@gmail.com
+
+Raison de la suppression : {reason if reason else "Non spécifiée"}
+
+---
+Informations du compte :
+- Email : {user.email}
+- Nom d'utilisateur : {user.username}
+- Date de la demande : {timezone.now().strftime('%d/%m/%Y à %H:%M')}
+
+Cordialement,
+L'équipe CityScape
+"""
+
+            # Send to user
+            send_mail(
+                subject,
+                message,
+                settings.EMAIL_HOST_USER,
+                [user.email],
+                fail_silently=False,
+            )
+
+            # Send notification to admin
+            admin_message = f"""Nouvelle demande de suppression de compte :
+
+Email : {user.email}
+Username : {user.username}
+Raison : {reason if reason else "Non spécifiée"}
+Date : {timezone.now().strftime('%d/%m/%Y à %H:%M')}
+
+Action requise : Supprimer le compte dans les 30 jours.
+"""
+            send_mail(
+                "CityScape - Demande de suppression de compte",
+                admin_message,
+                settings.EMAIL_HOST_USER,
+                [settings.EMAIL_HOST_USER],
+                fail_silently=True,
+            )
+
+            log.info(f"Account deletion request for user {user.username} ({user.email})")
+
+        except Exception as e:
+            log.error(f"Error sending deletion email: {e}")
+            return Response(
+                {"detail": "Erreur lors de l'envoi de l'email"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        return Response(
+            {"detail": "Demande de suppression enregistrée. Un email de confirmation vous a été envoyé."},
+            status=status.HTTP_200_OK
+        )
