@@ -2,6 +2,13 @@
 from pathlib import Path
 import os
 import sys
+# Load environment variables from .env file first
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 # fichiers médias
@@ -122,8 +129,6 @@ DEFAULT_FROM_EMAIL = "Escape City <toncompte@gmail.com>"
 SERVER_EMAIL = DEFAULT_FROM_EMAIL  # emails d'erreur Django (optionnel)
 
 try:
-	from dotenv import load_dotenv
-	load_dotenv()
 except Exception:
 	pass
 

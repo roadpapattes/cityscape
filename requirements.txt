@@ -2,3 +2,4 @@ Django>=4.2,<5.1
 djangorestframework>=3.14
 django-filter>=24.2
 google-auth>=2.23.0
+python-dotenv
