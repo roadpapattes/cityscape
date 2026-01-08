@@ -250,7 +250,7 @@ class PastStepsPage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10),
                             child: Image.network(
                               normalizeImageUrl(img, baseUrl),
-                              fit: BoxFit.cover,
+                              fit: BoxFit.contain,
                               height: 160,
                               width: double.infinity,
                               errorBuilder: (_, __, ___) => Container(
@@ -479,7 +479,7 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
                 normalizeImageUrl(e.imageUrl, baseUrl),
                 height: 180,
                 width: double.infinity,
-                fit: BoxFit.cover,
+                fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) => Container(
                   height: 180,
                   color: Colors.grey.shade200,
@@ -1500,7 +1500,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
                                       normalizeImageUrl(_stepImageUrl, baseUrl),
                                       height: 160,
                                       width: double.infinity,
-                                      fit: BoxFit.cover,
+                                      fit: BoxFit.contain,
                                       errorBuilder: (_, __, ___) => Container(
                                         height: 160,
                                         color: Colors.grey.shade200,
