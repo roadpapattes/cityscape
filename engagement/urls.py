@@ -3,6 +3,8 @@ from django.urls import path
 from django.http import JsonResponse
 from .views import (
     RegisterView, LoginView, LogoutView, MeView,
+    PasswordResetRequestView, PasswordResetConfirmView,
+    GoogleSignInView,
     StartSessionView,
     SessionStateView, SessionHistoryView, SessionHintView, SessionAnswerView,
     CanRateView, ReportEscapeView, RatingsListCreateView,
@@ -17,6 +19,9 @@ urlpatterns = [
     path('auth/login',    LoginView.as_view()),
     path('auth/logout',   LogoutView.as_view()),
     path('auth/me',       MeView.as_view()),
+    path('auth/password-reset/request', PasswordResetRequestView.as_view()),
+    path('auth/password-reset/confirm', PasswordResetConfirmView.as_view()),
+    path('auth/google',   GoogleSignInView.as_view()),
 
     # Gameplay (sessions)
     path('escapes/<int:escape_id>/sessions/start',  StartSessionView.as_view()),

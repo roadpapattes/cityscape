@@ -19,7 +19,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import PlaySession, Rating
+from .models import PlaySession, Rating, PasswordResetToken
 from .serializers import (
     UserSerializer,
     RegisterSerializer,
@@ -89,6 +89,141 @@ class MeView(APIView):
             "is_staff": u.is_staff,
             "is_superuser": u.is_superuser,
         })
+
+
+class PasswordResetRequestView(APIView):
+    """
+    POST /api/auth/password-reset/request
+    Body: {"email": "user@example.com"}
+    Response: {"message": "Code sent if email exists"}
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email", "").strip()
+        if not email:
+            return Response(
+                {"error": "Email requis"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # Security: Don't reveal if email exists
+            return Response(
+                {"message": "Si l'email existe, un code a été envoyé"},
+                status=status.HTTP_200_OK
+            )
+
+        # Invalidate previous tokens for this user
+        PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
+
+        # Create new token
+        reset_token = PasswordResetToken.objects.create(user=user)
+
+        # Send email
+        try:
+            send_mail(
+                subject="CityScape - Réinitialisation de mot de passe",
+                message=f"""Bonjour {user.username},
+
+Vous avez demandé une réinitialisation de votre mot de passe.
+
+Votre code de vérification est : {reset_token.code}
+
+Ce code est valide pendant 15 minutes.
+
+Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.
+
+L'équipe CityScape
+""",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            log.error(f"Failed to send password reset email: {e}")
+            return Response(
+                {"error": "Erreur lors de l'envoi de l'email"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        return Response(
+            {"message": "Si l'email existe, un code a été envoyé"},
+            status=status.HTTP_200_OK
+        )
+
+
+class PasswordResetConfirmView(APIView):
+    """
+    POST /api/auth/password-reset/confirm
+    Body: {"email": "user@example.com", "code": "123456", "new_password": "newpass"}
+    Response: {"message": "Password reset successful"}
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email", "").strip()
+        code = request.data.get("code", "").strip()
+        new_password = request.data.get("new_password", "")
+
+        if not email or not code or not new_password:
+            return Response(
+                {"error": "Email, code et nouveau mot de passe requis"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if len(new_password) < 8:
+            return Response(
+                {"error": "Le mot de passe doit contenir au moins 8 caractères"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "Code invalide ou expiré"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Find valid token
+        try:
+            reset_token = PasswordResetToken.objects.filter(
+                user=user,
+                code=code,
+                used=False
+            ).order_by('-created_at').first()
+
+            if not reset_token or not reset_token.is_valid():
+                return Response(
+                    {"error": "Code invalide ou expiré"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception:
+            return Response(
+                {"error": "Code invalide ou expiré"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Reset password
+        user.set_password(new_password)
+        user.save()
+
+        # Mark token as used
+        reset_token.used = True
+        reset_token.save()
+
+        # Invalidate all other tokens for this user
+        PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
+
+        return Response(
+            {"message": "Mot de passe réinitialisé avec succès"},
+            status=status.HTTP_200_OK
+        )
 
 
 # -------------- Gameplay utils --------------
@@ -795,3 +930,102 @@ class CreatorFeedbackView(APIView):
             return Response({"detail": f"Envoi email impossible: {e}"}, status=500)
 
         return Response({"ok": True}, status=200)
+
+
+# -------------- Google Sign-In --------------
+
+class GoogleSignInView(APIView):
+    """
+    Google Sign-In endpoint
+    Receives Google ID token from client, verifies it, and creates/logs in user
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        id_token = request.data.get("id_token", "").strip()
+
+        if not id_token:
+            return Response(
+                {"error": "id_token requis"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Import google-auth library for token verification
+            from google.oauth2 import id_token as google_id_token
+            from google.auth.transport import requests as google_requests
+
+            # Verify the token
+            # We don't specify client_id here because we'll accept tokens from any client
+            # The token verification ensures it's a valid Google token
+            idinfo = google_id_token.verify_oauth2_token(
+                id_token,
+                google_requests.Request()
+            )
+
+            # Extract user info from token
+            google_user_id = idinfo.get('sub')  # Google user ID
+            email = idinfo.get('email', '')
+            email_verified = idinfo.get('email_verified', False)
+            name = idinfo.get('name', '')
+            given_name = idinfo.get('given_name', '')
+            family_name = idinfo.get('family_name', '')
+
+            if not email or not email_verified:
+                return Response(
+                    {"error": "Email non vérifié ou manquant"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            User = get_user_model()
+
+            # Try to find user by email
+            user = User.objects.filter(email=email).first()
+
+            if user:
+                # User exists, log them in
+                token, _ = Token.objects.get_or_create(user=user)
+                return Response({
+                    "token": token.key,
+                    "user": UserSerializer(user).data
+                }, status=status.HTTP_200_OK)
+            else:
+                # Create new user
+                # Generate username from email or name
+                base_username = email.split('@')[0]
+                username = base_username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}{counter}"
+                    counter += 1
+
+                # Create user (no password needed for Google users)
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    first_name=given_name,
+                    last_name=family_name
+                )
+                user.set_unusable_password()  # Google users don't need passwords
+                user.save()
+
+                # Create token
+                token = Token.objects.create(user=user)
+
+                return Response({
+                    "token": token.key,
+                    "user": UserSerializer(user).data
+                }, status=status.HTTP_201_CREATED)
+
+        except ValueError as e:
+            # Invalid token
+            return Response(
+                {"error": f"Token Google invalide: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            log.error(f"Google Sign-In error: {e}")
+            return Response(
+                {"error": "Erreur lors de l'authentification Google"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

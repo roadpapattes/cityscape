@@ -1,5 +1,8 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
+import secrets
+import string
 
 User = settings.AUTH_USER_MODEL
 
@@ -49,3 +52,43 @@ class Rating(models.Model):
 
     def __str__(self):
         return f"{self.user} → {self.escape} ({self.stars})"
+
+
+class PasswordResetToken(models.Model):
+    """
+    Model to store password reset tokens with 6-digit codes.
+    Tokens expire after 15 minutes and can only be used once.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='password_reset_tokens'
+    )
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"PasswordResetToken({self.user.username}, {self.code}, used={self.used})"
+
+    @classmethod
+    def generate_code(cls):
+        """Generate a random 6-digit code"""
+        return ''.join(secrets.choice(string.digits) for _ in range(6))
+
+    def is_valid(self):
+        """Check if token is still valid (not used and not expired)"""
+        return not self.used and timezone.now() < self.expires_at
+
+    def save(self, *args, **kwargs):
+        """Auto-generate code and expiration on creation"""
+        if not self.pk:  # Only on creation
+            if not self.code:
+                self.code = self.generate_code()
+            if not self.expires_at:
+                self.expires_at = timezone.now() + timezone.timedelta(minutes=15)
+        super().save(*args, **kwargs)
