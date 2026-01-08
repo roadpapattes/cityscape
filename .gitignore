@@ -7,7 +7,6 @@ __pycache__/
 /static/
 /media/
 # Environnements & secrets
-.env
 .env.*
 env/
 venv/
@@ -18,7 +17,6 @@ venv/
 # --- Python ---
 __pycache__/
 *.py[cod]
-.env
 .venv/
 env/
 venv/
@@ -39,3 +37,4 @@ mobile/**/.metadata
 mobile/**/android/key.properties
 *.jks
 *.keystore
+.env

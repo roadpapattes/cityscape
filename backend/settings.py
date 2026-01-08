@@ -16,8 +16,8 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 APPEND_SLASH = False
 
-SECRET_KEY = 'dev-secret-key-change-me'
-DEBUG = True
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-secret-key-change-me')
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 # ALLOWED_HOSTS = ['*']
 def _split_env_list(key, default=""):
     return [x.strip() for x in os.getenv(key, default).split(",") if x.strip()]
@@ -90,7 +90,21 @@ DATABASES = {
     }
 }
 
-AUTH_PASSWORD_VALIDATORS = []
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 8}
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
 
 LANGUAGE_CODE = 'fr-fr'
 TIME_ZONE = 'Europe/Paris'
@@ -110,7 +124,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ]
 }
 
@@ -122,8 +136,8 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
-EMAIL_HOST_USER = "feedback.enigmapolis@gmail.com"            # <-- ton adresse Gmail
-EMAIL_HOST_PASSWORD = "nzvfzwujgbgymsrh"   # <-- 16 caractères générés par Google
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'feedback.enigmapolis@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 DEFAULT_FROM_EMAIL = "Escape City <toncompte@gmail.com>"
 SERVER_EMAIL = DEFAULT_FROM_EMAIL  # emails d'erreur Django (optionnel)
@@ -133,3 +147,20 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL  # emails d'erreur Django (optionnel)
 
 
 
+
+# Google OAuth
+GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID')
+
+# Security headers
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+
+# HTTPS settings (active en production quand DEBUG=False)
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 an
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True

@@ -1,4 +1,5 @@
 # engagement/views.py
+from .ratelimit_decorators import auth_rate_limit, password_reset_rate_limit, google_signin_rate_limit
 import re
 import unicodedata
 import logging
@@ -36,6 +37,7 @@ User = get_user_model()
 
 
 # ---------------- Auth ----------------
+@auth_rate_limit
 
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -52,6 +54,7 @@ class RegisterView(APIView):
         token, _ = Token.objects.get_or_create(user=user)
         return Response({"token": token.key, "user": UserSerializer(user).data}, status=201)
 
+@auth_rate_limit
 
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -90,6 +93,7 @@ class MeView(APIView):
             "is_superuser": u.is_superuser,
         })
 
+@password_reset_rate_limit
 
 class PasswordResetRequestView(APIView):
     """
@@ -155,6 +159,7 @@ L'équipe CityScape
             status=status.HTTP_200_OK
         )
 
+@password_reset_rate_limit
 
 class PasswordResetConfirmView(APIView):
     """
@@ -932,6 +937,7 @@ class CreatorFeedbackView(APIView):
         return Response({"ok": True}, status=200)
 
 
+@google_signin_rate_limit
 # -------------- Google Sign-In --------------
 
 class GoogleSignInView(APIView):
@@ -955,12 +961,12 @@ class GoogleSignInView(APIView):
             from google.oauth2 import id_token as google_id_token
             from google.auth.transport import requests as google_requests
 
-            # Verify the token
-            # We don't specify client_id here because we'll accept tokens from any client
-            # The token verification ensures it's a valid Google token
+            # Verify the token with CLIENT_ID to prevent token reuse from other apps
+            from django.conf import settings
             idinfo = google_id_token.verify_oauth2_token(
                 id_token,
-                google_requests.Request()
+                google_requests.Request(),
+                audience=settings.GOOGLE_OAUTH_CLIENT_ID
             )
 
             # Extract user info from token
@@ -1015,7 +1021,7 @@ class GoogleSignInView(APIView):
                 return Response({
                     "token": token.key,
                     "user": UserSerializer(user).data
-                }, status=status.HTTP_201_CREATED)
+                }, status=status.HTTP_200_OK)  # Always 200 to prevent user enumeration
 
         except ValueError as e:
             # Invalid token
