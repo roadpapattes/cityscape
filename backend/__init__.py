@@ -1,2 +1,1 @@
-# Import admin customization
-from . import admin
+# Admin customization is auto-imported by Django
