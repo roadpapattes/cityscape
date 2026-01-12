@@ -1,7 +1,7 @@
 // lib/features/profile/profile_page.dart
 
 import 'package:flutter/material.dart';
-import '../../services/api/api_service.dart';
+import '../../services/auth_service.dart';
 import '../../services/preferences_service.dart';
 import '../../models/user_preferences.dart';
 
@@ -13,7 +13,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final _api = ApiService.instance;
+  final _auth = AuthService.instance;
   final _prefs = PreferencesService.instance;
 
   bool _loading = true;
@@ -29,10 +29,10 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _loadUserInfo() async {
     setState(() => _loading = true);
     try {
-      final user = await _api.fetchCurrentUser();
+      final user = _auth.currentUser;
       setState(() {
-        _username = user['username'];
-        _email = user['email'];
+        _username = user?.username ?? 'Utilisateur';
+        _email = user?.email ?? '';
       });
     } catch (e) {
       if (mounted) {
@@ -65,9 +65,12 @@ class _ProfilePageState extends State<ProfilePage> {
     );
 
     if (confirm == true && mounted) {
-      await _api.logout();
+      await _auth.logout();
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/login');
+        Navigator.of(context).pop(); // Retour à l'écran précédent
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Déconnecté avec succès')),
+        );
       }
     }
   }
