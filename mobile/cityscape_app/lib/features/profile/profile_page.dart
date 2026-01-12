@@ -18,7 +18,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   bool _loading = true;
   String? _username;
-  String? _email;
 
   @override
   void initState() {
@@ -29,10 +28,9 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _loadUserInfo() async {
     setState(() => _loading = true);
     try {
-      final user = _auth.currentUser;
+      final user = _auth.meNotifier.value;
       setState(() {
         _username = user?.username ?? 'Utilisateur';
-        _email = user?.email ?? '';
       });
     } catch (e) {
       if (mounted) {
@@ -124,14 +122,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _email ?? '',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white70,
                   ),
                 ),
               ],
