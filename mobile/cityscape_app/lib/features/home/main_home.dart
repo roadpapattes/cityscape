@@ -22,6 +22,12 @@ import '../profile/profile_page.dart';
 
 // Import core widgets
 import '../../core/widgets/timer_badge.dart';
+import '../../core/widgets/themed_app_bar.dart';
+import '../../core/widgets/themed_bottom_nav.dart';
+
+// Import services for preferences
+import '../../services/preferences_service.dart';
+import '../../models/user_preferences.dart';
 
 /* ============================
    MAIN HOME SCREEN
@@ -36,62 +42,86 @@ class MainHome extends StatefulWidget {
 
 class _MainHomeState extends State<MainHome> {
   int _tabIndex = 1;
+  final _prefs = PreferencesService.instance;
 
   @override
   void initState() {
     super.initState();
     AuthService.instance.loadFromPrefs();
+    _prefs.addListener(_onPrefsChanged);
+  }
+
+  @override
+  void dispose() {
+    _prefs.removeListener(_onPrefsChanged);
+    super.dispose();
+  }
+
+  void _onPrefsChanged() {
+    setState(() {}); // Rebuild when preferences change
   }
 
   @override
   Widget build(BuildContext context) {
     final pages = [const ListPage(), const MapPage(), const CreatorPage()];
-    return Scaffold(
-      appBar: AppBar(
-        title: const _TitleWithUser(),
-        actions: [
-          ValueListenableBuilder<String?>(
-            valueListenable: AuthService.instance.tokenNotifier,
-            builder: (context, token, _) {
-              if (token == null) {
-                return IconButton(
-                  tooltip: 'Se connecter',
-                  icon: const Icon(Icons.login),
-                  onPressed: () => _openAuthDialog(context),
-                );
-              }
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    tooltip: 'Profil',
-                    icon: const Icon(Icons.account_circle),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ProfilePage(),
-                        ),
-                      );
-                    },
-                  ),
-                  IconButton(
-                    tooltip: 'Se déconnecter',
-                    icon: const Icon(Icons.logout),
-                    onPressed: () async {
-                      await AuthService.instance.logout();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Déconnecté')),
-                        );
-                      }
-                    },
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
+    final style = _prefs.currentPreferences.listCardStyle;
+    final useThemedUI = _tabIndex <= 1; // Liste (0) et Carte (1)
+
+    // Actions communes pour l'AppBar
+    final appBarActions = [
+      ValueListenableBuilder<String?>(
+        valueListenable: AuthService.instance.tokenNotifier,
+        builder: (context, token, _) {
+          if (token == null) {
+            return IconButton(
+              tooltip: 'Se connecter',
+              icon: const Icon(Icons.login),
+              onPressed: () => _openAuthDialog(context),
+            );
+          }
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: 'Profil',
+                icon: const Icon(Icons.account_circle),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ProfilePage(),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                tooltip: 'Se déconnecter',
+                icon: const Icon(Icons.logout),
+                onPressed: () async {
+                  await AuthService.instance.logout();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Déconnecté')),
+                    );
+                  }
+                },
+              ),
+            ],
+          );
+        },
       ),
+    ];
+
+    return Scaffold(
+      appBar: useThemedUI
+          ? ThemedAppBar(
+              title: _getPageTitle(),
+              style: style,
+              actions: appBarActions,
+            )
+          : AppBar(
+              title: const _TitleWithUser(),
+              actions: appBarActions,
+            ),
       body: Column(
         children: [
           ValueListenableBuilder<String?>(
@@ -113,15 +143,24 @@ class _MainHomeState extends State<MainHome> {
           Expanded(child: pages[_tabIndex]),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tabIndex,
-        onDestinationSelected: (i) => setState(() => _tabIndex = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.list_alt), label: 'Liste'),
-          NavigationDestination(icon: Icon(Icons.map_outlined), label: 'Carte'),
-          NavigationDestination(icon: Icon(Icons.edit_note_outlined), label: 'Créateur'),
-        ],
-      ),
+      bottomNavigationBar: useThemedUI
+          ? ThemedBottomNav(
+              currentIndex: _tabIndex,
+              onTap: (i) => setState(() => _tabIndex = i),
+              style: style,
+            )
+          : NavigationBar(
+              selectedIndex: _tabIndex,
+              onDestinationSelected: (i) => setState(() => _tabIndex = i),
+              destinations: const [
+                NavigationDestination(
+                    icon: Icon(Icons.list_alt), label: 'Liste'),
+                NavigationDestination(
+                    icon: Icon(Icons.map_outlined), label: 'Carte'),
+                NavigationDestination(
+                    icon: Icon(Icons.edit_note_outlined), label: 'Créateur'),
+              ],
+            ),
     );
   }
 
@@ -129,6 +168,17 @@ class _MainHomeState extends State<MainHome> {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const AuthPage()),
     );
+  }
+
+  String _getPageTitle() {
+    switch (_tabIndex) {
+      case 0:
+        return 'Liste des Escapes';
+      case 1:
+        return 'Carte';
+      default:
+        return 'CityScape';
+    }
   }
 }
 

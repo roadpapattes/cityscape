@@ -1,10 +1,11 @@
 // lib/services/preferences_service.dart
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_preferences.dart';
 
-class PreferencesService {
+class PreferencesService extends ChangeNotifier {
   static const String _prefsKey = 'user_preferences';
 
   static PreferencesService? _instance;
@@ -34,6 +35,7 @@ class PreferencesService {
     _currentPrefs = newPrefs;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsKey, jsonEncode(newPrefs.toJson()));
+    notifyListeners(); // Notifier les listeners du changement
   }
 
   Future<void> updateListCardStyle(ListCardStyle style) async {
