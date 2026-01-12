@@ -18,6 +18,7 @@ import '../list/list_page.dart';
 import '../map/map_page.dart';
 import '../creator/creator_page.dart';
 import '../auth/auth_page.dart';
+import '../profile/profile_page.dart';
 
 // Import core widgets
 import '../../core/widgets/timer_badge.dart';
@@ -59,17 +60,33 @@ class _MainHomeState extends State<MainHome> {
                   onPressed: () => _openAuthDialog(context),
                 );
               }
-              return IconButton(
-                tooltip: 'Se déconnecter',
-                icon: const Icon(Icons.logout),
-                onPressed: () async {
-                  await AuthService.instance.logout();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Déconnecté')),
-                    );
-                  }
-                },
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: 'Profil',
+                    icon: const Icon(Icons.account_circle),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ProfilePage(),
+                        ),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    tooltip: 'Se déconnecter',
+                    icon: const Icon(Icons.logout),
+                    onPressed: () async {
+                      await AuthService.instance.logout();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Déconnecté')),
+                        );
+                      }
+                    },
+                  ),
+                ],
               );
             },
           ),

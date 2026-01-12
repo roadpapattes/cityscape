@@ -28,6 +28,9 @@ import 'models/cache_entry.dart';
 // Import core utilities and constants
 import 'core/constants.dart';
 import 'core/utils/type_utils.dart';
+
+// Import services
+import 'services/preferences_service.dart';
 import 'core/utils/image_utils.dart';
 
 // Import services
@@ -50,9 +53,10 @@ import 'features/home/main_home.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Ouvre le cache Hive + charge l’auth depuis les prefs
+  // Ouvre le cache Hive + charge l'auth depuis les prefs
   await ApiService.instance.initCache();
   await AuthService.instance.loadFromPrefs();
+  await PreferencesService.instance.initialize();
 
   runApp(const CityscapeApp());
 }

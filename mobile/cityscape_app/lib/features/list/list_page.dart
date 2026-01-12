@@ -7,9 +7,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // Import models
 import '../../models/escape_game.dart';
+import '../../models/user_preferences.dart';
 
 // Import services
 import '../../services/api/api_service.dart';
+import '../../services/preferences_service.dart';
+
+// Import card styles
+import 'widgets/card_collection_style.dart';
+import 'widgets/gaming_ui_style.dart';
+import 'widgets/playful_style.dart';
 
 // Import other features (for navigation)
 // TODO: Update this import once EscapeDetailsPage is extracted
@@ -25,6 +32,7 @@ class ListPage extends StatefulWidget {
 
 class _ListPageState extends State<ListPage> {
   final _api = ApiService.instance;
+  final _prefs = PreferencesService.instance;
   final _searchCtrl = TextEditingController();
   bool _favOnly = false;
 
@@ -169,9 +177,8 @@ class _ListPageState extends State<ListPage> {
               ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
                   onRefresh: _loadAll,
-                  child: ListView.separated(
+                  child: ListView.builder(
                     itemCount: _items.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (ctx, i) {
                       final e = _items[i];
                       final fav = _favorites.contains(e.id);
@@ -180,29 +187,8 @@ class _ListPageState extends State<ListPage> {
                           : _distanceKm(_pos!.latitude, _pos!.longitude,
                                   e.latitude, e.longitude)
                               .toStringAsFixed(1);
-                      return ListTile(
-                        leading: CircleAvatar(
-                          child: Text(
-                            e.rating > 0 ? e.rating.toStringAsFixed(1) : '–',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        title: Text(e.title),
-                        subtitle: Text(
-                          '${e.city} • durée ${e.durationMinutes} min • diff ${e.difficulty}'
-                          '${dist != null ? " • $dist km" : ""}',
-                        ),
-                        trailing: IconButton(
-                          icon: Icon(fav ? Icons.star : Icons.star_border),
-                          color: fav ? Colors.amber : null,
-                          onPressed: () => _toggleFav(e.id),
-                        ),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => EscapeDetailsPage(escape: e),
-                          ),
-                        ),
-                      );
+
+                      return _buildStyledCard(e, fav, dist);
                     },
                   ),
                 ),
@@ -280,5 +266,50 @@ class _ListPageState extends State<ListPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildStyledCard(EscapeGame escape, bool isFavorite, String? distance) {
+    final style = _prefs.currentPreferences.listCardStyle;
+
+    switch (style) {
+      case ListCardStyle.cardCollection:
+        return CardCollectionStyleCard(
+          escape: escape,
+          isFavorite: isFavorite,
+          distance: distance,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => EscapeDetailsPage(escape: escape),
+            ),
+          ),
+          onFavoriteTap: () => _toggleFav(escape.id),
+        );
+
+      case ListCardStyle.gamingUI:
+        return GamingUIStyleCard(
+          escape: escape,
+          isFavorite: isFavorite,
+          distance: distance,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => EscapeDetailsPage(escape: escape),
+            ),
+          ),
+          onFavoriteTap: () => _toggleFav(escape.id),
+        );
+
+      case ListCardStyle.playful:
+        return PlayfulStyleCard(
+          escape: escape,
+          isFavorite: isFavorite,
+          distance: distance,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => EscapeDetailsPage(escape: escape),
+            ),
+          ),
+          onFavoriteTap: () => _toggleFav(escape.id),
+        );
+    }
   }
 }
