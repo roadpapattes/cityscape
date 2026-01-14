@@ -24,8 +24,14 @@ def index(_):
     with open(html_path, 'r', encoding='utf-8') as f:
         return HttpResponse(f.read(), content_type='text/html')
 
+def downloads_redirect(_):
+    html_path = os.path.join(settings.BASE_DIR, 'static_html', 'downloads.html')
+    with open(html_path, 'r', encoding='utf-8') as f:
+        return HttpResponse(f.read(), content_type='text/html')
+
 urlpatterns = [
     path('', index),  # Page d'accueil
+    path('downloads/', downloads_redirect),  # Redirection anciens téléchargements APK
     path('api/health', health),
     path('privacy-policy', privacy_policy),
     path('delete-account', delete_account),
