@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CityScape - Téléchargement</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .description {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .playstore-btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 16px 40px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            margin-bottom: 30px;
+        }
+
+        .playstore-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .beta-section {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .beta-section h2 {
+            color: #667eea;
+            font-size: 20px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .beta-section p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .beta-section ol {
+            color: #666;
+            line-height: 1.8;
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .contact-email {
+            color: #667eea;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .contact-email:hover {
+            text-decoration: underline;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #ddd, transparent);
+            margin: 30px 0;
+        }
+
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .note p {
+            color: #856404;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .playstore-btn {
+                padding: 14px 30px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🏙️</div>
+        <h1>CityScape</h1>
+
+        <div class="description">
+            <p>L'application CityScape est maintenant disponible sur le <strong>Google Play Store</strong> !</p>
+            <p>Le téléchargement direct de l'APK n'est plus disponible pour des raisons de sécurité et de mises à jour automatiques.</p>
+        </div>
+
+        <a href="YOUR_PLAYSTORE_URL_HERE" class="playstore-btn">
+            📱 Télécharger sur Play Store
+        </a>
+
+        <div class="divider"></div>
+
+        <div class="beta-section">
+            <h2>🧪 Programme de test bêta</h2>
+            <p>Vous souhaitez accéder aux dernières fonctionnalités en avant-première ?</p>
+
+            <p><strong>Pour devenir testeur :</strong></p>
+            <ol>
+                <li>Envoyez-nous un email avec votre compte Google (Gmail)</li>
+                <li>Nous vous ajouterons à la liste des testeurs</li>
+                <li>Vous recevrez un lien d'invitation pour rejoindre le programme bêta</li>
+                <li>Téléchargez l'application depuis le Play Store</li>
+            </ol>
+
+            <p>📧 Contact : <a href="mailto:feedback.enigmapolis@gmail.com" class="contact-email">feedback.enigmapolis@gmail.com</a></p>
+        </div>
+
+        <div class="note">
+            <p><strong>Note :</strong> Les testeurs bêta ont accès aux nouvelles fonctionnalités avant leur sortie officielle et peuvent nous aider à améliorer l'application.</p>
+        </div>
+    </div>
+</body>
+</html>
