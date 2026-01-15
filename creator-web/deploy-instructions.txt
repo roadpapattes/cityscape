@@ -1,0 +1,57 @@
+╔═══════════════════════════════════════════════════════════════════╗
+║  Instructions de déploiement - CityScape Creator Web avec carte  ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+📦 ÉTAPE 1: Installer les dépendances localement
+   Depuis le dossier creator-web sur votre PC:
+
+   npm install
+
+📦 ÉTAPE 2: Tester localement (optionnel)
+
+   npm run dev
+
+   Puis ouvrez http://localhost:5173/creator/
+
+🏗️ ÉTAPE 3: Build de production local
+
+   npm run build
+
+📤 ÉTAPE 4: Déployer sur le serveur
+
+   Méthode A - Via Git (recommandé):
+   ─────────────────────────────────
+   git add .
+   git commit -m "feat: add interactive map for location selection"
+   git push
+
+   Puis sur le serveur:
+   ssh deploy@api.cityscape.ovh
+   cd /tmp/creator-web
+   git pull origin main
+   npm install
+   npm run build
+   sudo cp -r dist/* /var/www/cityscape/creator-web/
+
+   Méthode B - Copie directe des fichiers:
+   ────────────────────────────────────────
+   # Sur votre PC, copiez les fichiers vers le serveur
+   scp -r dist/* deploy@api.cityscape.ovh:/tmp/creator-web-dist/
+
+   # Puis sur le serveur
+   ssh deploy@api.cityscape.ovh
+   sudo cp -r /tmp/creator-web-dist/* /var/www/cityscape/creator-web/
+
+✅ ÉTAPE 5: Vérifier
+
+   Ouvrez https://api.cityscape.ovh/creator/
+   Connectez-vous et créez/modifiez un escape
+   Vérifiez que le bouton "Sélectionner sur la carte" apparaît
+
+📝 NOTES IMPORTANTES:
+
+   - Leaflet et React-Leaflet sont maintenant dans package.json
+   - Le CSS de Leaflet est importé automatiquement
+   - Pas besoin de clé API (OpenStreetMap est gratuit)
+   - La carte se centre sur Paris par défaut si aucune position
+   - Les coordonnées peuvent toujours être saisies manuellement

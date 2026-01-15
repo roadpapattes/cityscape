@@ -18,7 +18,10 @@ L'application sera accessible sur `http://localhost:5173`
 - ✅ Création/édition d'escapes
 - ✅ Gestion des étapes (5 types d'énigmes)
 - ✅ Système d'indices
-- ✅ Géolocalisation
+- ✅ **Sélection de localisation interactive avec carte** 🗺️
+- ✅ Upload d'images
+- ✅ Escapes privés
+- ✅ Système de pénalités
 - ✅ Soumission pour révision
 
 ## 🏗️ Structure

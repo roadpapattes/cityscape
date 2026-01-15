@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import StepEditor from '../components/StepEditor';
 import ImageUploader from '../components/ImageUploader';
+import LocationPicker from '../components/LocationPicker';
 
 function EscapeEditor() {
   const { id } = useParams();
@@ -288,33 +289,13 @@ function InfoTab({ escape, setEscape, canEdit, saving, onSave }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-        <div className="form-group">
-          <label className="form-label">Latitude *</label>
-          <input
-            type="number"
-            step="0.000001"
-            className="form-input"
-            value={escape.latitude}
-            onChange={(e) => setEscape({ ...escape, latitude: parseFloat(e.target.value) })}
-            required
-            disabled={!canEdit || saving}
-          />
-        </div>
-
-        <div className="form-group">
-          <label className="form-label">Longitude *</label>
-          <input
-            type="number"
-            step="0.000001"
-            className="form-input"
-            value={escape.longitude}
-            onChange={(e) => setEscape({ ...escape, longitude: parseFloat(e.target.value) })}
-            required
-            disabled={!canEdit || saving}
-          />
-        </div>
-      </div>
+      <LocationPicker
+        label="Point de départ (coordonnées GPS) *"
+        latitude={escape.latitude}
+        longitude={escape.longitude}
+        onLocationChange={(lat, lng) => setEscape({ ...escape, latitude: lat, longitude: lng })}
+        disabled={!canEdit || saving}
+      />
 
       <div className="form-group">
         <label className="form-label">Difficulté</label>
