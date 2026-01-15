@@ -126,62 +126,99 @@ https://play.google.com/apps/testing/com.roadpapattes.cityscape
 
 ## 🌐 Déploiement Interface React
 
-### 1. Installation des dépendances
+### État actuel: ✅ DÉPLOYÉ
+
+L'interface React est **déjà déployée** et accessible sur:
+**https://api.cityscape.ovh/creator/**
+
+### Configuration actuelle
+
+- **Serveur**: api.cityscape.ovh
+- **Répertoire**: `/var/www/cityscape/creator-web/`
+- **Configuration Nginx**: `/etc/nginx/sites-available/cityscape`
+- **Base path Vite**: `/creator/`
+- **Node.js**: v20.20.0
+- **npm**: v10.8.2
+
+### Redéploiement après modifications
+
+Si tu modifies le code React, voici comment redéployer:
 
 ```bash
-cd creator-web
-npm install
-```
+# 1. Sur ta machine locale, copier les sources vers le serveur
+cd /chemin/vers/cityscape-monorepo
+scp -r creator-web deploy@api.cityscape.ovh:/tmp/
 
-### 2. Configuration
-
-Créer le fichier `.env.production`:
-```env
-VITE_API_BASE_URL=https://api.cityscape.ovh
-```
-
-### 3. Build
-
-```bash
+# 2. Sur le serveur, rebuild et déployer
+ssh deploy@api.cityscape.ovh
+cd /tmp/creator-web
+npm install  # Seulement si package.json a changé
 npm run build
+sudo cp -r dist/* /var/www/cityscape/creator-web/
+
+# 3. Vérifier le déploiement
+curl -I https://api.cityscape.ovh/creator/
 ```
 
-Fichiers générés dans `dist/`
+### Configuration Nginx
 
-### 4. Déploiement sur le serveur
+La configuration est déjà en place dans `/etc/nginx/sites-available/cityscape`:
 
-**Option A: Via le serveur Django (même domaine)**
+```nginx
+location /creator {
+  alias /var/www/cityscape/creator-web;
+  try_files $uri $uri/ /creator/index.html;
+  index index.html;
+
+  location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+  }
+}
+```
+
+### Déploiement initial (déjà effectué)
+
+Pour référence, voici les étapes qui ont été suivies:
+
+**1. Installation Node.js sur le serveur**
 
 ```bash
-# Sur votre machine locale
-cd creator-web
-npm run build
+ssh deploy@api.cityscape.ovh
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+node --version  # v20.20.0
+npm --version   # v10.8.2
+```
 
-# Copier vers le serveur
-scp -r dist/* deploy@api.cityscape.ovh:/var/www/cityscape/creator-web-dist/
+**2. Configuration et build**
+
+```bash
+# Copier les sources
+scp -r creator-web deploy@api.cityscape.ovh:/tmp/
 
 # Sur le serveur
-ssh deploy@api.cityscape.ovh
-cd /var/www/cityscape
-
-# Configurer Nginx pour servir creator-web
-# Ajouter dans la config Nginx:
-# location /creator {
-#     alias /var/www/cityscape/creator-web-dist;
-#     try_files $uri $uri/ /index.html;
-# }
-
-sudo systemctl reload nginx
+cd /tmp/creator-web
+npm install
+npm run build
 ```
 
-**Option B: Hébergement séparé (Netlify, Vercel, etc.)**
+**3. Déploiement des fichiers**
 
-1. Connecter le dépôt GitHub
-2. Configurer le build:
-   - Build command: `npm run build`
-   - Publish directory: `dist`
-3. Variables d'environnement: `VITE_API_BASE_URL=https://api.cityscape.ovh`
-4. Déployer
+```bash
+sudo mkdir -p /var/www/cityscape/creator-web
+sudo cp -r dist/* /var/www/cityscape/creator-web/
+sudo chown -R www-data:www-data /var/www/cityscape/creator-web
+sudo chmod -R 755 /var/www/cityscape/creator-web
+```
+
+**4. Configuration Nginx et reload**
+
+```bash
+sudo cp /tmp/nginx-cityscape.conf /etc/nginx/sites-available/cityscape
+sudo nginx -t
+sudo systemctl reload nginx
+```
 
 ---
 

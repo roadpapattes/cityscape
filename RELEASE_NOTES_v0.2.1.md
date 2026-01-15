@@ -1,6 +1,6 @@
 # 🚀 Notes de version CityScape v0.2.1
 
-**Date de sortie**: 15 janvier 2025
+**Date de sortie**: 15 janvier 2026
 **Version mobile**: 0.2.1 (versionCode 4)
 **Fichiers prêts**: ✅ APK (58.4MB) & AAB (48.0MB)
 
@@ -56,6 +56,8 @@ def app_config(_):
 - Réordonner les étapes (drag & drop)
 - Soumettre pour révision
 
+**URL de production:** https://api.cityscape.ovh/creator/
+
 **Technos:**
 - React + Vite
 - API REST avec authentification par token
@@ -94,6 +96,7 @@ def app_config(_):
 - ✅ Code source complet dans `creator-web/`
 - ✅ README avec instructions
 - ✅ Configuration Vite
+- ✅ Déployé sur https://api.cityscape.ovh/creator/
 
 ---
 
@@ -109,6 +112,7 @@ cd /chemin/vers/cityscape-monorepo
 - https://api.cityscape.ovh/
 - https://api.cityscape.ovh/api/app-config
 - https://api.cityscape.ovh/downloads/
+- https://api.cityscape.ovh/creator/
 
 ### Étape 2: Mobile (2-3 jours pour validation Google)
 1. Upload `app-release.aab` sur Google Play Console
@@ -117,12 +121,17 @@ cd /chemin/vers/cityscape-monorepo
 4. Attendre validation Google (24-72h généralement)
 5. Publier en production
 
-### Étape 3: React (optionnel, 15 minutes)
+### Étape 3: React ✅ DÉPLOYÉ
+L'interface React est déjà déployée et accessible sur:
+**https://api.cityscape.ovh/creator/**
+
+Pour redéployer après modifications:
 ```bash
-cd creator-web
-npm install
+# Sur le serveur
+ssh deploy@api.cityscape.ovh
+cd /tmp/creator-web
 npm run build
-# Copier dist/ vers serveur ou déployer sur Netlify/Vercel
+sudo cp -r dist/* /var/www/cityscape/creator-web/
 ```
 
 ### Étape 4: Activer mise à jour forcée (5 minutes)
@@ -237,10 +246,12 @@ sudo systemctl restart gunicorn
 - [ ] Notes de version rédigées
 - [ ] Upload sur Google Play Console
 
-### React (optionnel)
-- [ ] `npm run build` réussi
-- [ ] `.env.production` configuré
-- [ ] Déployé et testé
+### React
+- [x] `npm run build` réussi
+- [x] `.env.production` configuré
+- [x] Déployé sur https://api.cityscape.ovh/creator/
+- [x] Assets JS/CSS chargent correctement
+- [x] Nginx configuré avec routing React
 
 ### Post-déploiement
 - [ ] App v0.2.1 disponible sur Play Store
@@ -262,6 +273,6 @@ Tous les fichiers sont prêts pour le déploiement. Bon courage! 🚀
 
 ---
 
-**Dernière mise à jour**: 15 janvier 2025
+**Dernière mise à jour**: 15 janvier 2026
 **Préparé par**: Claude Sonnet 4.5
 **Contact**: feedback.enigmapolis@gmail.com
