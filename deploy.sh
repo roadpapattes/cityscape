@@ -6,7 +6,8 @@ set -e  # Arrêt en cas d'erreur
 # Configuration
 SERVER_USER="deploy"
 SERVER_HOST="api.cityscape.ovh"
-REMOTE_PROJECT_DIR="/srv/cityscape"
+REMOTE_PROJECT_DIR="/srv/cityscape/app"
+REMOTE_ENV_DIR="/srv/cityscape/env"
 DOWNLOADS_DIR="/var/www/cityscape/downloads"
 GUNICORN_SERVICE="cityscape-gunicorn"
 
@@ -21,7 +22,7 @@ ssh -o ConnectTimeout=10 "$SERVER_USER@$SERVER_HOST" "echo 'Connexion SSH réuss
 echo ""
 echo "📥 Récupération des dernières modifications..."
 ssh "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
-cd /srv/cityscape
+cd /srv/cityscape/app
 echo "Branche actuelle :"
 git branch --show-current
 echo ""
@@ -37,6 +38,7 @@ echo "📦 Collecte des fichiers statiques..."
 ssh "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
 cd /srv/cityscape
 source env/bin/activate 2>/dev/null || true
+cd app
 python manage.py collectstatic --noinput || echo "⚠️ collectstatic échoué (peut-être pas nécessaire)"
 echo "✓ Fichiers statiques collectés"
 ENDSSH
