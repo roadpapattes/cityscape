@@ -38,17 +38,6 @@ function LocationPicker({ label, latitude, longitude, onLocationChange, disabled
     }
   }, [position]);
 
-  const handleManualInput = (type, value) => {
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue)) {
-      const newPosition = {
-        lat: type === 'lat' ? numValue : (position?.lat || 0),
-        lng: type === 'lng' ? numValue : (position?.lng || 0),
-      };
-      setPosition(newPosition);
-    }
-  };
-
   const handleClearLocation = () => {
     setPosition(null);
     onLocationChange(null, null);
@@ -101,38 +90,6 @@ function LocationPicker({ label, latitude, longitude, onLocationChange, disabled
           </p>
         </div>
       )}
-
-      {/* Champs manuels (optionnels) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <div>
-          <label className="form-label" style={{ fontSize: '14px' }}>
-            Latitude
-          </label>
-          <input
-            type="number"
-            className="form-input"
-            value={position?.lat || ''}
-            onChange={(e) => handleManualInput('lat', e.target.value)}
-            placeholder="Ex: 48.8566"
-            step="0.000001"
-            disabled={disabled}
-          />
-        </div>
-        <div>
-          <label className="form-label" style={{ fontSize: '14px' }}>
-            Longitude
-          </label>
-          <input
-            type="number"
-            className="form-input"
-            value={position?.lng || ''}
-            onChange={(e) => handleManualInput('lng', e.target.value)}
-            placeholder="Ex: 2.3522"
-            step="0.000001"
-            disabled={disabled}
-          />
-        </div>
-      </div>
 
       {position && (
         <p style={{ fontSize: '14px', color: 'var(--success)', marginTop: '8px', marginBottom: 0 }}>
