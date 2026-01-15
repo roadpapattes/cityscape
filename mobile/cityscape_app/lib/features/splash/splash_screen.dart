@@ -7,6 +7,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../core/constants.dart';
 import '../../models/escape_game.dart';
 import '../../services/api/api_service.dart';
+import '../../services/version_check_service.dart';
+import '../../core/widgets/update_required_dialog.dart';
 import '../home/main_home.dart';
 
 /// Splash screen with bootstrap loading.
@@ -44,14 +46,33 @@ class _SplashBootstrapState extends State<SplashBootstrap> {
   Future<void> _boot() async {
     final started = DateTime.now();
     try {
-      // 0) Load local moderation (ids + reasons)
+      // 0) Version check - DOIT être fait en premier
+      setState(() => _status = 'Vérification de la version…');
+      try {
+        final config = await VersionCheckService.instance.checkVersion();
+        if (VersionCheckService.instance.shouldForceUpdate(config)) {
+          // Afficher la dialog bloquante
+          if (!mounted) return;
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => UpdateRequiredDialog(message: config.updateMessage),
+          );
+          return; // Arrêter le chargement ici
+        }
+      } catch (e) {
+        debugPrint('[BOOT] Version check error: $e');
+        // Si la vérification échoue, on continue (mode dégradé)
+      }
+
+      // 1) Load local moderation (ids + reasons)
       await ApiService.instance.loadLocalModeration();
 
-      // 1) DNS/TLS pre-warming + API (small GET)
+      // 2) DNS/TLS pre-warming + API (small GET)
       setState(() => _status = 'Connexion au serveur…');
       await ApiService.instance.ping();
 
-      // 2) Geolocation best effort (doesn't block if denied)
+      // 3) Geolocation best effort (doesn't block if denied)
       setState(() => _status = 'Récupération de la position…');
       LatLng? userLoc;
       try {
@@ -72,7 +93,7 @@ class _SplashBootstrapState extends State<SplashBootstrap> {
         // ignore: keep userLoc=null => fallback in MapPage
       }
 
-      // 3) Sequential preloading + progress (3 steps)
+      // 4) Sequential preloading + progress (3 steps)
       setState(() => _status = 'Chargement de la liste…');
       await ApiService.instance
           .fetchAll()
@@ -116,7 +137,7 @@ class _SplashBootstrapState extends State<SplashBootstrap> {
         return null;
       });
 
-      // 4) Respect minimum splash display time
+      // 5) Respect minimum splash display time
       final elapsed = DateTime.now().difference(started);
       const minSplash = Duration(milliseconds: 800);
       if (elapsed < minSplash) {
@@ -124,7 +145,7 @@ class _SplashBootstrapState extends State<SplashBootstrap> {
       }
 
       if (!mounted) return;
-      // 5) Open app (Map tab already selected in MainScaffold)
+      // 6) Open app (Map tab already selected in MainScaffold)
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainHome()),
       );

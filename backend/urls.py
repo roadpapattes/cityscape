@@ -9,6 +9,18 @@ import os
 def health(_):
     return JsonResponse({"status": "ok"})
 
+def app_config(_):
+    """
+    Endpoint pour la configuration de l'app mobile.
+    Utilisé pour forcer les mises à jour.
+    """
+    return JsonResponse({
+        "min_version": "0.2.0",
+        "current_version": "0.2.0",
+        "force_update": False,
+        "update_message": "Une nouvelle version est disponible! Mettez à jour pour profiter des dernières fonctionnalités."
+    })
+
 def privacy_policy(_):
     html_path = os.path.join(settings.BASE_DIR, 'static_html', 'privacy-policy.html')
     with open(html_path, 'r', encoding='utf-8') as f:
@@ -21,6 +33,7 @@ def delete_account(_):
 
 urlpatterns = [
     path('api/health', health),
+    path('api/app-config', app_config),
     path('privacy-policy', privacy_policy),
     path('delete-account', delete_account),
     path('admin/', admin.site.urls),
