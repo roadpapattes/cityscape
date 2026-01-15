@@ -83,6 +83,28 @@ class ApiClient {
     this.setToken(null);
   }
 
+  // User profile endpoints
+  async getUserProfile() {
+    return await this.request('/api/auth/profile');
+  }
+
+  async updateUserProfile(data) {
+    return await this.request('/api/auth/profile', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async changePassword(oldPassword, newPassword) {
+    return await this.request('/api/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({
+        old_password: oldPassword,
+        new_password: newPassword,
+      }),
+    });
+  }
+
   // Escape endpoints
   async getMyEscapes() {
     return await this.request('/api/creator/escapes');

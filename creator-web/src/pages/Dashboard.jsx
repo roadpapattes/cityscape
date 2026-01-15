@@ -77,9 +77,14 @@ function Dashboard() {
             <h1 style={{ marginBottom: '4px' }}>🏙️ CityScape Creator</h1>
             <p style={{ marginBottom: 0 }}>Gérez vos escapes urbains</p>
           </div>
-          <button className="btn btn-secondary btn-small" onClick={handleLogout}>
-            Déconnexion
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button className="btn btn-secondary btn-small" onClick={() => navigate('/profile')}>
+              👤 Mon profil
+            </button>
+            <button className="btn btn-secondary btn-small" onClick={handleLogout}>
+              Déconnexion
+            </button>
+          </div>
         </div>
       </div>
 
