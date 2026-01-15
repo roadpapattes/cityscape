@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import apiClient from '../api/client';
+import ImageUploader from './ImageUploader';
 
 function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
   const isEditing = !!step;
@@ -346,17 +347,12 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
           </div>
 
           {/* Image */}
-          <div className="form-group">
-            <label className="form-label">URL de l'image (optionnel)</label>
-            <input
-              type="url"
-              className="form-input"
-              value={formData.image_url}
-              onChange={(e) => updateField('image_url', e.target.value)}
-              disabled={loading}
-              placeholder="https://..."
-            />
-          </div>
+          <ImageUploader
+            label="Image de l'étape (optionnel)"
+            currentImageUrl={formData.image_url}
+            onImageUploaded={(url) => updateField('image_url', url)}
+            disabled={loading}
+          />
 
           {/* Hints */}
           {formData.answer_type !== 'narration' && (

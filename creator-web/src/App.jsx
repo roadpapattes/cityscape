@@ -6,7 +6,7 @@ import './styles/globals.css';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/creator">
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />

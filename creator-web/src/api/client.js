@@ -63,7 +63,7 @@ class ApiClient {
 
   // Auth endpoints
   async login(username, password) {
-    const response = await this.request('/api/login', {
+    const response = await this.request('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     });
@@ -72,7 +72,7 @@ class ApiClient {
   }
 
   async register(username, email, password) {
-    const response = await this.request('/api/register', {
+    const response = await this.request('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify({ username, email, password }),
     });

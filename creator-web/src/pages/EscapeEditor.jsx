@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import StepEditor from '../components/StepEditor';
+import ImageUploader from '../components/ImageUploader';
 
 function EscapeEditor() {
   const { id } = useParams();
@@ -111,7 +112,7 @@ function EscapeEditor() {
     );
   }
 
-  const canEdit = escape.status === 'draft' || escape.status === 'rejected';
+  const canEdit = escape.status === 'draft' || escape.status === 'rejected' || escape.status === 'published';
 
   return (
     <div className="container">
@@ -329,6 +330,80 @@ function InfoTab({ escape, setEscape, canEdit, saving, onSave }) {
         </select>
       </div>
 
+      {/* Section Pénalités */}
+      <div style={{ marginTop: '24px', marginBottom: '24px', padding: '16px', background: 'var(--bg-light)', borderRadius: '8px' }}>
+        <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '18px' }}>⏱️ Pénalités</h3>
+
+        <div className="form-group" style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={escape.penalize_wrong_answers || false}
+              onChange={(e) => setEscape({ ...escape, penalize_wrong_answers: e.target.checked })}
+              disabled={!canEdit || saving}
+              style={{ width: '18px', height: '18px' }}
+            />
+            <span>Activer les pénalités pour les mauvaises réponses</span>
+          </label>
+        </div>
+
+        {escape.penalize_wrong_answers && (
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Minutes de pénalité par mauvaise réponse</label>
+            <input
+              type="number"
+              className="form-input"
+              value={escape.wrong_answer_penalty || 0}
+              onChange={(e) => setEscape({ ...escape, wrong_answer_penalty: parseInt(e.target.value) || 0 })}
+              min="0"
+              max="30"
+              disabled={!canEdit || saving}
+            />
+            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '8px', marginBottom: 0 }}>
+              Chaque mauvaise réponse ajoutera ce nombre de minutes au temps total du joueur.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Section Confidentialité */}
+      <div style={{ marginTop: '24px', marginBottom: '24px', padding: '16px', background: 'var(--bg-light)', borderRadius: '8px' }}>
+        <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '18px' }}>🔒 Confidentialité</h3>
+
+        <div className="form-group" style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={escape.is_private || false}
+              onChange={(e) => setEscape({ ...escape, is_private: e.target.checked, allowed_users: e.target.checked ? (escape.allowed_users || []) : [] })}
+              disabled={!canEdit || saving}
+              style={{ width: '18px', height: '18px' }}
+            />
+            <span>Escape privé (accessible uniquement aux utilisateurs autorisés)</span>
+          </label>
+        </div>
+
+        {escape.is_private && (
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Utilisateurs autorisés (noms d'utilisateur séparés par des virgules)</label>
+            <textarea
+              className="form-textarea"
+              value={(escape.allowed_users || []).join(', ')}
+              onChange={(e) => {
+                const users = e.target.value.split(',').map(u => u.trim()).filter(u => u.length > 0);
+                setEscape({ ...escape, allowed_users: users });
+              }}
+              placeholder="user1, user2, user3"
+              disabled={!canEdit || saving}
+              rows="2"
+            />
+            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '8px', marginBottom: 0 }}>
+              Seuls ces utilisateurs pourront voir et jouer cet escape. Laissez vide pour rendre l'escape public.
+            </p>
+          </div>
+        )}
+      </div>
+
       <div className="form-group">
         <label className="form-label">Message de victoire</label>
         <textarea
@@ -341,17 +416,13 @@ function InfoTab({ escape, setEscape, canEdit, saving, onSave }) {
         />
       </div>
 
-      <div className="form-group">
-        <label className="form-label">URL de l'image</label>
-        <input
-          type="url"
-          className="form-input"
-          value={escape.image_url || ''}
-          onChange={(e) => setEscape({ ...escape, image_url: e.target.value })}
-          placeholder="https://..."
-          disabled={!canEdit || saving}
-        />
-      </div>
+      {/* Upload d'image */}
+      <ImageUploader
+        label="Image de l'escape"
+        currentImageUrl={escape.image_url}
+        onImageUploaded={(url) => setEscape({ ...escape, image_url: url })}
+        disabled={!canEdit || saving}
+      />
 
       {canEdit && (
         <button type="submit" className="btn btn-primary" disabled={saving}>
