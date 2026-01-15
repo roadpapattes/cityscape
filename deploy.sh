@@ -6,9 +6,9 @@ set -e  # Arrêt en cas d'erreur
 # Configuration
 SERVER_USER="deploy"
 SERVER_HOST="api.cityscape.ovh"
-REMOTE_PROJECT_DIR="/var/www/cityscape"
+REMOTE_PROJECT_DIR="/srv/cityscape"
 DOWNLOADS_DIR="/var/www/cityscape/downloads"
-BRANCH="claude/redirect-apk-playstore-uKVtR"
+GUNICORN_SERVICE="cityscape-gunicorn"
 
 echo "🚀 Déploiement de CityScape Backend"
 echo "=================================="
@@ -21,7 +21,7 @@ ssh -o ConnectTimeout=10 "$SERVER_USER@$SERVER_HOST" "echo 'Connexion SSH réuss
 echo ""
 echo "📥 Récupération des dernières modifications..."
 ssh "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
-cd /var/www/cityscape
+cd /srv/cityscape
 echo "Branche actuelle :"
 git branch --show-current
 echo ""
@@ -35,8 +35,8 @@ ENDSSH
 echo ""
 echo "📦 Collecte des fichiers statiques..."
 ssh "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
-cd /var/www/cityscape
-source venv/bin/activate 2>/dev/null || true
+cd /srv/cityscape
+source env/bin/activate 2>/dev/null || true
 python manage.py collectstatic --noinput || echo "⚠️ collectstatic échoué (peut-être pas nécessaire)"
 echo "✓ Fichiers statiques collectés"
 ENDSSH
@@ -45,21 +45,11 @@ ENDSSH
 echo ""
 echo "🔄 Redémarrage du service Django..."
 ssh "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
-# Essayer systemd d'abord
-if systemctl list-unit-files | grep -q "cityscape\|django\|gunicorn"; then
-    SERVICE_NAME=$(systemctl list-unit-files | grep -E "cityscape|django|gunicorn" | head -1 | awk '{print $1}')
-    echo "Service trouvé : $SERVICE_NAME"
-    sudo systemctl restart $SERVICE_NAME
-    sudo systemctl status $SERVICE_NAME --no-pager -l
-elif [ -f /etc/init.d/cityscape ]; then
-    sudo /etc/init.d/cityscape restart
-else
-    echo "⚠️ Service non trouvé. Essayez de redémarrer manuellement."
-    echo "Commandes possibles :"
-    echo "  - systemctl restart gunicorn"
-    echo "  - systemctl restart nginx"
-    echo "  - pkill -HUP gunicorn"
-fi
+echo "Redémarrage de cityscape-gunicorn..."
+sudo systemctl restart cityscape-gunicorn
+echo ""
+echo "Status du service:"
+sudo systemctl status cityscape-gunicorn --no-pager -l | head -20
 echo "✓ Service redémarré"
 ENDSSH
 
