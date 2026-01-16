@@ -1564,6 +1564,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _aCell(row, flexible: true),
