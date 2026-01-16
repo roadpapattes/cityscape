@@ -66,7 +66,7 @@ class PasswordResetToken(models.Model):
     )
     code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
+    expires_at = models.DateTimeField(null=True, blank=True)
     used = models.BooleanField(default=False)
 
     class Meta:
