@@ -9,8 +9,8 @@ class VersionCheckService {
   VersionCheckService._();
   static final instance = VersionCheckService._();
 
-  // Version actuelle de l'app (lue depuis pubspec.yaml)
-  static const String currentVersion = '0.2.1';
+  // Version actuelle de l'app (doit correspondre à versionName dans build.gradle.kts)
+  static const String currentVersion = '0.2.2';
 
   Future<AppConfigResponse> checkVersion() async {
     try {

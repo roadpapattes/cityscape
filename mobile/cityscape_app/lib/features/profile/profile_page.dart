@@ -3,7 +3,10 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/preferences_service.dart';
+import '../../services/version_check_service.dart';
 import '../../models/user_preferences.dart';
+import 'personal_info_page.dart';
+import 'change_password_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -148,11 +151,16 @@ class _ProfilePageState extends State<ProfilePage> {
                 leading: const Icon(Icons.person),
                 title: const Text('Informations personnelles'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  // TODO: Naviguer vers page d'édition du profil
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Bientôt disponible')),
+                onTap: () async {
+                  final result = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PersonalInfoPage(),
+                    ),
                   );
+                  if (result == true && mounted) {
+                    _loadUserInfo(); // Recharger les infos après modification
+                  }
                 },
               ),
               ListTile(
@@ -160,9 +168,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 title: const Text('Changer le mot de passe'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  // TODO: Naviguer vers page de changement de mot de passe
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Bientôt disponible')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ChangePasswordPage(),
+                    ),
                   );
                 },
               ),
@@ -178,7 +188,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ListTile(
                 leading: const Icon(Icons.info),
                 title: const Text('Version de l\'application'),
-                subtitle: const Text('0.1.0'),
+                subtitle: Text(VersionCheckService.currentVersion),
               ),
               ListTile(
                 leading: const Icon(Icons.help),

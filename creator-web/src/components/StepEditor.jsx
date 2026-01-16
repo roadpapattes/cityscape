@@ -12,6 +12,7 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
     answer_type: step?.answer_type || 'text',
     latitude: step?.latitude || '',
     longitude: step?.longitude || '',
+    show_location: step?.show_location !== false, // true par défaut
     image_url: step?.image_url || '',
 
     // Text answer
@@ -69,6 +70,7 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
         answer_type: formData.answer_type,
         latitude: formData.latitude || null,
         longitude: formData.longitude || null,
+        show_location: formData.show_location,
         image_url: formData.image_url || null,
         hints: formData.hints,
         hint_penalty: formData.hint_penalty,
@@ -345,6 +347,24 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
               />
             </div>
           </div>
+
+          {/* Show location toggle - only visible if location is set */}
+          {(formData.latitude || formData.longitude) && (
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.show_location}
+                  onChange={(e) => updateField('show_location', e.target.checked)}
+                  disabled={loading}
+                />
+                <span>Afficher le point sur la carte au joueur</span>
+              </label>
+              <p className="form-help">
+                Si activé, le joueur pourra voir ce point sur une carte pendant cette étape
+              </p>
+            </div>
+          )}
 
           {/* Image */}
           <ImageUploader

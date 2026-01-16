@@ -84,6 +84,7 @@ class GameStep(models.Model):
 
     latitude = models.FloatField(blank=True, null=True)
     longitude = models.FloatField(blank=True, null=True)
+    show_location = models.BooleanField(default=True, help_text="Afficher le point sur la carte au joueur")
 
     image_url = models.URLField(blank=True, null=True)
 

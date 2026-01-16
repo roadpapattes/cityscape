@@ -288,6 +288,9 @@ def _step_payload(step: GameStep, hints_used_map: Dict[str, Any]) -> Dict[str, A
         "title": step.title,
         "text": step.text or "",
         "image_url": getattr(step, "image_url", None),
+        "latitude": getattr(step, "latitude", None),
+        "longitude": getattr(step, "longitude", None),
+        "show_location": getattr(step, "show_location", True),  # True par défaut
         "answer_type": step.answer_type,  # 'text' | 'mcq' | 'numeric' | 'matching' | 'narration'
         "is_final": bool(getattr(step, "is_final", False)),
     }
@@ -474,12 +477,15 @@ class SessionHistoryView(APIView):
                 "title": step.title,
                 "text": step.text or "",
                 "image_url": getattr(step, "image_url", None),
+                "latitude": getattr(step, "latitude", None),
+                "longitude": getattr(step, "longitude", None),
+                "show_location": getattr(step, "show_location", True),
                 "answer_type": step.answer_type,
                 "is_final": bool(getattr(step, "is_final", False)),
             }
             base.update(hint_block)
 
-            # Joindre la réponse donnée si on l’a
+            # Joindre la réponse donnée si on l'a
             ans = answers_map.get(str(step.id))
             if isinstance(ans, dict):
                 base["answer"] = ans

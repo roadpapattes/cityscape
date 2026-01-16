@@ -200,4 +200,72 @@ Future<void> login(String username, String password) async {
     await _googleSignIn.signOut();
     await logout();
   }
+
+  /// Met à jour le profil utilisateur (username, email, first_name, last_name)
+  Future<UserMe> updateProfile({
+    String? username,
+    String? email,
+    String? firstName,
+    String? lastName,
+  }) async {
+    final t = tokenNotifier.value;
+    if (t == null) {
+      throw Exception('Non connecté');
+    }
+
+    final body = <String, dynamic>{};
+    if (username != null) body['username'] = username;
+    if (email != null) body['email'] = email;
+    if (firstName != null) body['first_name'] = firstName;
+    if (lastName != null) body['last_name'] = lastName;
+
+    final response = await http.patch(
+      Uri.parse('$baseUrl/api$kAuthPrefix/auth/profile'),
+      headers: {
+        'Authorization': 'Token $t',
+        'Content-Type': 'application/json; charset=utf-8',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(utf8.decode(response.bodyBytes));
+      throw Exception(error['detail'] ?? 'Erreur lors de la mise à jour du profil');
+    }
+
+    final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+    final updatedUser = UserMe.fromJson(data);
+    meNotifier.value = updatedUser;
+    return updatedUser;
+  }
+
+  /// Change le mot de passe de l'utilisateur
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    final t = tokenNotifier.value;
+    if (t == null) {
+      throw Exception('Non connecté');
+    }
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/api$kAuthPrefix/auth/change-password'),
+      headers: {
+        'Authorization': 'Token $t',
+        'Content-Type': 'application/json; charset=utf-8',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(utf8.decode(response.bodyBytes));
+      throw Exception(error['detail'] ?? 'Erreur lors du changement de mot de passe');
+    }
+  }
 }

@@ -348,6 +348,9 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
 
   bool _checkingStatus = false;
   bool _alreadyFinished = false;
+  bool _hasStarted = false;  // true si l'utilisateur a déjà commencé cet escape
+  int _currentStepIndex = 0; // index de l'étape en cours (0-based)
+  int _totalSteps = 0;       // nombre total d'étapes
   DateTime? _completedAt;
 
   Future<List<CommentItem>>? _futureComments;
@@ -368,22 +371,49 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
     setState(() => _checkingStatus = true);
     try {
       final j = await _api.tryGetSessionState(widget.escape.id);
-      if (j != null && (j['finished'] == true)) {
-        _alreadyFinished = true;
-        final s = (j['completed_at'] ?? j['finished_at']) as String?;
-        if (s != null) {
-          final parsed = DateTime.tryParse(s);
-          _completedAt = parsed?.toLocal(); // heure locale
+      if (j != null) {
+        // Récupérer les infos de progression
+        _totalSteps = (j['total_steps'] as int?) ?? (j['total'] as int?) ?? 0;
+        _currentStepIndex = (j['step_index'] as int?) ?? 0;
+
+        if (j['finished'] == true) {
+          _alreadyFinished = true;
+          _hasStarted = true;
+          final s = (j['completed_at'] ?? j['finished_at']) as String?;
+          if (s != null) {
+            final parsed = DateTime.tryParse(s);
+            _completedAt = parsed?.toLocal(); // heure locale
+          }
+        } else {
+          _alreadyFinished = false;
+          _completedAt = null;
+          // L'utilisateur a commencé si on a une session avec step_index > 0
+          // ou si la session existe tout simplement
+          _hasStarted = true;
         }
       } else {
+        // Pas de session existante
         _alreadyFinished = false;
+        _hasStarted = false;
         _completedAt = null;
+        _currentStepIndex = 0;
+        _totalSteps = 0;
       }
     } catch (_) {
       // on ignore et on laisse le bouton actif si on ne sait pas
     } finally {
       if (mounted) setState(() => _checkingStatus = false);
     }
+  }
+
+  Future<void> _openDirections() async {
+    final e = widget.escape;
+    final url = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1'
+      '&destination=${e.latitude},${e.longitude}'
+      '&travelmode=walking',
+    );
+    await launchUrl(url, mode: LaunchMode.externalApplication);
   }
 
   void _openReportSheet(BuildContext context, EscapeGame escape) {
@@ -510,37 +540,56 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
           const SizedBox(height: 8),
 
           // --- Démarrer / reprendre la session ---
-          FilledButton.icon(
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('Démarrer'),
-            onPressed: _alreadyFinished
-                ? null
-                : () async {
-                    try {
-                      await _api.getSessionState(e.id); // crée/reprend la session
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  icon: Icon(_hasStarted && !_alreadyFinished ? Icons.play_arrow : Icons.play_arrow),
+                  label: Text(
+                    _alreadyFinished
+                        ? 'Terminé'
+                        : (_hasStarted && _totalSteps > 0
+                            ? 'Reprendre (${_currentStepIndex + 1}/$_totalSteps)'
+                            : 'Démarrer'),
+                  ),
+                  onPressed: _alreadyFinished
+                      ? null
+                      : () async {
+                          try {
+                            await _api.getSessionState(e.id); // crée/reprend la session
 
-                      if (!GameTimer.instance.isRunning) {
-                        GameTimer.instance.start();
-                      }
-                      if (!context.mounted) return;
+                            if (!GameTimer.instance.isRunning) {
+                              GameTimer.instance.start();
+                            }
+                            if (!context.mounted) return;
 
-                      // On navigue vers la partie, puis on rafraîchit au retour
-                      await Navigator.of(context).push<bool>(
-                        MaterialPageRoute(builder: (_) => SessionPlayerPage(escape: e)),
-                      );
+                            // On navigue vers la partie, puis on rafraîchit au retour
+                            await Navigator.of(context).push<bool>(
+                              MaterialPageRoute(builder: (_) => SessionPlayerPage(escape: e)),
+                            );
 
-                      if (!mounted) return;
-                      await _checkStatus();
-                      setState(() {
-                        _futureComments = _api.fetchComments(e.id, limit: 3);
-                      });
-                    } catch (err) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Impossible de démarrer : $err')),
-                      );
-                    }
-                  },
+                            if (!mounted) return;
+                            await _checkStatus();
+                            setState(() {
+                              _futureComments = _api.fetchComments(e.id, limit: 3);
+                            });
+                          } catch (err) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Impossible de démarrer : $err')),
+                            );
+                          }
+                        },
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Bouton Itinéraire
+              OutlinedButton.icon(
+                icon: const Icon(Icons.directions_walk),
+                label: const Text('Itinéraire'),
+                onPressed: _openDirections,
+              ),
+            ],
           ),
 
           if (_alreadyFinished) ...[
@@ -654,6 +703,11 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
   String _prompt = '';
   // String? _revealedHint;
   List<String> _revealedHints = [];
+
+  // Coordonnées de l'étape (pour afficher la carte si défini)
+  double? _stepLatitude;
+  double? _stepLongitude;
+  bool _showStepLocation = true;  // true par défaut, contrôlé par le créateur
 
   // Réponse (texte/numérique)
   final _answerCtrl = TextEditingController();
@@ -794,12 +848,15 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
     GameTimer.instance.syncPenaltyMinutes(penaltyFromApi);
 
     if (_finished) {
-      // session finie → pas d’étape courante
+      // session finie → pas d'étape courante
       _index = _total > 0 ? _total - 1 : 0;
 
       _stepTitle = '';
       _stepImageUrl = null;
       _prompt = '';
+      _stepLatitude = null;
+      _stepLongitude = null;
+      _showStepLocation = true;
       _hintsTotal = 0;
       _hintsUsed = 0;
       _hintAvailable = false;
@@ -837,6 +894,11 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
       final imgAny = st['image_url'] ?? st['image'] ?? st['imageUrl'];
       _stepImageUrl = (imgAny == null) ? null : '$imgAny'.trim();
       _prompt = '${st['text'] ?? st['description'] ?? st['prompt'] ?? ''}'.trim();
+
+      // coordonnées de l'étape (pour afficher carte popup)
+      _stepLatitude = (st['latitude'] as num?)?.toDouble();
+      _stepLongitude = (st['longitude'] as num?)?.toDouble();
+      _showStepLocation = st['show_location'] != false; // true par défaut
 
       // indices (tolérant vieux payloads)
       _hintAvailable = (st['hint_available'] == true);
@@ -981,7 +1043,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => const Padding(
                     padding: EdgeInsets.all(24),
-                    child: Text('Impossible de charger l’image',
+                    child: Text('Impossible de charger l'image',
                         style: TextStyle(color: Colors.white)),
                   ),
                 ),
@@ -998,6 +1060,110 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
           ],
         ),
       ),
+    );
+  }
+
+  // ---------- Carte point d'étape ----------
+  bool get _hasStepLocation =>
+      _showStepLocation && _stepLatitude != null && _stepLongitude != null;
+
+  void _openStepLocationMap() {
+    if (_stepLatitude == null || _stepLongitude == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (_, scrollController) {
+            return Column(
+              children: [
+                // Poignée de drag
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // Titre
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.location_on, color: Colors.red),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _stepTitle.isNotEmpty ? _stepTitle : 'Point de l\'étape',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                // Carte
+                Expanded(
+                  child: GoogleMap(
+                    initialCameraPosition: CameraPosition(
+                      target: LatLng(_stepLatitude!, _stepLongitude!),
+                      zoom: 16,
+                    ),
+                    markers: {
+                      Marker(
+                        markerId: const MarkerId('step_location'),
+                        position: LatLng(_stepLatitude!, _stepLongitude!),
+                        infoWindow: InfoWindow(
+                          title: _stepTitle.isNotEmpty ? _stepTitle : 'Étape ${_index + 1}',
+                        ),
+                      ),
+                    },
+                    myLocationEnabled: true,
+                    myLocationButtonEnabled: true,
+                    zoomControlsEnabled: true,
+                  ),
+                ),
+                // Bouton itinéraire
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      icon: const Icon(Icons.directions_walk),
+                      label: const Text('Itinéraire vers ce point'),
+                      onPressed: () async {
+                        final url = Uri.parse(
+                          'https://www.google.com/maps/dir/?api=1'
+                          '&destination=$_stepLatitude,$_stepLongitude'
+                          '&travelmode=walking',
+                        );
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -1310,26 +1476,27 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
 
     final cs = Theme.of(context).colorScheme;
 
-    // Cellule A (fixe)
-    Widget _aCell(int aIndexOriginal) {
+    // Cellule A (fixe) - taille flexible selon contenu
+    Widget _aCell(int aIndexOriginal, {bool flexible = false}) {
       final selected = (_selA == aIndexOriginal);
 
-      return InkWell(
+      final cell = InkWell(
         onTap: () => _onTapA(aIndexOriginal),
         borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: selected ? cs.secondaryContainer : cs.surface,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: selected ? cs.secondary : cs.outlineVariant),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Icon(Icons.circle, size: 10),
               const SizedBox(width: 8),
-              Expanded(
+              Flexible(
                 child: Text(
                   _matchLeft[aIndexOriginal],
                   softWrap: true,
@@ -1339,83 +1506,88 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
           ),
         ),
       );
+
+      return flexible ? Flexible(child: cell) : cell;
     }
 
-    // Cellule B (ordre courant)
-    Widget _bCell(int rowIndex) {
+    // Cellule B (ordre courant) - taille flexible selon contenu
+    Widget _bCell(int rowIndex, {bool flexible = false}) {
       final bOriginal = _rightOrder[rowIndex];
       final selected  = (_selB == bOriginal);
 
-      return InkWell(
+      final cell = InkWell(
         onTap: () => _onTapB(bOriginal),
         borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: selected ? cs.primaryContainer : cs.surface,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: selected ? cs.primary : cs.outlineVariant),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Icon(Icons.square, size: 10),
               const SizedBox(width: 8),
-              Expanded(
+              Flexible(
                 child: Text(
                   _matchRight[bOriginal],
                   style: const TextStyle(fontWeight: FontWeight.w600),
                   softWrap: true,
                 ),
               ),
-              IconButton(
-                tooltip: 'Détacher',
-                onPressed: () => _unpairRow(rowIndex),
-                icon: const Icon(Icons.close),
-                visualDensity: VisualDensity.compact,
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: () => _unpairRow(rowIndex),
+                child: Icon(Icons.close, size: 18, color: cs.onSurfaceVariant),
               ),
             ],
           ),
         ),
       );
+
+      return flexible ? Flexible(child: cell) : cell;
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Clique un item de A puis un item de B (ou l’inverse). B se place en face de A.',
+          'Clique un item de A puis un item de B (ou l'inverse). B se place en face de A.',
         ),
         const SizedBox(height: 12),
 
-        // Lignes A | B avec hauteurs égales
+        // Lignes A | B avec tailles dynamiques adaptées au contenu
         for (int row = 0; row < rowCount; row++)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: _aCell(row)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _bCell(row)),
-                ],
-              ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _aCell(row, flexible: true),
+                const SizedBox(width: 12),
+                _bCell(row, flexible: true),
+              ],
             ),
           ),
 
         const SizedBox(height: 8),
-        Row(
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             Text(
               'Ordre B: ' + _rightOrder.map((e) => (e + 1).toString()).join(' → '),
               style: TextStyle(color: Colors.grey.shade700),
             ),
-            const Spacer(),
             TextButton.icon(
               onPressed: _resetPairs,
               icon: const Icon(Icons.restart_alt),
-              label: const Text('Réinitialiser les paires'),
+              label: const Text('Réinitialiser'),
             ),
           ],
         ),
@@ -1589,6 +1761,19 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
                           ),
                         ),
                       ),
+
+                      // ---- BOUTON CARTE (si coordonnées définies) ----
+                      if (_hasStepLocation) ...[
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.map_outlined),
+                          label: const Text('Voir le point sur la carte'),
+                          onPressed: _openStepLocationMap,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 44),
+                          ),
+                        ),
+                      ],
 
                       // ---- PIED : INDICES (multi) ----
 						if (hasHintSection) ...[
