@@ -369,7 +369,8 @@ class SessionStateView(APIView):
 
         # État courant
         idx = int(getattr(sess, "current_step_index", 0) or 0)
-        finished = bool(getattr(sess, "completed_at", None)) or (idx >= total)
+        # Un escape est terminé si completed_at est défini, OU si on a des étapes et qu'on les a toutes faites
+        finished = bool(getattr(sess, "completed_at", None)) or (total > 0 and idx >= total)
 
         hints_map = dict(getattr(sess, "hints_used", {}) or {})
 
