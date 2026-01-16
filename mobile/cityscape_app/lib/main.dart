@@ -1043,7 +1043,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => const Padding(
                     padding: EdgeInsets.all(24),
-                    child: Text('Impossible de charger l'image',
+                    child: Text("Impossible de charger l'image",
                         style: TextStyle(color: Colors.white)),
                   ),
                 ),
@@ -1555,7 +1555,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Clique un item de A puis un item de B (ou l'inverse). B se place en face de A.',
+          "Clique un item de A puis un item de B (ou l'inverse). B se place en face de A.",
         ),
         const SizedBox(height: 12),
 
