@@ -25,21 +25,60 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
+    _auth.meNotifier.addListener(_onUserChanged);
     _loadUserInfo();
+  }
+
+  @override
+  void dispose() {
+    _auth.meNotifier.removeListener(_onUserChanged);
+    super.dispose();
+  }
+
+  void _onUserChanged() {
+    if (mounted) {
+      setState(() {
+        _username = _getDisplayName(_auth.meNotifier.value);
+      });
+    }
+  }
+
+  /// Retourne le nom à afficher : prénom + nom si dispo, sinon username
+  String _getDisplayName(dynamic user) {
+    if (user == null) return 'Utilisateur';
+
+    // Essayer prénom + nom d'abord (plus parlant pour les utilisateurs Google)
+    final firstName = (user.firstName as String?) ?? '';
+    final lastName = (user.lastName as String?) ?? '';
+    final fullName = '$firstName $lastName'.trim();
+
+    if (fullName.isNotEmpty) {
+      return fullName;
+    }
+
+    // Sinon, utiliser le username
+    final username = (user.username as String?) ?? '';
+    return username.isNotEmpty ? username : 'Utilisateur';
   }
 
   Future<void> _loadUserInfo() async {
     setState(() => _loading = true);
     try {
-      final user = _auth.meNotifier.value;
+      // Forcer le chargement du profil si non disponible
+      if (_auth.meNotifier.value == null && _auth.tokenNotifier.value != null) {
+        await _auth.fetchMe();
+      }
       setState(() {
-        _username = user?.username ?? 'Utilisateur';
+        _username = _getDisplayName(_auth.meNotifier.value);
       });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur: $e')),
         );
+        setState(() {
+          _username = 'Utilisateur';
+        });
       }
     } finally {
       if (mounted) setState(() => _loading = false);
