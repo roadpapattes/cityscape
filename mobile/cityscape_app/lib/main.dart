@@ -3029,6 +3029,7 @@ class _StepEditorPageState extends State<StepEditorPage> {
   late TextEditingController _imageUrl;
   late TextEditingController _lat;
   late TextEditingController _lon;
+  bool _showLocation = true;
 
   // Multi-indices
   final List<TextEditingController> _hintCtrls = <TextEditingController>[];
@@ -3167,6 +3168,7 @@ class _StepEditorPageState extends State<StepEditorPage> {
     _answerText   = TextEditingController(text: s?.answerText ?? '');
     _correctIndex = s?.correctIndex;
     _orderCtrl    = TextEditingController(text: s?.order.toString() ?? '');
+    _showLocation = s?.showLocation ?? true;
 
     // --- Multi-indices : préférer s.hints, fallback sur s.hint (legacy)
     final existingHints = (s?.hints ?? const <String>[]);
@@ -3440,13 +3442,15 @@ class _StepEditorPageState extends State<StepEditorPage> {
       hints: hints,
       hint: '', // legacy neutralisé
       hintPenalty: hintPenalty,
+      showLocation: _showLocation,
     );
 
-    // on construit un patch pour fiabiliser l’UPDATE (et pour forcer narration)
+    // on construit un patch pour fiabiliser l'UPDATE (et pour forcer narration)
     final Map<String, dynamic> patch = step.toPayload();
     patch['hints'] = hints;
     patch['hint'] = '';
     patch['hint_penalty'] = hintPenalty;
+    patch['show_location'] = _showLocation;
 
     if (_answerType == 'narration') {
       // Neutraliser réponses + indices
@@ -3835,6 +3839,14 @@ class _StepEditorPageState extends State<StepEditorPage> {
           if (_answerType != 'narration') ...[
             const SizedBox(height: 8),
             _stepPointSection(),
+            const SizedBox(height: 12),
+            SwitchListTile(
+              title: const Text('Afficher la carte aux joueurs'),
+              subtitle: const Text('Si désactivé, la carte ne sera pas visible pendant le jeu'),
+              value: _showLocation,
+              onChanged: widget.readOnly ? null : (v) => setState(() => _showLocation = v),
+              contentPadding: EdgeInsets.zero,
+            ),
           ],
 
           const SizedBox(height: 12),

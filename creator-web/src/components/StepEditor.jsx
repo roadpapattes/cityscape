@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import apiClient from '../api/client';
 import ImageUploader from './ImageUploader';
+import LocationPicker from './LocationPicker';
 
 function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
   const isEditing = !!step;
@@ -319,34 +320,17 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
             </div>
           )}
 
-          {/* Location */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div className="form-group">
-              <label className="form-label">Latitude (optionnel)</label>
-              <input
-                type="number"
-                step="0.000001"
-                className="form-input"
-                value={formData.latitude}
-                onChange={(e) => updateField('latitude', e.target.value)}
-                disabled={loading}
-                placeholder="48.8566"
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Longitude (optionnel)</label>
-              <input
-                type="number"
-                step="0.000001"
-                className="form-input"
-                value={formData.longitude}
-                onChange={(e) => updateField('longitude', e.target.value)}
-                disabled={loading}
-                placeholder="2.3522"
-              />
-            </div>
-          </div>
+          {/* Location avec carte interactive */}
+          <LocationPicker
+            label="Position de l'étape (optionnel)"
+            latitude={formData.latitude ? parseFloat(formData.latitude) : null}
+            longitude={formData.longitude ? parseFloat(formData.longitude) : null}
+            onLocationChange={(lat, lng) => {
+              updateField('latitude', lat);
+              updateField('longitude', lng);
+            }}
+            disabled={loading}
+          />
 
           {/* Show location toggle - only visible if location is set */}
           {(formData.latitude || formData.longitude) && (

@@ -37,6 +37,9 @@ class GameStep {
   List<String> hints;          // nouveau "multi-indices"
   int hintPenalty;
 
+  // Affichage de la carte pour cette étape
+  bool showLocation;
+
   GameStep({
     required this.id,
     required this.escapeId,
@@ -56,6 +59,7 @@ class GameStep {
     this.hint = '',
     List<String>? hints,
     this.hintPenalty = 0,
+    this.showLocation = true,
   })  : options = options ?? const [],
         hints = hints ?? const [];
 
@@ -122,6 +126,9 @@ class GameStep {
       hint: (j['hint'] ?? '') as String,     // legacy (on conserve)
       hints: parsedHints,                     // multi-indices normalisés
       hintPenalty: (j['hint_penalty'] is num) ? (j['hint_penalty'] as num).toInt() : 0,
+
+      // Affichage carte
+      showLocation: j['show_location'] != false,  // true par défaut
     );
   }
 
@@ -136,6 +143,7 @@ class GameStep {
       if (imageUrl != null && imageUrl!.isNotEmpty) 'image_url': imageUrl,
       'answer_type': answerType,
       'hint_penalty': hintPenalty,
+      'show_location': showLocation,
     };
 
     // Multi-indices prioritaire ; jamais de null pour "hint"
