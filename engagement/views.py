@@ -374,19 +374,48 @@ class StartSessionView(APIView):
             created = False
 
         if created and not sess.started_at:
-            from django.utils import timezone
             sess.started_at = timezone.now()
             sess.save(update_fields=["started_at"])
 
-        return Response(
-            {
-                "id": sess.id,
-                "escape": escape.id,
-                "started_at": sess.started_at.isoformat() if sess.started_at else None,
-                "completed_at": sess.completed_at.isoformat() if sess.completed_at else None,
-            },
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-        )
+        # Retourner le même format que SessionStateView
+        steps = list(GameStep.objects.filter(escape=escape).order_by("order", "id"))
+        total = len(steps)
+
+        idx = int(getattr(sess, "current_step_index", 0) or 0)
+        finished = bool(getattr(sess, "completed_at", None)) or (total > 0 and idx >= total)
+
+        hints_map = dict(getattr(sess, "hints_used", {}) or {})
+
+        step_payload = None
+        step_index = idx
+        if finished:
+            step_index = min(idx, total)
+        else:
+            if total > 0:
+                step_index = max(0, min(idx, total - 1))
+                step_payload = _step_payload(steps[step_index], hints_map)
+            else:
+                step_index = 0
+
+        if finished:
+            past_steps = [_step_payload(s, hints_map) for s in steps]
+        else:
+            past_steps = [_step_payload(s, hints_map) for s in steps[:step_index]]
+
+        resp = {
+            "ok": True,
+            "finished": finished,
+            "total_steps": total,
+            "step_index": step_index,
+            "step": step_payload,
+            "past_steps": past_steps,
+            "penalty": int(getattr(sess, "penalty", 0) or 0),
+            "started_at": sess.started_at.isoformat() if sess.started_at else None,
+        }
+        if finished and getattr(sess, "completed_at", None):
+            resp["finished_at"] = sess.completed_at.isoformat()
+
+        return Response(resp, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
 class SessionStateView(APIView):
