@@ -168,7 +168,7 @@ class ApiClient {
   // Image upload
   async uploadImage(file) {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', file);
 
     const url = `${API_BASE_URL}/api/creator/upload_image`;
     const headers = {};
