@@ -395,22 +395,14 @@ class SessionStateView(APIView):
     def get(self, request, escape_id: int):
         escape = get_object_or_404(EscapeGame, pk=escape_id)
 
-        # 1) Récupérer OU créer la session (sans dupliquer)
+        # 1) Récupérer la session existante (ne PAS créer)
         try:
-            sess, created = PlaySession.objects.get_or_create(
-                user=request.user,
-                escape=escape,
-                defaults={"current_step_index": 0, "hints_used": {}},
-            )
-        except IntegrityError:
-            # Cas de course : si deux créations simultanées arrivent
             sess = PlaySession.objects.get(user=request.user, escape=escape)
-            created = False
-
-        # Date de démarrage si nouvelle session
-        if created and not sess.started_at:
-            sess.started_at = timezone.now()
-            sess.save(update_fields=["started_at"])
+        except PlaySession.DoesNotExist:
+            return Response(
+                {"detail": "Aucune session en cours"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         # 2) Étapes
         steps = list(GameStep.objects.filter(escape=escape).order_by("order", "id"))
@@ -465,15 +457,14 @@ class SessionHistoryView(APIView):
     def get(self, request, escape_id: int):
         escape = get_object_or_404(EscapeGame, pk=escape_id)
 
-        # Récupère (ou crée) la session
+        # Récupère la session existante (ne PAS créer)
         try:
-            sess, _ = PlaySession.objects.get_or_create(
-                user=request.user,
-                escape=escape,
-                defaults={"current_step_index": 0, "hints_used": {}},
-            )
-        except IntegrityError:
             sess = PlaySession.objects.get(user=request.user, escape=escape)
+        except PlaySession.DoesNotExist:
+            return Response(
+                {"detail": "Aucune session en cours", "steps": []},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         steps_qs = GameStep.objects.filter(escape=escape).order_by("order", "id")
         total = steps_qs.count()
