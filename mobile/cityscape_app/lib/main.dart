@@ -847,6 +847,19 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
         _asInt(j['penalty']) ?? _asInt(j['accumulated_penalty_minutes']) ?? 0;
     GameTimer.instance.syncPenaltyMinutes(penaltyFromApi);
 
+    // Démarrer le timer depuis la date de début de session (pour conserver le temps après fermeture app)
+    final startedAtStr = j['started_at'] as String?;
+    if (startedAtStr != null && startedAtStr.isNotEmpty) {
+      final startedAt = DateTime.tryParse(startedAtStr);
+      if (startedAt != null) {
+        GameTimer.instance.startFrom(startedAt);
+      } else {
+        GameTimer.instance.start();
+      }
+    } else {
+      GameTimer.instance.start();
+    }
+
     if (_finished) {
       // session finie → pas d'étape courante
       _index = _total > 0 ? _total - 1 : 0;

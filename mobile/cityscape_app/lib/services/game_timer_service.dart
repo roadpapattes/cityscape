@@ -36,6 +36,15 @@ class GameTimer extends ChangeNotifier {
     notifyListeners(); // tick immédiat
   }
 
+  /// Démarre (ou reprend) depuis une date de départ spécifique (ex: started_at du serveur).
+  /// Permet de conserver le temps écoulé même après fermeture de l'app.
+  void startFrom(DateTime startedAt) {
+    _startAt = startedAt;
+    _ticker?.cancel();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) => notifyListeners());
+    notifyListeners();
+  }
+
   /// Met en pause sans remettre les pénalités à zéro.
   void pause() {
     _ticker?.cancel();
