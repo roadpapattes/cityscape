@@ -556,7 +556,7 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
                       ? null
                       : () async {
                           try {
-                            await _api.getSessionState(e.id); // crée/reprend la session
+                            await _api.startSession(e.id); // crée/reprend la session
 
                             if (!GameTimer.instance.isRunning) {
                               GameTimer.instance.start();
@@ -834,7 +834,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
   Future<void> _loadState() async {
   setState(() => _loading = true);
   try {
-    final j = await _api.getSessionState(widget.escape.id) ?? <String, dynamic>{};
+    final j = await _api.startSession(widget.escape.id);
 
     // statut fin
     _finished = (j['finished'] == true);
