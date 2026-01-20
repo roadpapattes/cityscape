@@ -411,6 +411,7 @@ class StartSessionView(APIView):
             "past_steps": past_steps,
             "penalty": int(getattr(sess, "penalty", 0) or 0),
             "started_at": sess.started_at.isoformat() if sess.started_at else None,
+            "play_time_seconds": int(getattr(sess, "play_time_seconds", 0) or 0),
         }
         if finished and getattr(sess, "completed_at", None):
             resp["finished_at"] = sess.completed_at.isoformat()
@@ -473,11 +474,47 @@ class SessionStateView(APIView):
             "past_steps": past_steps,      # liste pour ta PastStepsPage
             "penalty": int(getattr(sess, "penalty", 0) or 0),
             "started_at": sess.started_at.isoformat() if sess.started_at else None,
+            "play_time_seconds": int(getattr(sess, "play_time_seconds", 0) or 0),
         }
         if finished and getattr(sess, "completed_at", None):
             resp["finished_at"] = sess.completed_at.isoformat()
 
         return Response(resp, status=status.HTTP_200_OK)
+
+
+class SessionSyncTimeView(APIView):
+    """Endpoint pour synchroniser le temps de jeu cumulé."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, escape_id: int):
+        escape = get_object_or_404(EscapeGame, pk=escape_id)
+
+        try:
+            sess = PlaySession.objects.get(user=request.user, escape=escape)
+        except PlaySession.DoesNotExist:
+            return Response(
+                {"detail": "Aucune session en cours"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Récupérer le temps additionnel envoyé par le client
+        additional_seconds = request.data.get("additional_seconds", 0)
+        try:
+            additional_seconds = int(additional_seconds)
+            if additional_seconds < 0:
+                additional_seconds = 0
+        except (ValueError, TypeError):
+            additional_seconds = 0
+
+        # Ajouter au temps cumulé
+        current_time = int(getattr(sess, "play_time_seconds", 0) or 0)
+        sess.play_time_seconds = current_time + additional_seconds
+        sess.save(update_fields=["play_time_seconds"])
+
+        return Response({
+            "ok": True,
+            "play_time_seconds": sess.play_time_seconds,
+        }, status=status.HTTP_200_OK)
 
 
 class SessionHistoryView(APIView):
@@ -670,6 +707,7 @@ class SessionAnswerView(APIView):
         - 'numeric'  : { "answer": "42" }
         - 'matching' : { "pairs": [[li,ri], ...] } ou [{"left_index": li, "right_index": ri}, ...]
         - 'narration': {}  (aucune réponse, accepté tel quel)
+        Optionnel: session_seconds (int) - temps de jeu depuis le dernier sync
         """
         escape = get_object_or_404(EscapeGame, pk=escape_id)
         sess = (PlaySession.objects
@@ -678,6 +716,18 @@ class SessionAnswerView(APIView):
                 .first())
         if not sess:
             return Response({"detail": "Session inactive. Démarrez d'abord."}, status=400)
+
+        # Sync du temps de jeu (optionnel, envoyé par le client à chaque réponse)
+        session_seconds = (request.data or {}).get("session_seconds")
+        if session_seconds is not None:
+            try:
+                session_seconds = int(session_seconds)
+                if session_seconds > 0:
+                    current_time = int(getattr(sess, "play_time_seconds", 0) or 0)
+                    sess.play_time_seconds = current_time + session_seconds
+                    sess.save(update_fields=["play_time_seconds"])
+            except (ValueError, TypeError):
+                pass  # Ignorer si invalide
 
         steps = list(GameStep.objects.filter(escape=escape).order_by("order", "id"))
         total = len(steps)

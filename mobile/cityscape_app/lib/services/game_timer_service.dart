@@ -6,18 +6,27 @@ class GameTimer extends ChangeNotifier {
   static final GameTimer instance = GameTimer._();
   GameTimer._();
 
-  DateTime? _startAt;
+  DateTime? _sessionStartAt;  // Quand cette session de jeu a commencé
+  Duration _baseTime = Duration.zero;  // Temps cumulé des sessions précédentes
   Duration _penalties = Duration.zero;
   Timer? _ticker;
 
-  bool get isRunning => _startAt != null;
+  bool get isRunning => _sessionStartAt != null;
 
-  /// Temps écoulé + pénalités
-  Duration get elapsed {
-    if (_startAt == null) return _penalties;
-    final base = DateTime.now().difference(_startAt!);
-    return base + _penalties;
+  /// Temps de la session courante (depuis _sessionStartAt)
+  Duration get _currentSessionTime {
+    if (_sessionStartAt == null) return Duration.zero;
+    return DateTime.now().difference(_sessionStartAt!);
   }
+
+  /// Temps total = base + session courante + pénalités
+  Duration get elapsed => _baseTime + _currentSessionTime + _penalties;
+
+  /// Temps écoulé en secondes (pour sync avec serveur)
+  int get elapsedSeconds => (_baseTime + _currentSessionTime).inSeconds;
+
+  /// Temps de la session courante en secondes (pour envoyer au serveur quand on quitte)
+  int get currentSessionSeconds => _currentSessionTime.inSeconds;
 
   String get elapsedText {
     final d = elapsed;
@@ -27,37 +36,66 @@ class GameTimer extends ChangeNotifier {
     return h > 0 ? '${_2(h)}:${_2(m)}:${_2(s)}' : '${_2(m)}:${_2(s)}';
   }
 
+  /// Démarre une nouvelle session de jeu avec un temps de base (cumul précédent).
+  /// baseSeconds = temps déjà joué lors des sessions précédentes (depuis le serveur)
+  void startWithBase(int baseSeconds) {
+    _baseTime = Duration(seconds: baseSeconds < 0 ? 0 : baseSeconds);
+    _sessionStartAt = DateTime.now();
+    _ticker?.cancel();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) => notifyListeners());
+    notifyListeners();
+  }
+
   /// Démarre si pas déjà en cours (idempotent). Ne réinitialise PAS si déjà démarré.
   void start() {
     if (isRunning) return;
-    _startAt = DateTime.now();
+    _sessionStartAt = DateTime.now();
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => notifyListeners());
-    notifyListeners(); // tick immédiat
+    notifyListeners();
   }
 
-  /// Démarre (ou reprend) depuis une date de départ spécifique (ex: started_at du serveur).
-  /// Permet de conserver le temps écoulé même après fermeture de l'app.
+  /// Démarre (ou reprend) depuis une date de départ spécifique.
+  /// DEPRECATED: utiliser startWithBase à la place
   void startFrom(DateTime startedAt) {
-    _startAt = startedAt;
+    _sessionStartAt = startedAt;
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => notifyListeners());
     notifyListeners();
   }
 
   /// Met en pause sans remettre les pénalités à zéro.
-  void pause() {
+  /// Retourne le temps de la session courante en secondes (à envoyer au serveur)
+  int pause() {
+    final sessionTime = currentSessionSeconds;
     _ticker?.cancel();
     _ticker = null;
-    _startAt = null;
+    // Ajouter le temps de la session courante au temps de base
+    _baseTime += _currentSessionTime;
+    _sessionStartAt = null;
     notifyListeners();
+    return sessionTime;
   }
 
-  /// Stoppe et remet à zéro.
+  /// Récupère le temps de session courant et continue à compter.
+  /// Utilisé pour sync le temps à chaque réponse sans interrompre le timer.
+  /// Retourne le temps de la session courante en secondes.
+  int syncAndContinue() {
+    if (!isRunning) return 0;
+    final sessionTime = currentSessionSeconds;
+    // Ajouter le temps de la session courante au temps de base
+    _baseTime += _currentSessionTime;
+    // Redémarrer la session immédiatement
+    _sessionStartAt = DateTime.now();
+    return sessionTime;
+  }
+
+  /// Stoppe et remet tout à zéro.
   void stop() {
     _ticker?.cancel();
     _ticker = null;
-    _startAt = null;
+    _sessionStartAt = null;
+    _baseTime = Duration.zero;
     _penalties = Duration.zero;
     notifyListeners();
   }

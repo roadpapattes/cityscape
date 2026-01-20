@@ -903,6 +903,7 @@ class ApiService {
   int? optionIndex,
   List<List<int>>? pairs, // matching
   bool narration = false,
+  int? sessionSeconds, // temps de jeu depuis le dernier sync
 }) async {
   final token = await AuthService.instance.getToken();
   if (token == null) throw Exception('Non connecté');
@@ -933,6 +934,11 @@ class ApiService {
     }
   }
 
+  // Ajouter le temps de session si fourni (sync du temps de jeu)
+  if (sessionSeconds != null && sessionSeconds > 0) {
+    payload['session_seconds'] = sessionSeconds;
+  }
+
   final uri = Uri.parse(
     '$baseUrl/api$kEngagementPrefix/escapes/$escapeId/sessions/answer',
   );
@@ -953,6 +959,35 @@ class ApiService {
 }
 
 
+
+  // ---------- SYNC TIME ----------
+  Future<void> syncPlayTime(int escapeId, int additionalSeconds) async {
+    final token = await AuthService.instance.getToken();
+    if (token == null) return; // silently ignore if not logged in
+    if (additionalSeconds <= 0) return; // nothing to sync
+
+    final url = '$baseUrl/api$kEngagementPrefix/escapes/$escapeId/sessions/sync_time';
+    debugPrint('[SYNC_TIME] POST $url (additional: $additionalSeconds s)');
+
+    try {
+      final r = await _post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Token $token',
+          'Content-Type': 'application/json; charset=utf-8',
+        },
+        body: {'additional_seconds': additionalSeconds},
+      );
+      if (r.statusCode == 200) {
+        debugPrint('[SYNC_TIME] OK');
+      } else {
+        debugPrint('[SYNC_TIME] Failed: ${r.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('[SYNC_TIME] Error: $e');
+      // Ignore errors - best effort sync
+    }
+  }
 
   // ---------- UPLOAD ----------
   Future<String> uploadImage(XFile xfile) async {

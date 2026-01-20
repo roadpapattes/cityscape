@@ -750,8 +750,34 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
 
   @override
   void dispose() {
+    // Synchroniser le temps de jeu avec le serveur quand on quitte la page
+    _syncTimeOnExit();
     _answerCtrl.dispose();
     super.dispose();
+  }
+
+  /// Synchronise le temps de la session courante avec le serveur (fire-and-forget)
+  void _syncTimeOnExit() {
+    if (GameTimer.instance.isRunning) {
+      final sessionSeconds = GameTimer.instance.pause();
+      if (sessionSeconds > 0) {
+        _api.syncPlayTime(widget.escape.id, sessionSeconds);
+      }
+    }
+  }
+
+  /// Synchronise le temps puis retourne le texte du temps final (pour victoire)
+  String _syncAndFinish() {
+    // Pause le timer et récupère le temps de la session courante
+    if (GameTimer.instance.isRunning) {
+      final sessionSeconds = GameTimer.instance.pause();
+      if (sessionSeconds > 0) {
+        // Fire-and-forget: on n'attend pas la réponse
+        _api.syncPlayTime(widget.escape.id, sessionSeconds);
+      }
+    }
+    // Maintenant le timer est en pause, on récupère le temps total et on reset
+    return GameTimer.instance.finishAndGetResult();
   }
 
   // S'assurer que _rightOrder existe, sans écraser un mélange déjà en place
@@ -847,18 +873,9 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
         _asInt(j['penalty']) ?? _asInt(j['accumulated_penalty_minutes']) ?? 0;
     GameTimer.instance.syncPenaltyMinutes(penaltyFromApi);
 
-    // Démarrer le timer depuis la date de début de session (pour conserver le temps après fermeture app)
-    final startedAtStr = j['started_at'] as String?;
-    if (startedAtStr != null && startedAtStr.isNotEmpty) {
-      final startedAt = DateTime.tryParse(startedAtStr);
-      if (startedAt != null) {
-        GameTimer.instance.startFrom(startedAt);
-      } else {
-        GameTimer.instance.start();
-      }
-    } else {
-      GameTimer.instance.start();
-    }
+    // Démarrer le timer avec le temps cumulé des sessions précédentes
+    final playTimeSeconds = _asInt(j['play_time_seconds']) ?? 0;
+    GameTimer.instance.startWithBase(playTimeSeconds);
 
     if (_finished) {
       // session finie → pas d'étape courante
@@ -1216,17 +1233,21 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
   Future<void> _submit() async {
     if (_submitting) return;
     setState(() => _submitting = true);
+
+    // Récupérer le temps de session courant et continuer le timer
+    final sessionSeconds = GameTimer.instance.syncAndContinue();
+
     try {
-	  // ---- Narration : pas de réponse, on avance juste l’étape ----
+	  // ---- Narration : pas de réponse, on avance juste l'étape ----
       if (_answerType == 'narration') {
-        final j = await _api.submitAnswer(widget.escape.id, narration: true);
+        final j = await _api.submitAnswer(widget.escape.id, narration: true, sessionSeconds: sessionSeconds);
 
         final finished = (j['finished'] ?? false) as bool;
         final finalMsg = (j['final_message'] ?? j['victory_message'] ?? '') as String;
 
         if (!context.mounted) return;
         if (finished) {
-          final finalTimeText = GameTimer.instance.finishAndGetResult();
+          final finalTimeText = _syncAndFinish();
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (_) => VictoryPage(
@@ -1242,13 +1263,13 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
         return; // très important : on sort ici, on ne tombe pas dans les autres types
       }  
 	  if (_answerType == 'narration') {
-		final j = await _api.submitAnswer(widget.escape.id, narration: true);
+		final j = await _api.submitAnswer(widget.escape.id, narration: true, sessionSeconds: sessionSeconds);
 
 		final finished = (j['finished'] ?? false) as bool;
 		final finalMsg = (j['final_message'] ?? j['victory_message'] ?? '') as String;
 
 		if (finished) {
-			final finalTimeText = GameTimer.instance.finishAndGetResult();
+			final finalTimeText = _syncAndFinish();
 			if (!context.mounted) return;
 			Navigator.of(context).pushReplacement(
 				MaterialPageRoute(
@@ -1277,6 +1298,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
           widget.escape.id,
           optionIndex: idx,
           answer: (idx >= 0 && idx < _mcqOptions.length) ? _mcqOptions[idx] : null,
+          sessionSeconds: sessionSeconds,
         );
 
         final correct  = (j['correct'] ?? false) as bool;
@@ -1302,7 +1324,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
 
         final finalMsg = (j['final_message'] ?? j['victory_message'] ?? '') as String;
         if (finished) {
-          final finalTimeText = GameTimer.instance.finishAndGetResult();
+          final finalTimeText = _syncAndFinish();
           if (!context.mounted) return;
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
@@ -1340,7 +1362,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
           pairs.add([leftOriginal, rightOriginal]);
         }
 
-        final j = await _api.submitAnswer(widget.escape.id, pairs: pairs);
+        final j = await _api.submitAnswer(widget.escape.id, pairs: pairs, sessionSeconds: sessionSeconds);
 
         final correct  = (j['correct'] ?? false) as bool;
         final finished = (j['finished'] ?? false) as bool;
@@ -1364,7 +1386,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
 
         final finalMsg = (j['final_message'] ?? j['victory_message'] ?? '') as String;
         if (finished) {
-          final finalTimeText = GameTimer.instance.finishAndGetResult();
+          final finalTimeText = _syncAndFinish();
           if (!context.mounted) return;
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
@@ -1392,6 +1414,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
       final j = await _api.submitAnswer(
         widget.escape.id,
         answer: ans,
+        sessionSeconds: sessionSeconds,
       );
 
       final correct  = (j['correct'] ?? false) as bool;
@@ -1417,7 +1440,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
 
       final finalMsg = (j['final_message'] ?? j['victory_message'] ?? '') as String;
       if (finished) {
-        final finalTimeText = GameTimer.instance.finishAndGetResult();
+        final finalTimeText = _syncAndFinish();
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => VictoryPage(
@@ -1447,16 +1470,20 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
   Future<void> _submitNarration() async {
   if (_submitting) return;
   setState(() => _submitting = true);
+
+  // Récupérer le temps de session courant et continuer le timer
+  final sessionSeconds = GameTimer.instance.syncAndContinue();
+
   try {
-    // On appelle l’API sans réponse (ack de lecture)
-    final j = await _api.submitAnswer(widget.escape.id);
+    // On appelle l'API sans réponse (ack de lecture)
+    final j = await _api.submitAnswer(widget.escape.id, sessionSeconds: sessionSeconds);
 
     final finished = (j['finished'] ?? false) as bool;
     final finalMsg = (j['final_message'] ?? j['victory_message'] ?? '') as String;
 
     if (!mounted) return;
     if (finished) {
-      final finalTimeText = GameTimer.instance.finishAndGetResult();
+      final finalTimeText = _syncAndFinish();
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => VictoryPage(
@@ -1906,7 +1933,7 @@ class _VictoryPageState extends State<VictoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    // “Latche” le temps s’il n’a pas été fourni en override
+    // "Latche" le temps s'il n'a pas été fourni en override
     final timeText = widget.timeOverride?.trim().isNotEmpty == true
         ? widget.timeOverride!.trim()
         : GameTimer.instance.finishAndGetResult();

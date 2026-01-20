@@ -20,6 +20,8 @@ class PlaySession(models.Model):
     # NOUVEAU : malus cumulé (mauvaises réponses + indices)
     penalty = models.IntegerField(default=0)  # augmente de 5 par mauvaise réponse + hint_penalty quand indice demandé
     answers = models.JSONField(default=dict, blank=True)
+    # Temps de jeu cumulé en secondes (temps réellement passé à jouer)
+    play_time_seconds = models.PositiveIntegerField(default=0)
 
     class Meta:
         unique_together = ('user', 'escape')

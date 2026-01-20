@@ -8,6 +8,7 @@ from .views import (
     AccountDeletionRequestView,
     StartSessionView,
     SessionStateView, SessionHistoryView, SessionHintView, SessionAnswerView,
+    SessionSyncTimeView,
     CanRateView, ReportEscapeView, RatingsListCreateView,
 )
 
@@ -31,6 +32,7 @@ urlpatterns = [
     path('escapes/<int:escape_id>/sessions/history', SessionHistoryView.as_view()),
     path('escapes/<int:escape_id>/sessions/hint',   SessionHintView.as_view()),
     path('escapes/<int:escape_id>/sessions/answer', SessionAnswerView.as_view()),
+    path('escapes/<int:escape_id>/sessions/sync_time', SessionSyncTimeView.as_view()),
     path('escapes/<int:escape_id>/report', ReportEscapeView.as_view(), name='escape-report'),
 
     # Ratings
