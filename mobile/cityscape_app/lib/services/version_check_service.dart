@@ -10,7 +10,7 @@ class VersionCheckService {
   static final instance = VersionCheckService._();
 
   // Version actuelle de l'app (doit correspondre à versionName dans build.gradle.kts)
-  static const String currentVersion = '0.2.6';
+  static const String currentVersion = '0.2.7';
 
   Future<AppConfigResponse> checkVersion() async {
     try {
