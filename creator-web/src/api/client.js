@@ -85,11 +85,11 @@ class ApiClient {
 
   // User profile endpoints
   async getUserProfile() {
-    return await this.request('/api/auth/profile');
+    return await this.request('/api/auth/me');
   }
 
   async updateUserProfile(data) {
-    return await this.request('/api/auth/profile', {
+    return await this.request('/api/auth/me', {
       method: 'PATCH',
       body: JSON.stringify(data),
     });

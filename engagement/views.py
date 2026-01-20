@@ -89,6 +89,55 @@ class MeView(APIView):
             "id": u.id,
             "username": u.username,
             "email": u.email or "",
+            "first_name": u.first_name or "",
+            "last_name": u.last_name or "",
+            "is_staff": u.is_staff,
+            "is_superuser": u.is_superuser,
+        })
+
+    def patch(self, request):
+        u = request.user
+        data = request.data
+
+        # Update allowed fields
+        if 'username' in data:
+            new_username = data['username'].strip()
+            if new_username and new_username != u.username:
+                # Check if username is already taken
+                User = get_user_model()
+                if User.objects.filter(username=new_username).exclude(pk=u.pk).exists():
+                    return Response(
+                        {"detail": "Ce nom d'utilisateur est déjà pris"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                u.username = new_username
+
+        if 'email' in data:
+            new_email = data['email'].strip()
+            if new_email and new_email != u.email:
+                # Check if email is already taken
+                User = get_user_model()
+                if User.objects.filter(email=new_email).exclude(pk=u.pk).exists():
+                    return Response(
+                        {"detail": "Cet email est déjà utilisé"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                u.email = new_email
+
+        if 'first_name' in data:
+            u.first_name = data['first_name'].strip()
+
+        if 'last_name' in data:
+            u.last_name = data['last_name'].strip()
+
+        u.save()
+
+        return Response({
+            "id": u.id,
+            "username": u.username,
+            "email": u.email or "",
+            "first_name": u.first_name or "",
+            "last_name": u.last_name or "",
             "is_staff": u.is_staff,
             "is_superuser": u.is_superuser,
         })
