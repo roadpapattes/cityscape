@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/preferences_service.dart';
 import '../../services/version_check_service.dart';
+import '../../services/tutorial_service.dart';
 import '../../models/user_preferences.dart';
 import 'personal_info_page.dart';
 import 'change_password_page.dart';
+import '../home/main_home.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -228,6 +230,23 @@ class _ProfilePageState extends State<ProfilePage> {
                 leading: const Icon(Icons.info),
                 title: const Text('Version de l\'application'),
                 subtitle: Text(VersionCheckService.currentVersion),
+              ),
+              ListTile(
+                leading: const Icon(Icons.school),
+                title: const Text('Revoir le tutoriel'),
+                subtitle: const Text('Apprenez à utiliser l\'application'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () async {
+                  // Réinitialiser le tutoriel et retourner à l'écran principal
+                  await TutorialService.instance.resetTutorial();
+                  if (mounted) {
+                    // Retour à MainHome et relancer le tutoriel
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const MainHome()),
+                      (route) => false,
+                    );
+                  }
+                },
               ),
               ListTile(
                 leading: const Icon(Icons.help),

@@ -13,6 +13,9 @@ import '../../models/user_preferences.dart';
 import '../../services/api/api_service.dart';
 import '../../services/preferences_service.dart';
 
+// Import tutorial
+import '../tutorial/tutorial_controller.dart';
+
 // Import card styles
 import 'widgets/card_collection_style.dart';
 import 'widgets/gaming_ui_style.dart';
@@ -43,6 +46,10 @@ class _ListPageState extends State<ListPage> {
   Position? _pos;
   bool _loading = true;
 
+  // Tutorial Phase 2
+  final _firstCardKey = GlobalKey();
+  bool _tutorialShown = false;
+
   @override
   void initState() {
     super.initState();
@@ -51,13 +58,48 @@ class _ListPageState extends State<ListPage> {
         _items = _applyFiltersAndSort(_all);
       });
     });
+    TutorialController.instance.addListener(_onTutorialChanged);
     _init();
   }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
+    TutorialController.instance.removeListener(_onTutorialChanged);
     super.dispose();
+  }
+
+  void _onTutorialChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// Lance le tutoriel Phase 2 si conditions remplies
+  void _checkAndShowTutorial() {
+    if (_tutorialShown) return;
+    if (!TutorialController.instance.isActive) return;
+    if (TutorialController.instance.currentPhase != TutorialPhase.escapeList) return;
+    if (_items.isEmpty) return;
+
+    _tutorialShown = true;
+
+    // Attendre que le widget soit rendu
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      TutorialController.instance.showEscapeCardTarget(
+        context,
+        cardKey: _firstCardKey,
+        onFinish: () {
+          // Naviguer vers la page de détails du premier escape
+          if (_items.isNotEmpty && mounted) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => EscapeDetailsPage(escape: _items.first),
+              ),
+            );
+          }
+        },
+      );
+    });
   }
 
   Future<void> _init() async {
@@ -96,6 +138,8 @@ class _ListPageState extends State<ListPage> {
         _all = L;
         _items = _applyFiltersAndSort(_all);
       });
+      // Vérifier si on doit lancer le tutoriel Phase 2
+      _checkAndShowTutorial();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -188,7 +232,9 @@ class _ListPageState extends State<ListPage> {
                                   e.latitude, e.longitude)
                               .toStringAsFixed(1);
 
-                      return _buildStyledCard(e, fav, dist);
+                      // Ajouter le GlobalKey pour la première carte (tutoriel)
+                      final isFirstCard = i == 0;
+                      return _buildStyledCard(e, fav, dist, isFirstCard: isFirstCard);
                     },
                   ),
                 ),
@@ -268,12 +314,13 @@ class _ListPageState extends State<ListPage> {
     );
   }
 
-  Widget _buildStyledCard(EscapeGame escape, bool isFavorite, String? distance) {
+  Widget _buildStyledCard(EscapeGame escape, bool isFavorite, String? distance, {bool isFirstCard = false}) {
     final style = _prefs.currentPreferences.listCardStyle;
 
+    Widget card;
     switch (style) {
       case ListCardStyle.cardCollection:
-        return CardCollectionStyleCard(
+        card = CardCollectionStyleCard(
           escape: escape,
           isFavorite: isFavorite,
           distance: distance,
@@ -284,9 +331,10 @@ class _ListPageState extends State<ListPage> {
           ),
           onFavoriteTap: () => _toggleFav(escape.id),
         );
+        break;
 
       case ListCardStyle.gamingUI:
-        return GamingUIStyleCard(
+        card = GamingUIStyleCard(
           escape: escape,
           isFavorite: isFavorite,
           distance: distance,
@@ -297,9 +345,10 @@ class _ListPageState extends State<ListPage> {
           ),
           onFavoriteTap: () => _toggleFav(escape.id),
         );
+        break;
 
       case ListCardStyle.playful:
-        return PlayfulStyleCard(
+        card = PlayfulStyleCard(
           escape: escape,
           isFavorite: isFavorite,
           distance: distance,
@@ -310,6 +359,17 @@ class _ListPageState extends State<ListPage> {
           ),
           onFavoriteTap: () => _toggleFav(escape.id),
         );
+        break;
     }
+
+    // Wrapper la première carte avec le GlobalKey pour le tutoriel
+    if (isFirstCard) {
+      return Container(
+        key: _firstCardKey,
+        child: card,
+      );
+    }
+
+    return card;
   }
 }

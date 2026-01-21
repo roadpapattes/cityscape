@@ -46,6 +46,11 @@ import 'core/widgets/creator_feedback_sheet.dart';
 import 'features/splash/splash_screen.dart';
 import 'features/home/main_home.dart';
 
+// Import tutorial
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'features/tutorial/tutorial_controller.dart';
+import 'features/tutorial/tutorial_content.dart';
+
 // Utility functions have been moved to core/utils/
 
 // openCreatorFeedbackSheet has been moved to core/widgets/creator_feedback_sheet.dart
@@ -355,11 +360,59 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
 
   Future<List<CommentItem>>? _futureComments;
 
+  // Tutorial Phase 3
+  final _imageKey = GlobalKey();
+  final _durationKey = GlobalKey();
+  final _startKey = GlobalKey();
+  bool _tutorialShown = false;
+
   @override
   void initState() {
     super.initState();
     _checkStatus();
     _futureComments = _api.fetchComments(widget.escape.id, limit: 3);
+    TutorialController.instance.addListener(_onTutorialChanged);
+
+    // Vérifier si on doit lancer le tutoriel après le build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowTutorial();
+    });
+  }
+
+  @override
+  void dispose() {
+    TutorialController.instance.removeListener(_onTutorialChanged);
+    super.dispose();
+  }
+
+  void _onTutorialChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// Lance le tutoriel Phase 3 si conditions remplies
+  void _checkAndShowTutorial() {
+    if (_tutorialShown) return;
+    if (!TutorialController.instance.isActive) return;
+    if (TutorialController.instance.currentPhase != TutorialPhase.escapeDetails) return;
+
+    _tutorialShown = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      TutorialController.instance.showEscapeDetailsTargets(
+        context,
+        imageKey: _imageKey,
+        durationKey: _durationKey,
+        startKey: _startKey,
+        onFinish: () {
+          // Passer à la phase suivante (CreatorPage)
+          // Revenir à MainHome - le listener changera l'onglet automatiquement
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+        },
+      );
+    });
   }
 
   String _fmt(DateTime dt) {
@@ -506,19 +559,23 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
+          // Image avec GlobalKey pour tutoriel
           if (e.imageUrl != null && e.imageUrl!.isNotEmpty)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                normalizeImageUrl(e.imageUrl, baseUrl),
-                height: 180,
-                width: double.infinity,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => Container(
+            Container(
+              key: _imageKey,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  normalizeImageUrl(e.imageUrl, baseUrl),
                   height: 180,
-                  color: Colors.grey.shade200,
-                  alignment: Alignment.center,
-                  child: const Icon(Icons.image_not_supported_outlined),
+                  width: double.infinity,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 180,
+                    color: Colors.grey.shade200,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.image_not_supported_outlined),
+                  ),
                 ),
               ),
             ),
@@ -530,7 +587,9 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
           ),
           const SizedBox(height: 12),
 
+          // Infos avec GlobalKey pour tutoriel (durée/difficulté)
           ListTile(
+            key: _durationKey,
             leading: const Icon(Icons.location_city),
             title: Text(e.city),
             subtitle: Text(
@@ -543,43 +602,47 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
           Row(
             children: [
               Expanded(
-                child: FilledButton.icon(
-                  icon: Icon(_hasStarted && !_alreadyFinished ? Icons.play_arrow : Icons.play_arrow),
-                  label: Text(
-                    _alreadyFinished
-                        ? 'Terminé'
-                        : (_hasStarted && _totalSteps > 0
-                            ? 'Reprendre (${_currentStepIndex + 1}/$_totalSteps)'
-                            : 'Démarrer'),
-                  ),
-                  onPressed: _alreadyFinished
-                      ? null
-                      : () async {
-                          try {
-                            await _api.startSession(e.id); // crée/reprend la session
+                // Bouton Démarrer avec GlobalKey pour tutoriel
+                child: Container(
+                  key: _startKey,
+                  child: FilledButton.icon(
+                    icon: Icon(_hasStarted && !_alreadyFinished ? Icons.play_arrow : Icons.play_arrow),
+                    label: Text(
+                      _alreadyFinished
+                          ? 'Terminé'
+                          : (_hasStarted && _totalSteps > 0
+                              ? 'Reprendre (${_currentStepIndex + 1}/$_totalSteps)'
+                              : 'Démarrer'),
+                    ),
+                    onPressed: _alreadyFinished
+                        ? null
+                        : () async {
+                            try {
+                              await _api.startSession(e.id); // crée/reprend la session
 
-                            if (!GameTimer.instance.isRunning) {
-                              GameTimer.instance.start();
+                              if (!GameTimer.instance.isRunning) {
+                                GameTimer.instance.start();
+                              }
+                              if (!context.mounted) return;
+
+                              // On navigue vers la partie, puis on rafraîchit au retour
+                              await Navigator.of(context).push<bool>(
+                                MaterialPageRoute(builder: (_) => SessionPlayerPage(escape: e)),
+                              );
+
+                              if (!mounted) return;
+                              await _checkStatus();
+                              setState(() {
+                                _futureComments = _api.fetchComments(e.id, limit: 3);
+                              });
+                            } catch (err) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Impossible de démarrer : $err')),
+                              );
                             }
-                            if (!context.mounted) return;
-
-                            // On navigue vers la partie, puis on rafraîchit au retour
-                            await Navigator.of(context).push<bool>(
-                              MaterialPageRoute(builder: (_) => SessionPlayerPage(escape: e)),
-                            );
-
-                            if (!mounted) return;
-                            await _checkStatus();
-                            setState(() {
-                              _futureComments = _api.fetchComments(e.id, limit: 3);
-                            });
-                          } catch (err) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Impossible de démarrer : $err')),
-                            );
-                          }
-                        },
+                          },
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -735,6 +798,14 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
   int? _selA; // index original dans _matchLeft
   int? _selB; // index original dans _matchRight
 
+  // Tutorial Phase 4 (optionnel - non utilisé dans le flux actuel)
+  final _timerKey = GlobalKey();
+  final _hintKey = GlobalKey();
+  final _historyKey = GlobalKey();
+  final _answerKey = GlobalKey();
+  final _progressKey = GlobalKey();
+  bool _tutorialShown = false;
+
   // ---------- Helpers ----------
   int? _asInt(dynamic v) {
     if (v == null) return null;
@@ -746,6 +817,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
   void initState() {
     super.initState();
     _loadState();
+    TutorialController.instance.addListener(_onTutorialChanged);
   }
 
   @override
@@ -753,7 +825,36 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
     // Synchroniser le temps de jeu avec le serveur quand on quitte la page
     _syncTimeOnExit();
     _answerCtrl.dispose();
+    TutorialController.instance.removeListener(_onTutorialChanged);
     super.dispose();
+  }
+
+  void _onTutorialChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// Lance le tutoriel Phase 4 si conditions remplies
+  void _checkAndShowTutorial() {
+    if (_tutorialShown) return;
+    if (!TutorialController.instance.isActive) return;
+    if (TutorialController.instance.currentPhase != TutorialPhase.sessionPlayer) return;
+
+    _tutorialShown = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      TutorialController.instance.showSessionPlayerTargets(
+        context,
+        timerKey: _timerKey,
+        hintKey: _hintKey,
+        historyKey: _historyKey,
+        answerKey: _answerKey,
+        progressKey: _progressKey,
+        onFinish: () {
+          // La phase suivante sera CreatorPage
+        },
+      );
+    });
   }
 
   /// Synchronise le temps de la session courante avec le serveur (fire-and-forget)
@@ -1052,7 +1153,11 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text('Erreur état: $e')));
   } finally {
-    if (mounted) setState(() => _loading = false);
+    if (mounted) {
+      setState(() => _loading = false);
+      // Vérifier si on doit lancer le tutoriel Phase 4
+      _checkAndShowTutorial();
+    }
   }
 }
 

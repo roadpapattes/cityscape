@@ -42,4 +42,9 @@ class PreferencesService extends ChangeNotifier {
     final newPrefs = _currentPrefs.copyWith(listCardStyle: style);
     await updatePreferences(newPrefs);
   }
+
+  Future<void> setTutorialCompleted(bool completed) async {
+    final newPrefs = _currentPrefs.copyWith(tutorialCompleted: completed);
+    await updatePreferences(newPrefs);
+  }
 }

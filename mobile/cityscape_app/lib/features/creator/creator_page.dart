@@ -10,6 +10,9 @@ import '../../models/escape_game.dart';
 // Core widgets
 import '../../core/widgets/creator_feedback_sheet.dart';
 
+// Tutorial
+import '../tutorial/tutorial_controller.dart';
+
 // Features - EscapeEditorPage (will be imported from main.dart for now)
 import '../../main.dart' show EscapeEditorPage;
 
@@ -40,6 +43,11 @@ class _CreatorPageState extends State<CreatorPage> {
 
   late final VoidCallback _onTokenChanged;
 
+  // Tutorial Phase 5
+  final _listKey = GlobalKey();
+  final _createButtonKey = GlobalKey();
+  bool _tutorialShown = false;
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +71,7 @@ class _CreatorPageState extends State<CreatorPage> {
 
     // écouter UNIQUEMENT les changements de token
     AuthService.instance.tokenNotifier.addListener(_onTokenChanged);
+    TutorialController.instance.addListener(_onTutorialChanged);
 
     // boot initial (au cas où token déjà présent)
     _onTokenChanged();
@@ -71,7 +80,36 @@ class _CreatorPageState extends State<CreatorPage> {
   @override
   void dispose() {
     AuthService.instance.tokenNotifier.removeListener(_onTokenChanged);
+    TutorialController.instance.removeListener(_onTutorialChanged);
     super.dispose();
+  }
+
+  void _onTutorialChanged() {
+    if (mounted) {
+      setState(() {});
+      _checkAndShowTutorial();
+    }
+  }
+
+  /// Lance le tutoriel Phase 5 si conditions remplies
+  void _checkAndShowTutorial() {
+    if (_tutorialShown) return;
+    if (!TutorialController.instance.isActive) return;
+    if (TutorialController.instance.currentPhase != TutorialPhase.creatorPage) return;
+
+    _tutorialShown = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      TutorialController.instance.showCreatorTargets(
+        context,
+        listKey: _listKey,
+        createKey: _createButtonKey,
+        onFinish: () {
+          // Tutoriel terminé !
+        },
+      );
+    });
   }
 
   Future<void> _ensureProfileBeforeLoading() async {
@@ -132,6 +170,11 @@ class _CreatorPageState extends State<CreatorPage> {
           return const Center(child: CircularProgressIndicator());
         }
 
+        // Vérifier si on doit lancer le tutoriel Phase 5
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _checkAndShowTutorial();
+        });
+
         return Column(
           children: [
             // Header + filtres + bouton "Nouveau brouillon"
@@ -176,6 +219,7 @@ class _CreatorPageState extends State<CreatorPage> {
                   if (!_isAdmin)
                     Flexible(
                       child: FittedBox(
+                        key: _createButtonKey,
                         fit: BoxFit.scaleDown,
                         child: FilledButton.icon(
                           icon: const Icon(Icons.add),
@@ -206,8 +250,9 @@ class _CreatorPageState extends State<CreatorPage> {
                 ),
               ),
 
-            // Liste
+            // Liste (avec GlobalKey pour tutoriel)
             Expanded(
+              key: _listKey,
               child: FutureBuilder<List<EscapeGame>>(
                 future: _future,
                 builder: (ctx, snap) {

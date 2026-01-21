@@ -8,28 +8,34 @@ enum ListCardStyle {
 
 class UserPreferences {
   final ListCardStyle listCardStyle;
+  final bool tutorialCompleted;
 
   const UserPreferences({
     this.listCardStyle = ListCardStyle.cardCollection,
+    this.tutorialCompleted = false,
   });
 
   UserPreferences copyWith({
     ListCardStyle? listCardStyle,
+    bool? tutorialCompleted,
   }) {
     return UserPreferences(
       listCardStyle: listCardStyle ?? this.listCardStyle,
+      tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'listCardStyle': listCardStyle.index,
+      'tutorialCompleted': tutorialCompleted,
     };
   }
 
   factory UserPreferences.fromJson(Map<String, dynamic> json) {
     return UserPreferences(
       listCardStyle: ListCardStyle.values[json['listCardStyle'] ?? 0],
+      tutorialCompleted: json['tutorialCompleted'] ?? false,
     );
   }
 
