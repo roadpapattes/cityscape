@@ -43,8 +43,8 @@ android {
         applicationId = "com.roadpapattes.cityscape"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = 14
-        versionName = "0.3.0"
+        versionCode = 15
+        versionName = "0.3.1"
 
         // Injecte le placeholder utilisé par AndroidManifest.xml
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey

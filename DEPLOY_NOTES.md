@@ -164,6 +164,7 @@ Utiliser `sudo` pour les operations dans `/var/www/`
 
 | Version | versionCode | Date | Notes |
 |---------|-------------|------|-------|
+| 0.3.1 | 15 | 2026-01-21 | Fix tutorial flow (phase transition) |
 | 0.3.0 | 14 | 2026-01-21 | Interactive tutorial for new users |
 | 0.2.9 | 13 | 2026-01-20 | Cumulative play time tracking across sessions |
 | 0.2.8 | 12 | 2026-01-20 | Fix timer persistence across app restarts |
