@@ -240,13 +240,18 @@ class TutorialController extends ChangeNotifier {
   }) {
     if (!_isActive || _currentPhase != TutorialPhase.creatorPage) return;
 
+    // Position centrale pour les contenus custom
+    final screenHeight = MediaQuery.of(context).size.height;
+    final centerPosition = CustomTargetContentPosition(top: screenHeight * 0.3);
+
     final targets = <TargetFocus>[
       _createTarget(
         key: listKey,
         content: TutorialContents.creatorList,
         context: context,
         shape: ShapeLightFocus.RRect,
-        contentAlign: ContentAlign.top,  // Afficher au-dessus car la liste prend l'écran
+        contentAlign: ContentAlign.custom,
+        customPosition: centerPosition,  // Position centrée sur l'écran
       ),
       _createTarget(
         key: createKey,
@@ -260,8 +265,8 @@ class TutorialController extends ChangeNotifier {
         content: TutorialContents.tutorialComplete,
         context: context,
         shape: ShapeLightFocus.RRect,
-        contentAlign: ContentAlign.custom,  // Centre de l'écran
-        alignSkip: Alignment.center,
+        contentAlign: ContentAlign.custom,
+        customPosition: centerPosition,
       ),
     ];
 
@@ -279,6 +284,7 @@ class TutorialController extends ChangeNotifier {
     ShapeLightFocus shape = ShapeLightFocus.RRect,
     Alignment alignSkip = Alignment.topRight,
     ContentAlign contentAlign = ContentAlign.bottom,
+    CustomTargetContentPosition? customPosition,
   }) {
     return TargetFocus(
       identify: content.title,
@@ -289,6 +295,7 @@ class TutorialController extends ChangeNotifier {
       contents: [
         TargetContent(
           align: contentAlign,
+          customPosition: customPosition,
           builder: (context, controller) => content.build(context),
         ),
       ],
