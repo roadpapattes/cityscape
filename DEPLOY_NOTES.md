@@ -164,6 +164,7 @@ Utiliser `sudo` pour les operations dans `/var/www/`
 
 | Version | versionCode | Date | Notes |
 |---------|-------------|------|-------|
+| 0.3.0 | 14 | 2026-01-21 | Interactive tutorial for new users |
 | 0.2.9 | 13 | 2026-01-20 | Cumulative play time tracking across sessions |
 | 0.2.8 | 12 | 2026-01-20 | Fix timer persistence across app restarts |
 | 0.2.7 | 11 | 2026-01-20 | Fix session creation on detail view, image upload web |
