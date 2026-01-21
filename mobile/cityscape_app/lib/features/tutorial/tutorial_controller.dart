@@ -246,18 +246,21 @@ class TutorialController extends ChangeNotifier {
         content: TutorialContents.creatorList,
         context: context,
         shape: ShapeLightFocus.RRect,
+        contentAlign: ContentAlign.top,  // Afficher au-dessus car la liste prend l'écran
       ),
       _createTarget(
         key: createKey,
         content: TutorialContents.createButton,
         context: context,
         shape: ShapeLightFocus.Circle,
+        contentAlign: ContentAlign.bottom,  // Bouton en haut, donc contenu en dessous
       ),
       _createTarget(
         key: GlobalKey(), // Placeholder - on affiche juste le message final
         content: TutorialContents.tutorialComplete,
         context: context,
         shape: ShapeLightFocus.RRect,
+        contentAlign: ContentAlign.custom,  // Centre de l'écran
         alignSkip: Alignment.center,
       ),
     ];
@@ -275,6 +278,7 @@ class TutorialController extends ChangeNotifier {
     required BuildContext context,
     ShapeLightFocus shape = ShapeLightFocus.RRect,
     Alignment alignSkip = Alignment.topRight,
+    ContentAlign contentAlign = ContentAlign.bottom,
   }) {
     return TargetFocus(
       identify: content.title,
@@ -284,7 +288,7 @@ class TutorialController extends ChangeNotifier {
       paddingFocus: 8,
       contents: [
         TargetContent(
-          align: ContentAlign.bottom,
+          align: contentAlign,
           builder: (context, controller) => content.build(context),
         ),
       ],
