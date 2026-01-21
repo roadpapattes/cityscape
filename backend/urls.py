@@ -17,7 +17,7 @@ def app_config(_):
     return JsonResponse({
         "min_version": "0.3.1",
         "current_version": "0.3.1",
-        "force_update": False,
+        "force_update": True,
         "update_message": "Une nouvelle version est disponible! Mettez à jour pour profiter des dernières fonctionnalités."
     })
 
