@@ -30,10 +30,10 @@ class TutorialController extends ChangeNotifier {
   /// Phase actuelle du tutoriel
   TutorialPhase get currentPhase => _currentPhase;
 
-  /// Démarre le tutoriel depuis le début
+  /// Démarre le tutoriel depuis le début (appelé après l'intro MainHome)
   void startTutorial() {
     _isActive = true;
-    _currentPhase = TutorialPhase.mainHome;
+    _currentPhase = TutorialPhase.escapeList;  // On commence à escapeList car MainHome a déjà fait l'intro
     notifyListeners();
   }
 

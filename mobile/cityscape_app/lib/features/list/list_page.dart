@@ -70,7 +70,11 @@ class _ListPageState extends State<ListPage> {
   }
 
   void _onTutorialChanged() {
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+      // Vérifier si on doit lancer le tutoriel Phase 2 après un changement de phase
+      _checkAndShowTutorial();
+    }
   }
 
   /// Lance le tutoriel Phase 2 si conditions remplies
