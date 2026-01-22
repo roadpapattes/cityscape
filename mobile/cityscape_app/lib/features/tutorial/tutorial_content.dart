@@ -112,16 +112,22 @@ class TutorialContents {
   );
 
   // Phase 3: Détails escape
-  static const escapeImage = TutorialContent(
-    title: 'Univers Unique',
-    description: 'Chaque escape a son propre univers et son histoire. Plongez dans l\'aventure !',
-    icon: Icons.image,
-  );
-
   static const itineraryButton = TutorialContent(
     title: 'Rejoignez le point de départ',
     description: 'Suivez l\'itinéraire proposé pour vous rendre au point de départ et démarrer votre aventure',
     icon: Icons.directions_walk,
+  );
+
+  static const commentsSection = TutorialContent(
+    title: 'Commentaires',
+    description: 'Retrouvez les avis des joueurs pour choisir les Escape Game selon vos affinités',
+    icon: Icons.comment,
+  );
+
+  static const reportButton = TutorialContent(
+    title: 'Vigilants ensemble',
+    description: 'Signalez les Escape Game qui contiendraient des informations inconvenantes',
+    icon: Icons.flag,
   );
 
   static const startButton = TutorialContent(

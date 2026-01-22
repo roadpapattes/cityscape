@@ -361,8 +361,9 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
   Future<List<CommentItem>>? _futureComments;
 
   // Tutorial Phase 3
-  final _imageKey = GlobalKey();
   final _itineraryKey = GlobalKey();
+  final _commentsKey = GlobalKey();
+  final _reportKey = GlobalKey();
   final _startKey = GlobalKey();
   bool _tutorialShown = false;
 
@@ -401,8 +402,9 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
       if (!mounted) return;
       TutorialController.instance.showEscapeDetailsTargets(
         context,
-        imageKey: _imageKey,
         itineraryKey: _itineraryKey,
+        commentsKey: _commentsKey,
+        reportKey: _reportKey,
         startKey: _startKey,
         onFinish: () {
           // Passer à la phase suivante (CreatorPage)
@@ -559,23 +561,20 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          // Image avec GlobalKey pour tutoriel
+          // Image de l'escape
           if (e.imageUrl != null && e.imageUrl!.isNotEmpty)
-            Container(
-              key: _imageKey,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  normalizeImageUrl(e.imageUrl, baseUrl),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                normalizeImageUrl(e.imageUrl, baseUrl),
+                height: 180,
+                width: double.infinity,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Container(
                   height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 180,
-                    color: Colors.grey.shade200,
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.image_not_supported_outlined),
-                  ),
+                  color: Colors.grey.shade200,
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.image_not_supported_outlined),
                 ),
               ),
             ),
@@ -676,42 +675,54 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
           ],
 
           const SizedBox(height: 16),
-          const Text('Derniers commentaires', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
 
-          FutureBuilder<List<CommentItem>>(
-            future: _futureComments,
-            builder: (ctx, snap) {
-              if (snap.connectionState != ConnectionState.done) {
-                return const SizedBox.shrink();
-              }
-              if (snap.hasError || (snap.data?.isEmpty ?? true)) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text('Pas encore de commentaires.'),
-                );
-              }
-              final items = snap.data!;
-              return Column(
-                children: [
-                  for (final c in items)
-                    ListTile(
-                      dense: true,
-                      leading: Text('★' * c.stars + '☆' * (5 - c.stars)),
-                      title: Text(c.user),
-                      subtitle: Text(c.comment),
-                    ),
-                ],
-              );
-            },
+          // Section commentaires avec GlobalKey pour tutoriel
+          Container(
+            key: _commentsKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Derniers commentaires', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                FutureBuilder<List<CommentItem>>(
+                  future: _futureComments,
+                  builder: (ctx, snap) {
+                    if (snap.connectionState != ConnectionState.done) {
+                      return const SizedBox.shrink();
+                    }
+                    if (snap.hasError || (snap.data?.isEmpty ?? true)) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Text('Pas encore de commentaires.'),
+                      );
+                    }
+                    final items = snap.data!;
+                    return Column(
+                      children: [
+                        for (final c in items)
+                          ListTile(
+                            dense: true,
+                            leading: Text('★' * c.stars + '☆' * (5 - c.stars)),
+                            title: Text(c.user),
+                            subtitle: Text(c.comment),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
 
-          // --- Signaler l'escape ---
-          OutlinedButton.icon(
-            icon: const Icon(Icons.flag_outlined),
-            label: const Text('Signaler cet escape'),
-            onPressed: () => _openReportSheet(context, e),
+          // Bouton Signaler avec GlobalKey pour tutoriel
+          Container(
+            key: _reportKey,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.flag_outlined),
+              label: const Text('Signaler cet escape'),
+              onPressed: () => _openReportSheet(context, e),
+            ),
           ),
           const SizedBox(height: 8),
 

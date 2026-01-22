@@ -109,31 +109,40 @@ class TutorialController extends ChangeNotifier {
   }
 
   /// Affiche les targets pour la page de détails (Phase 3)
+  /// Ordre: Itinéraire -> Commentaires -> Signaler -> Démarrer
   void showEscapeDetailsTargets(
     BuildContext context, {
-    required GlobalKey imageKey,
     required GlobalKey itineraryKey,
+    required GlobalKey commentsKey,
+    required GlobalKey reportKey,
     required GlobalKey startKey,
     required VoidCallback onFinish,
   }) {
     if (!_isActive || _currentPhase != TutorialPhase.escapeDetails) return;
 
     final targets = <TargetFocus>[
-      // Étape 3.1: Image
-      _createTarget(
-        key: imageKey,
-        content: TutorialContents.escapeImage,
-        context: context,
-        shape: ShapeLightFocus.RRect,
-      ),
-      // Étape 3.2: Bouton Itinéraire
+      // Étape 3.1: Bouton Itinéraire
       _createTarget(
         key: itineraryKey,
         content: TutorialContents.itineraryButton,
         context: context,
         shape: ShapeLightFocus.RRect,
       ),
-      // Étape 3.3: Bouton Démarrer
+      // Étape 3.2: Section Commentaires
+      _createTarget(
+        key: commentsKey,
+        content: TutorialContents.commentsSection,
+        context: context,
+        shape: ShapeLightFocus.RRect,
+      ),
+      // Étape 3.3: Bouton Signaler
+      _createTarget(
+        key: reportKey,
+        content: TutorialContents.reportButton,
+        context: context,
+        shape: ShapeLightFocus.RRect,
+      ),
+      // Étape 3.4: Bouton Démarrer
       _createTarget(
         key: startKey,
         content: TutorialContents.startButton,
@@ -163,6 +172,8 @@ class TutorialController extends ChangeNotifier {
         context: context,
         shape: ShapeLightFocus.Circle,
         contentAlign: ContentAlign.top,
+        radius: 12,
+        paddingFocus: 12,
       ),
     ];
 
@@ -179,6 +190,7 @@ class TutorialController extends ChangeNotifier {
     required GlobalKey createKey,
     required GlobalKey feedbackKey,
     required VoidCallback onFinish,
+    bool isLoggedIn = true,
   }) {
     if (!_isActive || _currentPhase != TutorialPhase.creatorPage) return;
 
@@ -186,42 +198,46 @@ class TutorialController extends ChangeNotifier {
     final screenHeight = MediaQuery.of(context).size.height;
     final bottomPosition = CustomTargetContentPosition(bottom: 80);
 
-    final targets = <TargetFocus>[
+    final targets = <TargetFocus>[];
+
+    // Si l'utilisateur est connecté, on montre les étapes normales
+    if (isLoggedIn) {
       // Étape 4.1: Liste des créations (focus réduit)
-      _createTarget(
+      targets.add(_createTarget(
         key: listKey,
         content: TutorialContents.creatorList,
         context: context,
         shape: ShapeLightFocus.RRect,
         contentAlign: ContentAlign.custom,
         customPosition: bottomPosition,  // Juste au-dessus du bouton Passer
-      ),
+      ));
       // Étape 4.2: Bouton nouveau brouillon
-      _createTarget(
+      targets.add(_createTarget(
         key: createKey,
         content: TutorialContents.createButton,
         context: context,
         shape: ShapeLightFocus.RRect,
         contentAlign: ContentAlign.bottom,
-      ),
+      ));
       // Étape 4.3: Bouton feedback
-      _createTarget(
+      targets.add(_createTarget(
         key: feedbackKey,
         content: TutorialContents.feedbackButton,
         context: context,
         shape: ShapeLightFocus.RRect,
         contentAlign: ContentAlign.top,
-      ),
-      // Message de fin
-      _createTarget(
-        key: GlobalKey(), // Placeholder - on affiche juste le message final
-        content: TutorialContents.tutorialComplete,
-        context: context,
-        shape: ShapeLightFocus.RRect,
-        contentAlign: ContentAlign.custom,
-        customPosition: CustomTargetContentPosition(top: screenHeight * 0.3),
-      ),
-    ];
+      ));
+    }
+
+    // Message de fin (toujours affiché)
+    targets.add(_createTarget(
+      key: GlobalKey(), // Placeholder - on affiche juste le message final
+      content: TutorialContents.tutorialComplete,
+      context: context,
+      shape: ShapeLightFocus.RRect,
+      contentAlign: ContentAlign.custom,
+      customPosition: CustomTargetContentPosition(top: screenHeight * 0.3),
+    ));
 
     _showTutorial(context, targets, onFinish: () {
       stopTutorial(markCompleted: true);
@@ -238,13 +254,15 @@ class TutorialController extends ChangeNotifier {
     Alignment alignSkip = Alignment.topRight,
     ContentAlign contentAlign = ContentAlign.bottom,
     CustomTargetContentPosition? customPosition,
+    double radius = 8,
+    double paddingFocus = 8,
   }) {
     return TargetFocus(
       identify: content.title,
       keyTarget: key,
       shape: shape,
-      radius: 8,
-      paddingFocus: 8,
+      radius: radius,
+      paddingFocus: paddingFocus,
       contents: [
         TargetContent(
           align: contentAlign,

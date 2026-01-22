@@ -100,6 +100,9 @@ class _CreatorPageState extends State<CreatorPage> {
 
     _tutorialShown = true;
 
+    // Vérifier si l'utilisateur est connecté
+    final token = AuthService.instance.tokenNotifier.value;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       TutorialController.instance.showCreatorTargets(
@@ -107,6 +110,7 @@ class _CreatorPageState extends State<CreatorPage> {
         listKey: _listKey,
         createKey: _createButtonKey,
         feedbackKey: _feedbackKey,
+        isLoggedIn: token != null,
         onFinish: () {
           // Tutoriel terminé !
         },

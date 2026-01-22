@@ -15,8 +15,8 @@ def app_config(_):
     Utilisé pour forcer les mises à jour.
     """
     return JsonResponse({
-        "min_version": "0.3.4",
-        "current_version": "0.3.4",
+        "min_version": "0.3.5",
+        "current_version": "0.3.5",
         "force_update": True,
         "update_message": "Une nouvelle version est disponible! Mettez à jour pour profiter des dernières fonctionnalités."
     })

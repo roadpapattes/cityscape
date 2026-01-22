@@ -138,8 +138,8 @@ class _MainHomeState extends State<MainHome> {
         identify: 'listTab',
         keyTarget: _listTabKey,
         shape: ShapeLightFocus.Circle,
-        radius: 8,
-        paddingFocus: 8,
+        radius: 12,
+        paddingFocus: 12,
         contents: [
           TargetContent(
             align: ContentAlign.top,

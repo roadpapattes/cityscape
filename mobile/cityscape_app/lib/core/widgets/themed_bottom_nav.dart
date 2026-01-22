@@ -54,15 +54,15 @@ class ThemedBottomNav extends StatelessWidget {
         elevation: 0,
         items: [
           BottomNavigationBarItem(
-            icon: Container(key: listTabKey, child: const Icon(Icons.view_list)),
+            icon: Container(key: listTabKey, child: const Icon(Icons.view_list, size: 28)),
             label: 'Liste',
           ),
           const BottomNavigationBarItem(
-            icon: Icon(Icons.map),
+            icon: Icon(Icons.map, size: 28),
             label: 'Carte',
           ),
           BottomNavigationBarItem(
-            icon: Container(key: creatorTabKey, child: const Icon(Icons.create)),
+            icon: Container(key: creatorTabKey, child: const Icon(Icons.create, size: 28)),
             label: 'Créer',
           ),
         ],
@@ -129,7 +129,7 @@ class ThemedBottomNav extends StatelessWidget {
 
   Widget _buildGamingIcon(IconData icon, bool isSelected) {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: isSelected
@@ -147,7 +147,7 @@ class ThemedBottomNav extends StatelessWidget {
               ]
             : null,
       ),
-      child: Icon(icon),
+      child: Icon(icon, size: 28),
     );
   }
 
@@ -204,7 +204,7 @@ class ThemedBottomNav extends StatelessWidget {
     final color = colors[index % colors.length];
 
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: isSelected ? color.withOpacity(0.15) : null,
@@ -215,7 +215,7 @@ class ThemedBottomNav extends StatelessWidget {
               )
             : null,
       ),
-      child: Icon(icon),
+      child: Icon(icon, size: 28),
     );
   }
 }
