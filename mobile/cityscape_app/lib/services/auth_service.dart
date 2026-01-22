@@ -18,6 +18,10 @@ class AuthService extends ChangeNotifier {
 
   Future<UserMe>? _meLoading; // <-- déduplication en cours
 
+  /// Indicates if the last successful login/register/google was a new user
+  bool _lastLoginWasNewUser = false;
+  bool get lastLoginWasNewUser => _lastLoginWasNewUser;
+
   Future<void> loadFromPrefs() async {
     final sp = await SharedPreferences.getInstance();
     tokenNotifier.value = sp.getString('auth_token');
@@ -47,7 +51,8 @@ class AuthService extends ChangeNotifier {
 
   bool get isAdmin => meNotifier.value?.isAdmin == true;
 
-Future<void> login(String username, String password) async {
+/// Login with username/password. Returns true if is_new_user (always false for login).
+Future<bool> login(String username, String password) async {
   final r = await http.post(
     Uri.parse('$baseUrl/api$kAuthPrefix/auth/login'),
     headers: {
@@ -67,15 +72,22 @@ Future<void> login(String username, String password) async {
     throw Exception('Token manquant');
   }
 
+  // Check if new user (should always be false for login)
+  final isNewUser = j['is_new_user'] as bool? ?? false;
+  _lastLoginWasNewUser = isNewUser;
+
   // 1) Sauvegarde immédiate -> l'UI considère qu'on est loggé
   await saveToken(token);
 
   // 2) Préchargement du profil en tâche de fond (sans bloquer, sans propager l'erreur)
   unawaited(ensureProfileLoaded().catchError((_) {}));
+
+  return isNewUser;
 }
 
 
-  Future<void> register(String username, String password, String? email) async {
+  /// Register new user. Returns true if is_new_user (always true for register).
+  Future<bool> register(String username, String password, String? email) async {
     final r = await http.post(
       Uri.parse('$baseUrl/api$kAuthPrefix/auth/register'),
       headers: {
@@ -95,9 +107,14 @@ Future<void> login(String username, String password) async {
     final token = j['token'] as String?;
     if (token == null || token.isEmpty) throw Exception('Token manquant');
 
+    // Check if new user (should always be true for register)
+    final isNewUser = j['is_new_user'] as bool? ?? true;
+    _lastLoginWasNewUser = isNewUser;
+
     await saveToken(token);
-    await ensureProfileLoaded();
-	unawaited(ensureProfileLoaded().catchError((_) {}));
+    unawaited(ensureProfileLoaded().catchError((_) {}));
+
+    return isNewUser;
   }
 
   Future<UserMe> fetchMe() {
@@ -144,7 +161,8 @@ Future<void> login(String username, String password) async {
     serverClientId: '622564437605-fludcb1jo2157oi7ejbg25jju9d6qeht.apps.googleusercontent.com',
   );
 
-  Future<void> signInWithGoogle() async {
+  /// Sign in with Google. Returns true if is_new_user.
+  Future<bool> signInWithGoogle() async {
     try {
       // Start Google Sign-In flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
@@ -180,11 +198,17 @@ Future<void> login(String username, String password) async {
           throw Exception('Token manquant dans la réponse');
         }
 
+        // Check if new user
+        final isNewUser = data['is_new_user'] as bool? ?? false;
+        _lastLoginWasNewUser = isNewUser;
+
         // Save token
         await saveToken(token);
 
         // Load user profile
-        await fetchMe();
+        unawaited(ensureProfileLoaded().catchError((_) {}));
+
+        return isNewUser;
       } else {
         final error = jsonDecode(utf8.decode(response.bodyBytes));
         throw Exception(error['error'] ?? 'Erreur d\'authentification Google');

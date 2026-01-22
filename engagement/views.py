@@ -52,7 +52,11 @@ class RegisterView(APIView):
             return Response({"detail": "Username already exists."}, status=400)
         user = User.objects.create_user(username=username, email=email, password=password)
         token, _ = Token.objects.get_or_create(user=user)
-        return Response({"token": token.key, "user": UserSerializer(user).data}, status=201)
+        return Response({
+            "token": token.key,
+            "user": UserSerializer(user).data,
+            "is_new_user": True,  # Always true for registration
+        }, status=201)
 
 @auth_rate_limit
 
@@ -68,7 +72,11 @@ class LoginView(APIView):
         if not user:
             return Response({"detail": "Invalid credentials."}, status=400)
         token, _ = Token.objects.get_or_create(user=user)
-        return Response({"token": token.key, "user": UserSerializer(user).data}, status=200)
+        return Response({
+            "token": token.key,
+            "user": UserSerializer(user).data,
+            "is_new_user": False,  # Always false for login (existing user)
+        }, status=200)
 
 
 class LogoutView(APIView):
@@ -1111,15 +1119,17 @@ class GoogleSignInView(APIView):
 
             User = get_user_model()
 
-            # Try to find user by email
-            user = User.objects.filter(email=email).first()
+            # Try to find user by email - check BEFORE any modification
+            existing_user = User.objects.filter(email=email).first()
+            is_new_user = existing_user is None
 
-            if user:
+            if existing_user:
                 # User exists, log them in
-                token, _ = Token.objects.get_or_create(user=user)
+                token, _ = Token.objects.get_or_create(user=existing_user)
                 return Response({
                     "token": token.key,
-                    "user": UserSerializer(user).data
+                    "user": UserSerializer(existing_user).data,
+                    "is_new_user": False,  # Existing user
                 }, status=status.HTTP_200_OK)
             else:
                 # Create new user
@@ -1146,7 +1156,8 @@ class GoogleSignInView(APIView):
 
                 return Response({
                     "token": token.key,
-                    "user": UserSerializer(user).data
+                    "user": UserSerializer(user).data,
+                    "is_new_user": True,  # New user created
                 }, status=status.HTTP_200_OK)  # Always 200 to prevent user enumeration
 
         except ValueError as e:

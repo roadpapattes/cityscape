@@ -7,9 +7,11 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../core/constants.dart';
 import '../../models/escape_game.dart';
 import '../../services/api/api_service.dart';
+import '../../services/auth_service.dart';
 import '../../services/version_check_service.dart';
 import '../../core/widgets/update_required_dialog.dart';
 import '../home/main_home.dart';
+import '../welcome/welcome_screen.dart';
 
 /// Splash screen with bootstrap loading.
 /// Handles initialization of the app including:
@@ -145,10 +147,24 @@ class _SplashBootstrapState extends State<SplashBootstrap> {
       }
 
       if (!mounted) return;
-      // 6) Open app (Map tab already selected in MainScaffold)
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainHome()),
-      );
+
+      // 6) Check if user is logged in to decide where to navigate
+      await AuthService.instance.loadFromPrefs();
+      final hasToken = AuthService.instance.tokenNotifier.value != null;
+
+      if (!mounted) return;
+
+      if (hasToken) {
+        // User is logged in -> go to MainHome
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainHome()),
+        );
+      } else {
+        // User is not logged in -> go to WelcomeScreen
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _status = 'Impossible de démarrer (${e.toString()}).');

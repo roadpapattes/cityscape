@@ -157,6 +157,11 @@ class _CreatorPageState extends State<CreatorPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Vérifier si on doit lancer le tutoriel Phase 4 (même sans connexion)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowTutorial();
+    });
+
     return ValueListenableBuilder<String?>(
       valueListenable: AuthService.instance.tokenNotifier,
       builder: (_, token, __) {
@@ -175,11 +180,6 @@ class _CreatorPageState extends State<CreatorPage> {
           });
           return const Center(child: CircularProgressIndicator());
         }
-
-        // Vérifier si on doit lancer le tutoriel Phase 5
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _checkAndShowTutorial();
-        });
 
         return Column(
           children: [

@@ -9,6 +9,7 @@ import '../../models/user_preferences.dart';
 import 'personal_info_page.dart';
 import 'change_password_page.dart';
 import '../home/main_home.dart';
+import '../welcome/welcome_screen.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -109,9 +110,10 @@ class _ProfilePageState extends State<ProfilePage> {
     if (confirm == true && mounted) {
       await _auth.logout();
       if (mounted) {
-        Navigator.of(context).pop(); // Retour à l'écran précédent
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Déconnecté avec succès')),
+        // Navigate to WelcomeScreen and clear navigation stack
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          (route) => false,
         );
       }
     }

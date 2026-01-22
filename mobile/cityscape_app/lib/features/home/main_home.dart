@@ -17,6 +17,7 @@ import '../auth/auth_page.dart';
 import '../profile/profile_page.dart';
 import '../tutorial/tutorial_controller.dart';
 import '../tutorial/tutorial_content.dart';
+import '../welcome/welcome_screen.dart';
 
 // Import core widgets
 import '../../core/widgets/themed_app_bar.dart';
@@ -218,8 +219,10 @@ class _MainHomeState extends State<MainHome> {
                 onPressed: () async {
                   await AuthService.instance.logout();
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Déconnecté')),
+                    // Navigate to WelcomeScreen and clear navigation stack
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                      (route) => false,
                     );
                   }
                 },
@@ -241,27 +244,7 @@ class _MainHomeState extends State<MainHome> {
               title: const _TitleWithUser(),
               actions: appBarActions,
             ),
-      body: Column(
-        children: [
-          ValueListenableBuilder<String?>(
-            valueListenable: AuthService.instance.tokenNotifier,
-            builder: (context, token, _) {
-              if (token != null) return const SizedBox.shrink();
-              return MaterialBanner(
-                content: const Text("Vous n'êtes pas connecté."),
-                leading: const Icon(Icons.person_outline),
-                actions: [
-                  TextButton(
-                    onPressed: () => _openAuthDialog(context),
-                    child: const Text('Se connecter'),
-                  ),
-                ],
-              );
-            },
-          ),
-          Expanded(child: pages[_tabIndex]),
-        ],
-      ),
+      body: pages[_tabIndex],
       bottomNavigationBar: Container(
         key: _bottomNavKey,
         child: useThemedUI

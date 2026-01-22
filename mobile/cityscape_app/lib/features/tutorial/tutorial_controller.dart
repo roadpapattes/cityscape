@@ -229,14 +229,23 @@ class TutorialController extends ChangeNotifier {
       ));
     }
 
-    // Message de fin (toujours affiché)
-    targets.add(_createTarget(
-      key: GlobalKey(), // Placeholder - on affiche juste le message final
-      content: TutorialContents.tutorialComplete,
-      context: context,
-      shape: ShapeLightFocus.RRect,
-      contentAlign: ContentAlign.custom,
-      customPosition: CustomTargetContentPosition(top: screenHeight * 0.3),
+    // Message de fin (toujours affiché) - sans cible, juste l'overlay avec le message
+    final screenWidth = MediaQuery.of(context).size.width;
+    targets.add(TargetFocus(
+      identify: TutorialContents.tutorialComplete.title,
+      targetPosition: TargetPosition(
+        const Size(0, 0),
+        Offset(screenWidth / 2, screenHeight * 0.3),
+      ),
+      shape: ShapeLightFocus.Circle,
+      radius: 0,
+      paddingFocus: 0,
+      contents: [
+        TargetContent(
+          align: ContentAlign.bottom,
+          builder: (context, controller) => TutorialContents.tutorialComplete.build(context),
+        ),
+      ],
     ));
 
     _showTutorial(context, targets, onFinish: () {
