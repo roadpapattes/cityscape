@@ -80,34 +80,34 @@ class TutorialContent {
 /// Contenus prédéfinis pour chaque étape du tutoriel
 class TutorialContents {
   // Phase 1: Navigation principale
-  static const listTab = TutorialContent(
-    title: 'Liste des Escapes',
-    description: 'Découvrez tous les escape games disponibles dans votre région. Parcourez, filtrez et trouvez votre prochaine aventure !',
-    icon: Icons.list_alt,
-  );
-
-  static const mapTab = TutorialContent(
-    title: 'Carte Interactive',
-    description: 'Visualisez les escapes proches de vous sur la carte. Trouvez facilement ceux à proximité !',
-    icon: Icons.map,
-  );
-
-  static const creatorTab = TutorialContent(
-    title: 'Mode Créateur',
-    description: 'Créez vos propres escape games et partagez-les avec la communauté !',
-    icon: Icons.edit_note,
+  static const navigation = TutorialContent(
+    title: 'Navigation',
+    description: 'Naviguez dans les différents menus pour trouver un escape game ou en créer un vous même !',
+    icon: Icons.menu,
   );
 
   static const profileButton = TutorialContent(
-    title: 'Votre Profil',
-    description: 'Accédez à votre profil, vos favoris et vos paramètres.',
+    title: 'Votre profil',
+    description: 'Accédez à votre profil, changez de thème ou modifiez vos informations personnelles',
     icon: Icons.account_circle,
   );
 
-  // Phase 2: Exploration
+  static const listTab = TutorialContent(
+    title: 'Liste des Escape Game',
+    description: 'Accédez à la liste complète des Escape Game',
+    icon: Icons.list_alt,
+  );
+
+  // Phase 2: Liste des escapes
+  static const searchAndFilter = TutorialContent(
+    title: 'Triez, recherchez',
+    description: 'Trouvez les Escape Game les mieux notés ou ceux dans votre ville. Ajoutez des favoris pour les retrouver facilement plus tard.',
+    icon: Icons.search,
+  );
+
   static const escapeCard = TutorialContent(
-    title: 'Carte d\'Escape',
-    description: 'Chaque carte représente un escape game. Cliquez dessus pour voir ses détails !',
+    title: 'L\'Escape Game en un coup d\'oeil',
+    description: 'Retrouvez ici le titre de l\'Escape Game, sa durée estimée ou encore la note moyenne attribuée par les joueurs. Cliquez dessus pour voir les détails et lancer une partie !',
     icon: Icons.games,
   );
 
@@ -118,60 +118,41 @@ class TutorialContents {
     icon: Icons.image,
   );
 
-  static const escapeDuration = TutorialContent(
-    title: 'Durée & Difficulté',
-    description: 'Consultez le temps estimé et le niveau de difficulté avant de vous lancer.',
-    icon: Icons.timer,
+  static const itineraryButton = TutorialContent(
+    title: 'Rejoignez le point de départ',
+    description: 'Suivez l\'itinéraire proposé pour vous rendre au point de départ et démarrer votre aventure',
+    icon: Icons.directions_walk,
   );
 
   static const startButton = TutorialContent(
-    title: 'Démarrer l\'Aventure',
-    description: 'Prêt ? Cliquez ici pour commencer votre escape game !',
+    title: 'Démarrez l\'aventure',
+    description: 'Prêt ? Cliquez ici pour commencer votre escape game',
     icon: Icons.play_arrow,
   );
 
-  // Phase 4: En jeu
-  static const timer = TutorialContent(
-    title: 'Chronomètre',
-    description: 'Votre temps de jeu est comptabilisé ici. Le temps continue même si vous quittez l\'app !',
-    icon: Icons.access_time,
+  static const creatorTab = TutorialContent(
+    title: 'Vous préférez créer votre Escape Game ?',
+    description: 'Rendez-vous dans le menu créateur, concevez votre propre Escape Game et soumettez le pour modération.',
+    icon: Icons.edit_note,
   );
 
-  static const hintButton = TutorialContent(
-    title: 'Indices',
-    description: 'Besoin d\'aide ? Utilisez un indice, mais attention aux pénalités de temps !',
-    icon: Icons.lightbulb_outline,
-  );
-
-  static const historyButton = TutorialContent(
-    title: 'Historique',
-    description: 'Consultez les étapes déjà complétées et revivez votre progression.',
-    icon: Icons.history,
-  );
-
-  static const answerZone = TutorialContent(
-    title: 'Zone de Réponse',
-    description: 'Entrez votre réponse ici pour valider l\'étape et progresser.',
-    icon: Icons.edit,
-  );
-
-  static const progression = TutorialContent(
-    title: 'Progression',
-    description: 'Suivez votre avancement dans l\'escape. Chaque étape vous rapproche de la victoire !',
-    icon: Icons.linear_scale,
-  );
-
-  // Phase 5: Mode Créateur
+  // Phase 4: Mode Créateur
   static const creatorList = TutorialContent(
-    title: 'Mes Créations',
-    description: 'Retrouvez tous vos escape games créés ici. Modifiez-les ou suivez leur popularité !',
+    title: 'Vos créations',
+    description: 'Retrouvez ici les Escape Game que vous avez créé, modifiez les puis soumettez les',
     icon: Icons.folder,
   );
 
   static const createButton = TutorialContent(
-    title: 'Créer un Escape',
-    description: 'Commencez à créer votre propre escape game et partagez-le !',
+    title: 'Créer un Escape Game',
+    description: 'Commencez à créer votre propre Escape Game et partagez le juste avec vos amis ou avec le monde entier !',
     icon: Icons.add_circle,
+  );
+
+  static const feedbackButton = TutorialContent(
+    title: 'Partagez vos suggestions',
+    description: 'Aidez-nous à améliorer l\'application en envoyant vos suggestions ou les bugs que vous pourriez rencontrer',
+    icon: Icons.bug_report,
   );
 
   // Fin

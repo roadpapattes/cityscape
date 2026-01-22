@@ -362,7 +362,7 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
 
   // Tutorial Phase 3
   final _imageKey = GlobalKey();
-  final _durationKey = GlobalKey();
+  final _itineraryKey = GlobalKey();
   final _startKey = GlobalKey();
   bool _tutorialShown = false;
 
@@ -402,7 +402,7 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
       TutorialController.instance.showEscapeDetailsTargets(
         context,
         imageKey: _imageKey,
-        durationKey: _durationKey,
+        itineraryKey: _itineraryKey,
         startKey: _startKey,
         onFinish: () {
           // Passer à la phase suivante (CreatorPage)
@@ -587,9 +587,8 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
           ),
           const SizedBox(height: 12),
 
-          // Infos avec GlobalKey pour tutoriel (durée/difficulté)
+          // Infos (durée/difficulté)
           ListTile(
-            key: _durationKey,
             leading: const Icon(Icons.location_city),
             title: Text(e.city),
             subtitle: Text(
@@ -646,11 +645,14 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
                 ),
               ),
               const SizedBox(width: 12),
-              // Bouton Itinéraire
-              OutlinedButton.icon(
-                icon: const Icon(Icons.directions_walk),
-                label: const Text('Itinéraire'),
-                onPressed: _openDirections,
+              // Bouton Itinéraire avec GlobalKey pour tutoriel
+              Container(
+                key: _itineraryKey,
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.directions_walk),
+                  label: const Text('Itinéraire'),
+                  onPressed: _openDirections,
+                ),
               ),
             ],
           ),
@@ -798,14 +800,6 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
   int? _selA; // index original dans _matchLeft
   int? _selB; // index original dans _matchRight
 
-  // Tutorial Phase 4 (optionnel - non utilisé dans le flux actuel)
-  final _timerKey = GlobalKey();
-  final _hintKey = GlobalKey();
-  final _historyKey = GlobalKey();
-  final _answerKey = GlobalKey();
-  final _progressKey = GlobalKey();
-  bool _tutorialShown = false;
-
   // ---------- Helpers ----------
   int? _asInt(dynamic v) {
     if (v == null) return null;
@@ -817,7 +811,6 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
   void initState() {
     super.initState();
     _loadState();
-    TutorialController.instance.addListener(_onTutorialChanged);
   }
 
   @override
@@ -825,36 +818,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
     // Synchroniser le temps de jeu avec le serveur quand on quitte la page
     _syncTimeOnExit();
     _answerCtrl.dispose();
-    TutorialController.instance.removeListener(_onTutorialChanged);
     super.dispose();
-  }
-
-  void _onTutorialChanged() {
-    if (mounted) setState(() {});
-  }
-
-  /// Lance le tutoriel Phase 4 si conditions remplies
-  void _checkAndShowTutorial() {
-    if (_tutorialShown) return;
-    if (!TutorialController.instance.isActive) return;
-    if (TutorialController.instance.currentPhase != TutorialPhase.sessionPlayer) return;
-
-    _tutorialShown = true;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      TutorialController.instance.showSessionPlayerTargets(
-        context,
-        timerKey: _timerKey,
-        hintKey: _hintKey,
-        historyKey: _historyKey,
-        answerKey: _answerKey,
-        progressKey: _progressKey,
-        onFinish: () {
-          // La phase suivante sera CreatorPage
-        },
-      );
-    });
   }
 
   /// Synchronise le temps de la session courante avec le serveur (fire-and-forget)
@@ -1155,8 +1119,6 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
   } finally {
     if (mounted) {
       setState(() => _loading = false);
-      // Vérifier si on doit lancer le tutoriel Phase 4
-      _checkAndShowTutorial();
     }
   }
 }

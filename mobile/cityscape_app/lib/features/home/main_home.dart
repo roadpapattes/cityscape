@@ -37,9 +37,12 @@ class _MainHomeState extends State<MainHome> {
   int _tabIndex = 1;
   final _prefs = PreferencesService.instance;
 
-  // GlobalKeys pour le tutoriel
+  // GlobalKeys pour le tutoriel Phase 1 et Phase 3.5
   final _bottomNavKey = GlobalKey();
   final _profileButtonKey = GlobalKey();
+  final _listTabKey = GlobalKey();
+  final _creatorTabKey = GlobalKey();
+  bool _creatorTabTutorialShown = false;
 
   @override
   void initState() {
@@ -69,7 +72,24 @@ class _MainHomeState extends State<MainHome> {
   void _onTutorialPhaseChanged() {
     if (!mounted) return;
     final phase = TutorialController.instance.currentPhase;
-    if (phase == TutorialPhase.creatorPage && _tabIndex != 2) {
+
+    // Phase 3.5: Focus sur le bouton Créateur
+    if (phase == TutorialPhase.creatorTabFocus && !_creatorTabTutorialShown) {
+      _creatorTabTutorialShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        TutorialController.instance.showCreatorTabTarget(
+          context,
+          creatorTabKey: _creatorTabKey,
+          onFinish: () {
+            // Aller à l'onglet Créateur
+            setState(() => _tabIndex = 2);
+          },
+        );
+      });
+    }
+    // Phase 4: Page Créateur
+    else if (phase == TutorialPhase.creatorPage && _tabIndex != 2) {
       // Aller automatiquement à l'onglet Créateur
       setState(() => _tabIndex = 2);
     }
@@ -85,7 +105,7 @@ class _MainHomeState extends State<MainHome> {
   /// Lance le tutoriel interactif
   void _startTutorial() {
     final targets = <TargetFocus>[
-      // Bottom Navigation - Vue d'ensemble
+      // Étape 1.1: Bottom Navigation - Vue d'ensemble
       TargetFocus(
         identify: 'bottomNav',
         keyTarget: _bottomNavKey,
@@ -95,11 +115,11 @@ class _MainHomeState extends State<MainHome> {
         contents: [
           TargetContent(
             align: ContentAlign.top,
-            builder: (context, controller) => TutorialContents.listTab.build(context),
+            builder: (context, controller) => TutorialContents.navigation.build(context),
           ),
         ],
       ),
-      // Profil button
+      // Étape 1.2: Profil button
       TargetFocus(
         identify: 'profile',
         keyTarget: _profileButtonKey,
@@ -113,6 +133,20 @@ class _MainHomeState extends State<MainHome> {
           ),
         ],
       ),
+      // Étape 1.3: Bouton Liste (ciblage en cercle)
+      TargetFocus(
+        identify: 'listTab',
+        keyTarget: _listTabKey,
+        shape: ShapeLightFocus.Circle,
+        radius: 8,
+        paddingFocus: 8,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            builder: (context, controller) => TutorialContents.listTab.build(context),
+          ),
+        ],
+      ),
     ];
 
     TutorialCoachMark(
@@ -122,6 +156,12 @@ class _MainHomeState extends State<MainHome> {
       hideSkip: false,
       textSkip: 'Passer',
       paddingFocus: 10,
+      onClickTarget: (target) {
+        // Si l'utilisateur clique sur le bouton Liste, on navigue vers la liste
+        if (target.identify == 'listTab') {
+          setState(() => _tabIndex = 0);
+        }
+      },
       onSkip: () {
         TutorialService.instance.markTutorialCompleted();
         return true;
@@ -229,17 +269,21 @@ class _MainHomeState extends State<MainHome> {
                 currentIndex: _tabIndex,
                 onTap: (i) => setState(() => _tabIndex = i),
                 style: style,
+                listTabKey: _listTabKey,
+                creatorTabKey: _creatorTabKey,
               )
             : NavigationBar(
                 selectedIndex: _tabIndex,
                 onDestinationSelected: (i) => setState(() => _tabIndex = i),
-                destinations: const [
+                destinations: [
                   NavigationDestination(
-                      icon: Icon(Icons.list_alt), label: 'Liste'),
-                  NavigationDestination(
+                      key: _listTabKey,
+                      icon: const Icon(Icons.list_alt), label: 'Liste'),
+                  const NavigationDestination(
                       icon: Icon(Icons.map_outlined), label: 'Carte'),
                   NavigationDestination(
-                      icon: Icon(Icons.edit_note_outlined), label: 'Créateur'),
+                      key: _creatorTabKey,
+                      icon: const Icon(Icons.edit_note_outlined), label: 'Créateur'),
                 ],
               ),
       ),

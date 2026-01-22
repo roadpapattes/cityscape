@@ -47,6 +47,7 @@ class _ListPageState extends State<ListPage> {
   bool _loading = true;
 
   // Tutorial Phase 2
+  final _searchFilterKey = GlobalKey();
   final _firstCardKey = GlobalKey();
   bool _tutorialShown = false;
 
@@ -89,8 +90,9 @@ class _ListPageState extends State<ListPage> {
     // Attendre que le widget soit rendu
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      TutorialController.instance.showEscapeCardTarget(
+      TutorialController.instance.showEscapeListTargets(
         context,
+        searchFilterKey: _searchFilterKey,
         cardKey: _firstCardKey,
         onFinish: () {
           // Naviguer vers la page de détails du premier escape
@@ -250,70 +252,73 @@ class _ListPageState extends State<ListPage> {
   Widget _buildListHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Escapes',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const Spacer(),
-              DropdownButton<SortMode>(
-                value: _sort,
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() {
-                    _sort = v;
-                    _items = _applyFiltersAndSort(_all);
-                  });
-                },
-                items: [
-                  const DropdownMenuItem(
-                    value: SortMode.rating,
-                    child: Text('Par note'),
-                  ),
-                  DropdownMenuItem(
-                    value: SortMode.distance,
-                    enabled: _pos != null,
-                    child: const Text('Par distance'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchCtrl,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search),
-                    hintText: 'Rechercher (titre, ville)',
-                    isDense: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        key: _searchFilterKey,
+        child: Column(
+          children: [
+            Row(
+              children: [
+                const Text(
+                  'Escapes',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                DropdownButton<SortMode>(
+                  value: _sort,
+                  onChanged: (v) {
+                    if (v == null) return;
+                    setState(() {
+                      _sort = v;
+                      _items = _applyFiltersAndSort(_all);
+                    });
+                  },
+                  items: [
+                    const DropdownMenuItem(
+                      value: SortMode.rating,
+                      child: Text('Par note'),
                     ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    DropdownMenuItem(
+                      value: SortMode.distance,
+                      enabled: _pos != null,
+                      child: const Text('Par distance'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchCtrl,
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
+                      hintText: 'Rechercher (titre, ville)',
+                      isDense: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              FilterChip(
-                selected: _favOnly,
-                label: const Text('Favoris'),
-                onSelected: (v) {
-                  setState(() {
-                    _favOnly = v;
-                    _items = _applyFiltersAndSort(_all);
-                  });
-                },
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 8),
+                FilterChip(
+                  selected: _favOnly,
+                  label: const Text('Favoris'),
+                  onSelected: (v) {
+                    setState(() {
+                      _favOnly = v;
+                      _items = _applyFiltersAndSort(_all);
+                    });
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

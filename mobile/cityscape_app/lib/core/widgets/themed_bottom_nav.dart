@@ -6,12 +6,16 @@ class ThemedBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
   final ListCardStyle style;
+  final GlobalKey? listTabKey;
+  final GlobalKey? creatorTabKey;
 
   const ThemedBottomNav({
     super.key,
     required this.currentIndex,
     required this.onTap,
     required this.style,
+    this.listTabKey,
+    this.creatorTabKey,
   });
 
   @override
@@ -48,17 +52,17 @@ class ThemedBottomNav extends StatelessWidget {
         selectedFontSize: 12,
         unselectedFontSize: 11,
         elevation: 0,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.view_list),
+            icon: Container(key: listTabKey, child: const Icon(Icons.view_list)),
             label: 'Liste',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.map),
             label: 'Carte',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.create),
+            icon: Container(key: creatorTabKey, child: const Icon(Icons.create)),
             label: 'Créer',
           ),
         ],
@@ -107,7 +111,7 @@ class ThemedBottomNav extends StatelessWidget {
         ),
         items: [
           BottomNavigationBarItem(
-            icon: _buildGamingIcon(Icons.view_list, currentIndex == 0),
+            icon: Container(key: listTabKey, child: _buildGamingIcon(Icons.view_list, currentIndex == 0)),
             label: 'LISTE',
           ),
           BottomNavigationBarItem(
@@ -115,7 +119,7 @@ class ThemedBottomNav extends StatelessWidget {
             label: 'CARTE',
           ),
           BottomNavigationBarItem(
-            icon: _buildGamingIcon(Icons.create, currentIndex == 2),
+            icon: Container(key: creatorTabKey, child: _buildGamingIcon(Icons.create, currentIndex == 2)),
             label: 'CRÉER',
           ),
         ],
@@ -175,7 +179,7 @@ class ThemedBottomNav extends StatelessWidget {
         ),
         items: [
           BottomNavigationBarItem(
-            icon: _buildPlayfulIcon(Icons.view_list, currentIndex == 0, 0),
+            icon: Container(key: listTabKey, child: _buildPlayfulIcon(Icons.view_list, currentIndex == 0, 0)),
             label: 'Liste',
           ),
           BottomNavigationBarItem(
@@ -183,7 +187,7 @@ class ThemedBottomNav extends StatelessWidget {
             label: 'Carte',
           ),
           BottomNavigationBarItem(
-            icon: _buildPlayfulIcon(Icons.create, currentIndex == 2, 2),
+            icon: Container(key: creatorTabKey, child: _buildPlayfulIcon(Icons.create, currentIndex == 2, 2)),
             label: 'Créer',
           ),
         ],

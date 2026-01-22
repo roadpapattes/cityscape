@@ -7,12 +7,12 @@ import 'tutorial_content.dart';
 
 /// Les différentes phases du tutoriel
 enum TutorialPhase {
-  mainHome,      // Phase 1: Navigation principale
-  escapeList,    // Phase 2: Liste des escapes (clic sur une carte)
-  escapeDetails, // Phase 3: Détails d'un escape
-  sessionPlayer, // Phase 4: En jeu
-  creatorPage,   // Phase 5: Mode créateur
-  completed,     // Terminé
+  mainHome,        // Phase 1: Navigation principale
+  escapeList,      // Phase 2: Liste des escapes (clic sur une carte)
+  escapeDetails,   // Phase 3: Détails d'un escape
+  creatorTabFocus, // Phase 3.5: Focus sur le bouton Créateur (après détails)
+  creatorPage,     // Phase 4: Mode créateur
+  completed,       // Terminé
 }
 
 /// Controller global pour gérer le tutoriel multi-pages
@@ -61,9 +61,9 @@ class TutorialController extends ChangeNotifier {
         _currentPhase = TutorialPhase.escapeDetails;
         break;
       case TutorialPhase.escapeDetails:
-        _currentPhase = TutorialPhase.creatorPage;
+        _currentPhase = TutorialPhase.creatorTabFocus;
         break;
-      case TutorialPhase.sessionPlayer:
+      case TutorialPhase.creatorTabFocus:
         _currentPhase = TutorialPhase.creatorPage;
         break;
       case TutorialPhase.creatorPage:
@@ -76,59 +76,24 @@ class TutorialController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Affiche les targets pour la phase MainHome
-  void showMainHomeTargets(
+  /// Affiche les targets pour la page liste (Phase 2)
+  void showEscapeListTargets(
     BuildContext context, {
-    required GlobalKey listTabKey,
-    required GlobalKey mapTabKey,
-    required GlobalKey creatorTabKey,
-    required GlobalKey profileKey,
-    required VoidCallback onFinish,
-  }) {
-    if (!_isActive || _currentPhase != TutorialPhase.mainHome) return;
-
-    final targets = <TargetFocus>[
-      _createTarget(
-        key: listTabKey,
-        content: TutorialContents.listTab,
-        context: context,
-        shape: ShapeLightFocus.RRect,
-      ),
-      _createTarget(
-        key: mapTabKey,
-        content: TutorialContents.mapTab,
-        context: context,
-        shape: ShapeLightFocus.RRect,
-      ),
-      _createTarget(
-        key: creatorTabKey,
-        content: TutorialContents.creatorTab,
-        context: context,
-        shape: ShapeLightFocus.RRect,
-      ),
-      _createTarget(
-        key: profileKey,
-        content: TutorialContents.profileButton,
-        context: context,
-        shape: ShapeLightFocus.Circle,
-      ),
-    ];
-
-    _showTutorial(context, targets, onFinish: () {
-      nextPhase();
-      onFinish();
-    });
-  }
-
-  /// Affiche le target pour la carte d'escape (Phase 2)
-  void showEscapeCardTarget(
-    BuildContext context, {
+    required GlobalKey searchFilterKey,
     required GlobalKey cardKey,
     required VoidCallback onFinish,
   }) {
     if (!_isActive || _currentPhase != TutorialPhase.escapeList) return;
 
     final targets = <TargetFocus>[
+      // Étape 2.1: Zone de recherche et tri
+      _createTarget(
+        key: searchFilterKey,
+        content: TutorialContents.searchAndFilter,
+        context: context,
+        shape: ShapeLightFocus.RRect,
+      ),
+      // Étape 2.2: Carte d'escape
       _createTarget(
         key: cardKey,
         content: TutorialContents.escapeCard,
@@ -147,25 +112,28 @@ class TutorialController extends ChangeNotifier {
   void showEscapeDetailsTargets(
     BuildContext context, {
     required GlobalKey imageKey,
-    required GlobalKey durationKey,
+    required GlobalKey itineraryKey,
     required GlobalKey startKey,
     required VoidCallback onFinish,
   }) {
     if (!_isActive || _currentPhase != TutorialPhase.escapeDetails) return;
 
     final targets = <TargetFocus>[
+      // Étape 3.1: Image
       _createTarget(
         key: imageKey,
         content: TutorialContents.escapeImage,
         context: context,
         shape: ShapeLightFocus.RRect,
       ),
+      // Étape 3.2: Bouton Itinéraire
       _createTarget(
-        key: durationKey,
-        content: TutorialContents.escapeDuration,
+        key: itineraryKey,
+        content: TutorialContents.itineraryButton,
         context: context,
         shape: ShapeLightFocus.RRect,
       ),
+      // Étape 3.3: Bouton Démarrer
       _createTarget(
         key: startKey,
         content: TutorialContents.startButton,
@@ -180,48 +148,21 @@ class TutorialController extends ChangeNotifier {
     });
   }
 
-  /// Affiche les targets pour la page de jeu (Phase 4)
-  void showSessionPlayerTargets(
+  /// Affiche le target pour le bouton créateur (après Phase 3, avant Phase 4)
+  void showCreatorTabTarget(
     BuildContext context, {
-    required GlobalKey timerKey,
-    required GlobalKey hintKey,
-    required GlobalKey historyKey,
-    required GlobalKey answerKey,
-    required GlobalKey progressKey,
+    required GlobalKey creatorTabKey,
     required VoidCallback onFinish,
   }) {
-    if (!_isActive || _currentPhase != TutorialPhase.sessionPlayer) return;
+    if (!_isActive || _currentPhase != TutorialPhase.creatorTabFocus) return;
 
     final targets = <TargetFocus>[
       _createTarget(
-        key: timerKey,
-        content: TutorialContents.timer,
-        context: context,
-        shape: ShapeLightFocus.RRect,
-      ),
-      _createTarget(
-        key: hintKey,
-        content: TutorialContents.hintButton,
+        key: creatorTabKey,
+        content: TutorialContents.creatorTab,
         context: context,
         shape: ShapeLightFocus.Circle,
-      ),
-      _createTarget(
-        key: historyKey,
-        content: TutorialContents.historyButton,
-        context: context,
-        shape: ShapeLightFocus.Circle,
-      ),
-      _createTarget(
-        key: answerKey,
-        content: TutorialContents.answerZone,
-        context: context,
-        shape: ShapeLightFocus.RRect,
-      ),
-      _createTarget(
-        key: progressKey,
-        content: TutorialContents.progression,
-        context: context,
-        shape: ShapeLightFocus.RRect,
+        contentAlign: ContentAlign.top,
       ),
     ];
 
@@ -231,42 +172,54 @@ class TutorialController extends ChangeNotifier {
     });
   }
 
-  /// Affiche les targets pour la page créateur (Phase 5)
+  /// Affiche les targets pour la page créateur (Phase 4 finale)
   void showCreatorTargets(
     BuildContext context, {
     required GlobalKey listKey,
     required GlobalKey createKey,
+    required GlobalKey feedbackKey,
     required VoidCallback onFinish,
   }) {
     if (!_isActive || _currentPhase != TutorialPhase.creatorPage) return;
 
-    // Position centrale pour les contenus custom
+    // Position juste au-dessus du bouton "Passer" en bas à droite
     final screenHeight = MediaQuery.of(context).size.height;
-    final centerPosition = CustomTargetContentPosition(top: screenHeight * 0.3);
+    final bottomPosition = CustomTargetContentPosition(bottom: 80);
 
     final targets = <TargetFocus>[
+      // Étape 4.1: Liste des créations (focus réduit)
       _createTarget(
         key: listKey,
         content: TutorialContents.creatorList,
         context: context,
         shape: ShapeLightFocus.RRect,
         contentAlign: ContentAlign.custom,
-        customPosition: centerPosition,  // Position centrée sur l'écran
+        customPosition: bottomPosition,  // Juste au-dessus du bouton Passer
       ),
+      // Étape 4.2: Bouton nouveau brouillon
       _createTarget(
         key: createKey,
         content: TutorialContents.createButton,
         context: context,
-        shape: ShapeLightFocus.Circle,
-        contentAlign: ContentAlign.bottom,  // Bouton en haut, donc contenu en dessous
+        shape: ShapeLightFocus.RRect,
+        contentAlign: ContentAlign.bottom,
       ),
+      // Étape 4.3: Bouton feedback
+      _createTarget(
+        key: feedbackKey,
+        content: TutorialContents.feedbackButton,
+        context: context,
+        shape: ShapeLightFocus.RRect,
+        contentAlign: ContentAlign.top,
+      ),
+      // Message de fin
       _createTarget(
         key: GlobalKey(), // Placeholder - on affiche juste le message final
         content: TutorialContents.tutorialComplete,
         context: context,
         shape: ShapeLightFocus.RRect,
         contentAlign: ContentAlign.custom,
-        customPosition: centerPosition,
+        customPosition: CustomTargetContentPosition(top: screenHeight * 0.3),
       ),
     ];
 

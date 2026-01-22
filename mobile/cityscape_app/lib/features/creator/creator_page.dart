@@ -43,9 +43,10 @@ class _CreatorPageState extends State<CreatorPage> {
 
   late final VoidCallback _onTokenChanged;
 
-  // Tutorial Phase 5
+  // Tutorial Phase 4
   final _listKey = GlobalKey();
   final _createButtonKey = GlobalKey();
+  final _feedbackKey = GlobalKey();
   bool _tutorialShown = false;
 
   @override
@@ -91,7 +92,7 @@ class _CreatorPageState extends State<CreatorPage> {
     }
   }
 
-  /// Lance le tutoriel Phase 5 si conditions remplies
+  /// Lance le tutoriel Phase 4 si conditions remplies
   void _checkAndShowTutorial() {
     if (_tutorialShown) return;
     if (!TutorialController.instance.isActive) return;
@@ -105,6 +106,7 @@ class _CreatorPageState extends State<CreatorPage> {
         context,
         listKey: _listKey,
         createKey: _createButtonKey,
+        feedbackKey: _feedbackKey,
         onFinish: () {
           // Tutoriel terminé !
         },
@@ -250,105 +252,121 @@ class _CreatorPageState extends State<CreatorPage> {
                 ),
               ),
 
-            // Liste (avec GlobalKey pour tutoriel)
+            // Liste (avec GlobalKey pour tutoriel - focus sur une partie de la zone)
             Expanded(
-              key: _listKey,
-              child: FutureBuilder<List<EscapeGame>>(
-                future: _future,
-                builder: (ctx, snap) {
-                  if (snap.connectionState != ConnectionState.done) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snap.hasError) {
-                    return Center(child: Text('Erreur: ${snap.error}'));
-                  }
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Stack(
+                    children: [
+                      // Zone de focus pour le tutoriel (moitié supérieure)
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: constraints.maxHeight * 0.5,
+                        child: Container(key: _listKey),
+                      ),
+                      // Liste réelle
+                      FutureBuilder<List<EscapeGame>>(
+                        future: _future,
+                        builder: (ctx, snap) {
+                          if (snap.connectionState != ConnectionState.done) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          if (snap.hasError) {
+                            return Center(child: Text('Erreur: ${snap.error}'));
+                          }
 
-                  var items = snap.data ?? [];
+                          var items = snap.data ?? [];
 
-                  // Filtrage complémentaire côté client pour admin quand _statusFilter != 'all'
-                  if (_isAdmin && _statusFilter != 'all') {
-                    items = items.where((e) => e.status == _statusFilter).toList();
-                  }
+                          // Filtrage complémentaire côté client pour admin quand _statusFilter != 'all'
+                          if (_isAdmin && _statusFilter != 'all') {
+                            items = items.where((e) => e.status == _statusFilter).toList();
+                          }
 
-                  if (items.isEmpty) {
-                    return const Center(child: Text('Aucun escape.'));
-                  }
+                          if (items.isEmpty) {
+                            return const Center(child: Text('Aucun escape.'));
+                          }
 
-                  return RefreshIndicator(
-                    onRefresh: () async => _reload(),
-                    child: ListView.separated(
-                      itemCount: items.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (_, i) {
-                        final e = items[i];
+                          return RefreshIndicator(
+                            onRefresh: () async => _reload(),
+                            child: ListView.separated(
+                              itemCount: items.length,
+                              separatorBuilder: (_, __) => const Divider(height: 1),
+                              itemBuilder: (_, i) {
+                                final e = items[i];
 
-                        final human = ({
-                          'draft': 'Brouillon',
-                          'submitted': 'Soumis',
-                          'published': 'Publié',
-                          'rejected': 'Rejeté',
-                        }[e.status]) ?? e.status;
+                                final human = ({
+                                  'draft': 'Brouillon',
+                                  'submitted': 'Soumis',
+                                  'published': 'Publié',
+                                  'rejected': 'Rejeté',
+                                }[e.status]) ?? e.status;
 
-                        return ListTile(
-                          title: Text(e.title),
-                          subtitle: Text('${e.city} • durée ${e.durationMinutes} min • statut: $human'),
-                          onTap: () async {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => EscapeEditorPage(escape: e)),
-                            );
-                            _reload();
-                          },
-                          trailing: _isAdmin
-                              ? AdminActions(
-                                  escape: e,
-                                  roleKnown: _roleKnown,
-                                  isAdmin: _isAdmin,
-                                  onReload: _reload,
-                                )
-                              : (e.status == 'draft'
-                                  ? FilledButton.icon(
-                                      icon: const Icon(Icons.send_outlined),
-                                      label: const Text('Soumettre'),
-                                      onPressed: () async {
-                                        final ok = await showDialog<bool>(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title: const Text('Soumettre cet escape ?'),
-                                            content: const Text(
-                                              'Il passera en "Soumis" et ne sera plus modifiable jusqu\'à décision.',
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(context, false),
-                                                child: const Text('Annuler'),
-                                              ),
-                                              FilledButton(
-                                                onPressed: () => Navigator.pop(context, true),
-                                                child: const Text('Soumettre'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                        if (ok != true) return;
-                                        try {
-                                          await _api.submitEscape(e.id);
-                                          if (!context.mounted) return;
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Soumis pour approbation')),
-                                          );
-                                          _reload();
-                                        } catch (err) {
-                                          if (!context.mounted) return;
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Erreur: $err')),
-                                          );
-                                        }
-                                      },
-                                    )
-                                  : null),
-                        );
-                      },
-                    ),
+                                return ListTile(
+                                  title: Text(e.title),
+                                  subtitle: Text('${e.city} • durée ${e.durationMinutes} min • statut: $human'),
+                                  onTap: () async {
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(builder: (_) => EscapeEditorPage(escape: e)),
+                                    );
+                                    _reload();
+                                  },
+                                  trailing: _isAdmin
+                                      ? AdminActions(
+                                          escape: e,
+                                          roleKnown: _roleKnown,
+                                          isAdmin: _isAdmin,
+                                          onReload: _reload,
+                                        )
+                                      : (e.status == 'draft'
+                                          ? FilledButton.icon(
+                                              icon: const Icon(Icons.send_outlined),
+                                              label: const Text('Soumettre'),
+                                              onPressed: () async {
+                                                final ok = await showDialog<bool>(
+                                                  context: context,
+                                                  builder: (_) => AlertDialog(
+                                                    title: const Text('Soumettre cet escape ?'),
+                                                    content: const Text(
+                                                      'Il passera en "Soumis" et ne sera plus modifiable jusqu\'à décision.',
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () => Navigator.pop(context, false),
+                                                        child: const Text('Annuler'),
+                                                      ),
+                                                      FilledButton(
+                                                        onPressed: () => Navigator.pop(context, true),
+                                                        child: const Text('Soumettre'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                                if (ok != true) return;
+                                                try {
+                                                  await _api.submitEscape(e.id);
+                                                  if (!context.mounted) return;
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(content: Text('Soumis pour approbation')),
+                                                  );
+                                                  _reload();
+                                                } catch (err) {
+                                                  if (!context.mounted) return;
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(content: Text('Erreur: $err')),
+                                                  );
+                                                }
+                                              },
+                                            )
+                                          : null),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   );
                 },
               ),
@@ -360,6 +378,7 @@ class _CreatorPageState extends State<CreatorPage> {
               child: SafeArea(
                 top: false,
                 child: SizedBox(
+                  key: _feedbackKey,
                   width: double.infinity,
                   child: FilledButton.icon(
                     icon: const Icon(Icons.bug_report_outlined),
