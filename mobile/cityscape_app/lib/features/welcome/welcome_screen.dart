@@ -2,12 +2,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../../core/constants.dart';
 import '../../services/auth_service.dart';
 import '../../services/tutorial_service.dart';
-import '../auth/auth_page.dart';
 import '../auth/terms_page.dart';
 import '../home/main_home.dart';
-import '../tutorial/tutorial_controller.dart';
 
 /* ============================
    WELCOME SCREEN
@@ -101,51 +100,26 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   Widget _buildIllustration(ThemeData theme) {
-    return Container(
-      width: 200,
-      height: 200,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-        shape: BoxShape.circle,
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Background decorations
-          Positioned(
-            top: 20,
-            right: 30,
-            child: Icon(
-              Icons.location_on,
-              size: 32,
-              color: theme.colorScheme.primary.withValues(alpha: 0.5),
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Image.asset(
+        kLogoAsset,
+        width: 180,
+        height: 180,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          width: 180,
+          height: 180,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(24),
           ),
-          Positioned(
-            bottom: 30,
-            left: 25,
-            child: Icon(
-              Icons.map_outlined,
-              size: 28,
-              color: theme.colorScheme.secondary.withValues(alpha: 0.5),
-            ),
-          ),
-          Positioned(
-            top: 50,
-            left: 35,
-            child: Icon(
-              Icons.star,
-              size: 24,
-              color: Colors.amber.withValues(alpha: 0.7),
-            ),
-          ),
-          // Main icon
-          Icon(
+          child: Icon(
             Icons.location_city,
             size: 100,
             color: theme.colorScheme.primary,
           ),
-        ],
+        ),
       ),
     );
   }

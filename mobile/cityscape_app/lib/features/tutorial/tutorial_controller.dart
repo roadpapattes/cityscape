@@ -191,6 +191,7 @@ class TutorialController extends ChangeNotifier {
     required GlobalKey feedbackKey,
     required VoidCallback onFinish,
     bool isLoggedIn = true,
+    bool isAdmin = false,
   }) {
     if (!_isActive || _currentPhase != TutorialPhase.creatorPage) return;
 
@@ -211,14 +212,16 @@ class TutorialController extends ChangeNotifier {
         contentAlign: ContentAlign.custom,
         customPosition: bottomPosition,  // Juste au-dessus du bouton Passer
       ));
-      // Étape 4.2: Bouton nouveau brouillon
-      targets.add(_createTarget(
-        key: createKey,
-        content: TutorialContents.createButton,
-        context: context,
-        shape: ShapeLightFocus.RRect,
-        contentAlign: ContentAlign.bottom,
-      ));
+      // Étape 4.2: Bouton nouveau brouillon (seulement si pas admin)
+      if (!isAdmin) {
+        targets.add(_createTarget(
+          key: createKey,
+          content: TutorialContents.createButton,
+          context: context,
+          shape: ShapeLightFocus.RRect,
+          contentAlign: ContentAlign.bottom,
+        ));
+      }
       // Étape 4.3: Bouton feedback
       targets.add(_createTarget(
         key: feedbackKey,

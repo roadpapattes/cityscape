@@ -87,8 +87,15 @@ class _CreatorPageState extends State<CreatorPage> {
 
   void _onTutorialChanged() {
     if (mounted) {
+      // Reset le flag si on entre dans la phase creatorPage
+      if (TutorialController.instance.currentPhase == TutorialPhase.creatorPage) {
+        _tutorialShown = false;
+      }
       setState(() {});
-      _checkAndShowTutorial();
+      // Ajouter un délai pour s'assurer que le widget est complètement rendu
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _checkAndShowTutorial();
+      });
     }
   }
 
@@ -98,24 +105,40 @@ class _CreatorPageState extends State<CreatorPage> {
     if (!TutorialController.instance.isActive) return;
     if (TutorialController.instance.currentPhase != TutorialPhase.creatorPage) return;
 
-    _tutorialShown = true;
-
     // Vérifier si l'utilisateur est connecté
     final token = AuthService.instance.tokenNotifier.value;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      TutorialController.instance.showCreatorTargets(
-        context,
-        listKey: _listKey,
-        createKey: _createButtonKey,
-        feedbackKey: _feedbackKey,
-        isLoggedIn: token != null,
-        onFinish: () {
-          // Tutoriel terminé !
-        },
-      );
-    });
+    // Vérifier que les widgets sont prêts à être ciblés
+    if (token != null) {
+      // Le bouton feedback doit toujours être présent
+      final feedbackKeyAttached = _feedbackKey.currentContext != null;
+
+      // Le bouton créer n'est visible que pour les non-admins
+      // Pour les admins, on vérifie seulement le bouton feedback
+      final createKeyAttached = _isAdmin || _createButtonKey.currentContext != null;
+
+      if (!createKeyAttached || !feedbackKeyAttached) {
+        // Les widgets ne sont pas encore rendus, réessayer au prochain frame
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _checkAndShowTutorial();
+        });
+        return;
+      }
+    }
+
+    _tutorialShown = true;
+
+    TutorialController.instance.showCreatorTargets(
+      context,
+      listKey: _listKey,
+      createKey: _createButtonKey,
+      feedbackKey: _feedbackKey,
+      isLoggedIn: token != null,
+      isAdmin: _isAdmin,
+      onFinish: () {
+        // Tutoriel terminé !
+      },
+    );
   }
 
   Future<void> _ensureProfileBeforeLoading() async {
