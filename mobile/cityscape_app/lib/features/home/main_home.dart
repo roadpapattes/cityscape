@@ -169,7 +169,7 @@ class _MainHomeState extends State<MainHome> {
         }
       },
       onSkip: () {
-        TutorialService.instance.markTutorialCompleted();
+        TutorialController.instance.stopTutorial(markCompleted: true);
         return true;
       },
       onFinish: () {

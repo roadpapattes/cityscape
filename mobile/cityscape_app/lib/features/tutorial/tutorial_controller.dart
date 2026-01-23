@@ -39,10 +39,12 @@ class TutorialController extends ChangeNotifier {
 
   /// Arrête le tutoriel
   Future<void> stopTutorial({bool markCompleted = false}) async {
+    final coach = _tutorialCoachMark;
+    _tutorialCoachMark = null;  // Évite les doubles appels
+
     _isActive = false;
     _currentPhase = TutorialPhase.completed;
-    _tutorialCoachMark?.finish();
-    _tutorialCoachMark = null;
+    coach?.finish();
 
     if (markCompleted) {
       await TutorialService.instance.markTutorialCompleted();
@@ -53,7 +55,7 @@ class TutorialController extends ChangeNotifier {
 
   /// Termine le tutoriel en cours (appelé par le bouton "Terminer")
   void finishTutorial() {
-    _tutorialCoachMark?.finish();
+    stopTutorial(markCompleted: true);
   }
 
   /// Passe à la phase suivante
