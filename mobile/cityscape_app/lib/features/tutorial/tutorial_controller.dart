@@ -51,6 +51,11 @@ class TutorialController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Termine le tutoriel en cours (appelé par le bouton "Terminer")
+  void finishTutorial() {
+    _tutorialCoachMark?.finish();
+  }
+
   /// Passe à la phase suivante
   void nextPhase() {
     switch (_currentPhase) {
@@ -248,7 +253,10 @@ class TutorialController extends ChangeNotifier {
           align: ContentAlign.bottom,
           builder: (context, controller) => TutorialContents.tutorialComplete.buildWithButton(
             context,
-            onTerminate: () => controller.next(),
+            onTerminate: () {
+              // Terminer le tutoriel proprement
+              finishTutorial();
+            },
           ),
         ),
       ],
