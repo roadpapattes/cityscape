@@ -232,7 +232,7 @@ class TutorialController extends ChangeNotifier {
       ));
     }
 
-    // Message de fin (toujours affiché) - sans cible, juste l'overlay avec le message
+    // Message de fin (toujours affiché) - clic n'importe où pour terminer
     final screenWidth = MediaQuery.of(context).size.width;
     targets.add(TargetFocus(
       identify: TutorialContents.tutorialComplete.title,
@@ -243,6 +243,7 @@ class TutorialController extends ChangeNotifier {
       shape: ShapeLightFocus.Circle,
       radius: 0,
       paddingFocus: 0,
+      enableOverlayTab: true,  // Permet de cliquer n'importe où pour passer
       contents: [
         TargetContent(
           align: ContentAlign.bottom,
@@ -297,12 +298,14 @@ class TutorialController extends ChangeNotifier {
       opacityShadow: 0.8,
       hideSkip: false,
       textSkip: 'Passer',
+      alignSkip: Alignment.bottomCenter,
       paddingFocus: 10,
       onClickTarget: (target) {
-        // Clic sur la cible
+        // Clic sur la cible - passe à l'étape suivante
       },
       onClickOverlay: (target) {
-        // Clic sur l'overlay (pour passer à la suite)
+        // Clic sur l'overlay - passe aussi à l'étape suivante
+        // Utile notamment pour le message de fin
       },
       onSkip: () {
         stopTutorial(markCompleted: true);

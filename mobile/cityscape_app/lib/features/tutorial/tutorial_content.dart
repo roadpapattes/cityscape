@@ -164,7 +164,7 @@ class TutorialContents {
   // Fin
   static const tutorialComplete = TutorialContent(
     title: 'Vous êtes prêt !',
-    description: 'Bonne exploration et amusez-vous bien ! Vous pouvez revoir ce tutoriel depuis votre profil.',
+    description: 'Bonne exploration et amusez-vous bien !\nVous pouvez revoir ce tutoriel depuis votre profil.\n\nTouchez l\'écran pour terminer',
     icon: Icons.celebration,
   );
 }

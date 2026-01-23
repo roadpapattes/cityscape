@@ -156,6 +156,7 @@ class _MainHomeState extends State<MainHome> {
       opacityShadow: 0.8,
       hideSkip: false,
       textSkip: 'Passer',
+      alignSkip: Alignment.bottomCenter,
       paddingFocus: 10,
       onClickTarget: (target) {
         // Si l'utilisateur clique sur le bouton Liste, on navigue vers la liste
