@@ -232,7 +232,7 @@ class TutorialController extends ChangeNotifier {
       ));
     }
 
-    // Message de fin (toujours affiché) - clic n'importe où pour terminer
+    // Message de fin avec bouton "Terminer" explicite
     final screenWidth = MediaQuery.of(context).size.width;
     targets.add(TargetFocus(
       identify: TutorialContents.tutorialComplete.title,
@@ -243,16 +243,18 @@ class TutorialController extends ChangeNotifier {
       shape: ShapeLightFocus.Circle,
       radius: 0,
       paddingFocus: 0,
-      enableOverlayTab: true,  // Permet de cliquer n'importe où pour passer
       contents: [
         TargetContent(
           align: ContentAlign.bottom,
-          builder: (context, controller) => TutorialContents.tutorialComplete.build(context),
+          builder: (context, controller) => TutorialContents.tutorialComplete.buildWithButton(
+            context,
+            onTerminate: () => controller.next(),
+          ),
         ),
       ],
     ));
 
-    _showTutorial(context, targets, onFinish: () {
+    _showTutorial(context, targets, hideSkip: true, onFinish: () {
       stopTutorial(markCompleted: true);
       onFinish();
     });
@@ -291,21 +293,18 @@ class TutorialController extends ChangeNotifier {
     BuildContext context,
     List<TargetFocus> targets, {
     required VoidCallback onFinish,
+    bool hideSkip = false,
   }) {
     _tutorialCoachMark = TutorialCoachMark(
       targets: targets,
       colorShadow: Colors.black,
       opacityShadow: 0.8,
-      hideSkip: false,
-      textSkip: 'Passer',
-      alignSkip: Alignment.bottomCenter,
+      hideSkip: hideSkip,
+      textSkip: 'Passer le tutoriel',
+      alignSkip: Alignment.topLeft,
       paddingFocus: 10,
       onClickTarget: (target) {
         // Clic sur la cible - passe à l'étape suivante
-      },
-      onClickOverlay: (target) {
-        // Clic sur l'overlay - passe aussi à l'étape suivante
-        // Utile notamment pour le message de fin
       },
       onSkip: () {
         stopTutorial(markCompleted: true);

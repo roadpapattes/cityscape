@@ -94,6 +94,10 @@ class _MainHomeState extends State<MainHome> {
       // Aller automatiquement à l'onglet Créateur
       setState(() => _tabIndex = 2);
     }
+    // Tutoriel terminé: Aller à la Carte
+    else if (phase == TutorialPhase.completed && _tabIndex != 1) {
+      setState(() => _tabIndex = 1);
+    }
   }
 
   /// Vérifie si le tutoriel doit être lancé
@@ -155,8 +159,8 @@ class _MainHomeState extends State<MainHome> {
       colorShadow: Colors.black,
       opacityShadow: 0.8,
       hideSkip: false,
-      textSkip: 'Passer',
-      alignSkip: Alignment.bottomCenter,
+      textSkip: 'Passer le tutoriel',
+      alignSkip: Alignment.topLeft,
       paddingFocus: 10,
       onClickTarget: (target) {
         // Si l'utilisateur clique sur le bouton Liste, on navigue vers la liste

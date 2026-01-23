@@ -75,6 +75,74 @@ class TutorialContent {
       ),
     );
   }
+
+  /// Construit le widget avec un bouton "Terminer" pour la dernière étape
+  Widget buildWithButton(BuildContext context, {required VoidCallback onTerminate}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+              size: 48,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            description,
+            style: Theme.of(context).textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onTerminate,
+              icon: const Icon(Icons.check_circle),
+              label: const Text(
+                'Terminer',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Contenus prédéfinis pour chaque étape du tutoriel
@@ -164,7 +232,7 @@ class TutorialContents {
   // Fin
   static const tutorialComplete = TutorialContent(
     title: 'Vous êtes prêt !',
-    description: 'Bonne exploration et amusez-vous bien !\nVous pouvez revoir ce tutoriel depuis votre profil.\n\nTouchez l\'écran pour terminer',
+    description: 'Bonne exploration et amusez-vous bien !\nVous pouvez revoir ce tutoriel depuis votre profil.',
     icon: Icons.celebration,
   );
 }
