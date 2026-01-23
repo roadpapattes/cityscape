@@ -264,7 +264,7 @@ class TutorialController extends ChangeNotifier {
       ],
     ));
 
-    _showTutorial(context, targets, hideSkip: true, onFinish: () {
+    _showTutorial(context, targets, onFinish: () {
       stopTutorial(markCompleted: true);
       onFinish();
     });

@@ -387,7 +387,13 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
   }
 
   void _onTutorialChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    // Si le tutoriel a été skippé (completed mais plus actif), revenir au MainHome
+    if (TutorialController.instance.currentPhase == TutorialPhase.completed) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() {});
   }
 
   /// Lance le tutoriel Phase 3 si conditions remplies
@@ -407,6 +413,8 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
         reportKey: _reportKey,
         startKey: _startKey,
         onFinish: () {
+          // Ne pas naviguer si le tutoriel a été skippé
+          if (!TutorialController.instance.isActive) return;
           // Passer à la phase suivante (CreatorPage)
           // Revenir à MainHome - le listener changera l'onglet automatiquement
           if (mounted) {

@@ -95,6 +95,8 @@ class _ListPageState extends State<ListPage> {
         searchFilterKey: _searchFilterKey,
         cardKey: _firstCardKey,
         onFinish: () {
+          // Ne pas naviguer si le tutoriel a été skippé
+          if (!TutorialController.instance.isActive) return;
           // Naviguer vers la page de détails du premier escape
           if (_items.isNotEmpty && mounted) {
             Navigator.of(context).push(
