@@ -387,7 +387,15 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
   }
 
   void _onTutorialChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    // Si le tutoriel est terminé, revenir au MainHome après un court délai
+    if (TutorialController.instance.currentPhase == TutorialPhase.completed) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) Navigator.of(context).pop();
+      });
+      return;
+    }
+    setState(() {});
   }
 
   /// Lance le tutoriel Phase 3 si conditions remplies
