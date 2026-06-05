@@ -560,10 +560,12 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
 
     return Scaffold(
       appBar: AppBar(title: Text(e.title)),
-      body: ListView(
-        padding: const EdgeInsets.all(12),
-        children: [
-          // Image de l'escape
+      body: SafeArea(
+        top: false,
+        child: ListView(
+          padding: const EdgeInsets.all(12),
+          children: [
+            // Image de l'escape
           if (e.imageUrl != null && e.imageUrl!.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
@@ -741,6 +743,7 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
           ),
           const SizedBox(height: 8),
         ],
+        ),
       ),
     );
   }
@@ -1750,7 +1753,9 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
     const Center(child: TimerBadge()),
   ],
 ),
-      body: _loading
+      body: SafeArea(
+        top: false,
+        child: _loading
           ? const Center(child: CircularProgressIndicator())
           : _finished
               ? Center(
@@ -1958,6 +1963,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
                     ],
                   ),
                 ),
+      ),
     );
   }
 }
