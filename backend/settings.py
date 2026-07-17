@@ -125,7 +125,18 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ]
+    ],
+    'EXCEPTION_HANDLER': 'engagement.exceptions.custom_exception_handler',
+}
+
+# Cache partagé entre tous les workers Gunicorn (utilisé par django-ratelimit).
+# Fichier sur disque plutôt que LocMemCache (non partagé entre workers) ou
+# DatabaseCache (contention d'écriture sur le même fichier que db.sqlite3).
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": BASE_DIR / "django_cache",
+    }
 }
 
 # --- Email (Gmail SMTP) ---

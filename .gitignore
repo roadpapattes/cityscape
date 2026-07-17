@@ -6,6 +6,7 @@ __pycache__/
 # Django collectstatic
 /static/
 /media/
+/django_cache/
 # Environnements & secrets
 .env.*
 env/

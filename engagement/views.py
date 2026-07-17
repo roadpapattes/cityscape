@@ -38,7 +38,6 @@ User = get_user_model()
 
 # ---------------- Auth ----------------
 @auth_rate_limit
-
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -59,7 +58,6 @@ class RegisterView(APIView):
         }, status=201)
 
 @auth_rate_limit
-
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -151,7 +149,6 @@ class MeView(APIView):
         })
 
 @password_reset_rate_limit
-
 class PasswordResetRequestView(APIView):
     """
     POST /api/auth/password-reset/request
@@ -217,7 +214,6 @@ L'équipe CityScape
         )
 
 @password_reset_rate_limit
-
 class PasswordResetConfirmView(APIView):
     """
     POST /api/auth/password-reset/confirm
@@ -1071,9 +1067,8 @@ class CreatorFeedbackView(APIView):
         return Response({"ok": True}, status=200)
 
 
-@google_signin_rate_limit
 # -------------- Google Sign-In --------------
-
+@google_signin_rate_limit
 class GoogleSignInView(APIView):
     """
     Google Sign-In endpoint
