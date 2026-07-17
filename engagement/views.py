@@ -1,5 +1,5 @@
 # engagement/views.py
-from .ratelimit_decorators import auth_rate_limit, password_reset_rate_limit, google_signin_rate_limit
+from .ratelimit_decorators import auth_rate_limit, password_reset_rate_limit, google_signin_rate_limit, email_verify_rate_limit
 import re
 import unicodedata
 import logging
@@ -20,7 +20,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import PlaySession, Rating, PasswordResetToken
+from .models import PlaySession, Rating, PasswordResetToken, UserProfile, EmailVerificationToken
 from .serializers import (
     UserSerializer,
     RegisterSerializer,
@@ -45,16 +45,48 @@ class RegisterView(APIView):
         s = RegisterSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         username = s.validated_data["username"]
-        email = s.validated_data.get("email") or ""
+        email = s.validated_data["email"]
         password = s.validated_data["password"]
         if User.objects.filter(username=username).exists():
             return Response({"detail": "Username already exists."}, status=400)
+        if User.objects.filter(email=email).exists():
+            return Response({"detail": "Un compte existe déjà avec cet email."}, status=400)
+
         user = User.objects.create_user(username=username, email=email, password=password)
+        UserProfile.objects.create(user=user, email_verified=False)
+        verification_token = EmailVerificationToken.objects.create(user=user)
+
+        email_sent = True
+        try:
+            send_mail(
+                subject="CityScape - Vérifiez votre email",
+                message=f"""Bonjour {user.username},
+
+Merci de votre inscription sur CityScape.
+
+Votre code de vérification est : {verification_token.code}
+
+Ce code est valide pendant 15 minutes.
+
+L'équipe CityScape
+""",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            # Le compte existe déjà (contrairement au reset de mot de passe) : on
+            # ne fait pas échouer l'inscription pour un souci SMTP, le client
+            # pourra proposer un renvoi via /auth/verify-email/resend.
+            log.error(f"Failed to send verification email: {e}")
+            email_sent = False
+
         token, _ = Token.objects.get_or_create(user=user)
         return Response({
             "token": token.key,
             "user": UserSerializer(user).data,
             "is_new_user": True,  # Always true for registration
+            "email_sent": email_sent,
         }, status=201)
 
 @auth_rate_limit
@@ -99,6 +131,7 @@ class MeView(APIView):
             "last_name": u.last_name or "",
             "is_staff": u.is_staff,
             "is_superuser": u.is_superuser,
+            "email_verified": getattr(getattr(u, "profile", None), "email_verified", True),
         })
 
     def patch(self, request):
@@ -146,6 +179,7 @@ class MeView(APIView):
             "last_name": u.last_name or "",
             "is_staff": u.is_staff,
             "is_superuser": u.is_superuser,
+            "email_verified": getattr(getattr(u, "profile", None), "email_verified", True),
         })
 
 @password_reset_rate_limit
@@ -282,6 +316,114 @@ class PasswordResetConfirmView(APIView):
             {"message": "Mot de passe réinitialisé avec succès"},
             status=status.HTTP_200_OK
         )
+
+
+@email_verify_rate_limit
+class EmailVerifyConfirmView(APIView):
+    """
+    POST /api/auth/verify-email/confirm
+    Body: {"email": "user@example.com", "code": "123456"}
+    Response: {"message": "Email vérifié."}
+
+    Mode "soft" : ne bloque rien, marque juste UserProfile.email_verified=True.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email", "").strip()
+        code = request.data.get("code", "").strip()
+
+        if not email or not code:
+            return Response(
+                {"detail": "Email et code requis."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Code invalide ou expiré."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        verification_token = EmailVerificationToken.objects.filter(
+            user=user,
+            code=code,
+            used=False
+        ).order_by('-created_at').first()
+
+        if not verification_token or not verification_token.is_valid():
+            return Response(
+                {"detail": "Code invalide ou expiré."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        verification_token.used = True
+        verification_token.save()
+
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.email_verified = True
+        profile.save(update_fields=["email_verified"])
+
+        return Response({"message": "Email vérifié."}, status=status.HTTP_200_OK)
+
+
+@email_verify_rate_limit
+class EmailVerifyResendView(APIView):
+    """
+    POST /api/auth/verify-email/resend
+    Body: {"email": "user@example.com"}
+    Response générique anti-énumération, comme PasswordResetRequestView.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email", "").strip()
+        if not email:
+            return Response(
+                {"detail": "Email requis."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        generic_response = Response(
+            {"message": "Si un compte non vérifié existe avec cet email, un code a été envoyé."},
+            status=status.HTTP_200_OK
+        )
+
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return generic_response
+
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        if profile.email_verified:
+            return generic_response
+
+        EmailVerificationToken.objects.filter(user=user, used=False).update(used=True)
+        verification_token = EmailVerificationToken.objects.create(user=user)
+
+        try:
+            send_mail(
+                subject="CityScape - Vérifiez votre email",
+                message=f"""Bonjour {user.username},
+
+Votre nouveau code de vérification est : {verification_token.code}
+
+Ce code est valide pendant 15 minutes.
+
+L'équipe CityScape
+""",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            log.error(f"Failed to resend verification email: {e}")
+
+        return generic_response
 
 
 # -------------- Gameplay utils --------------
@@ -1119,7 +1261,12 @@ class GoogleSignInView(APIView):
             is_new_user = existing_user is None
 
             if existing_user:
-                # User exists, log them in
+                # User exists, log them in. Google prouve la possession de l'email
+                # -> on marque le compte verifie meme s'il avait ete cree localement
+                # sans jamais confirmer son email.
+                UserProfile.objects.update_or_create(
+                    user=existing_user, defaults={"email_verified": True}
+                )
                 token, _ = Token.objects.get_or_create(user=existing_user)
                 return Response({
                     "token": token.key,
@@ -1145,6 +1292,9 @@ class GoogleSignInView(APIView):
                 )
                 user.set_unusable_password()  # Google users don't need passwords
                 user.save()
+
+                # Google a deja confirme l'email (idinfo['email_verified'] checke plus haut)
+                UserProfile.objects.create(user=user, email_verified=True)
 
                 # Create token
                 token = Token.objects.create(user=user)

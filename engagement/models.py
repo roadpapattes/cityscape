@@ -94,3 +94,59 @@ class PasswordResetToken(models.Model):
             if not self.expires_at:
                 self.expires_at = timezone.now() + timezone.timedelta(minutes=15)
         super().save(*args, **kwargs)
+
+
+class UserProfile(models.Model):
+    """
+    Etat de verification d'email. Separe du User Django par defaut (pas de champ
+    libre dessus sans swapper AUTH_USER_MODEL).
+    """
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='profile'
+    )
+    email_verified = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"UserProfile({self.user.username}, verified={self.email_verified})"
+
+
+class EmailVerificationToken(models.Model):
+    """
+    Meme mecanique que PasswordResetToken : code a 6 chiffres, expire apres
+    15 minutes, usage unique.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='email_verification_tokens'
+    )
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    used = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"EmailVerificationToken({self.user.username}, {self.code}, used={self.used})"
+
+    @classmethod
+    def generate_code(cls):
+        """Generate a random 6-digit code"""
+        return ''.join(secrets.choice(string.digits) for _ in range(6))
+
+    def is_valid(self):
+        """Check if token is still valid (not used and not expired)"""
+        return not self.used and timezone.now() < self.expires_at
+
+    def save(self, *args, **kwargs):
+        """Auto-generate code and expiration on creation"""
+        if not self.pk:  # Only on creation
+            if not self.code:
+                self.code = self.generate_code()
+            if not self.expires_at:
+                self.expires_at = timezone.now() + timezone.timedelta(minutes=15)
+        super().save(*args, **kwargs)

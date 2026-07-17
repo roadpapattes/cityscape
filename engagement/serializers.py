@@ -5,13 +5,19 @@ from .models import PlaySession, Rating
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
+    email_verified = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ("id", "username", "email")
+        fields = ("id", "username", "email", "email_verified")
+
+    def get_email_verified(self, obj):
+        # Pas de profil (comptes crees avant ce champ) -> considere verifie.
+        return getattr(getattr(obj, "profile", None), "email_verified", True)
 
 class RegisterSerializer(serializers.Serializer):
     username = serializers.CharField()
-    email = serializers.EmailField(required=False, allow_blank=True)
+    email = serializers.EmailField(required=True, allow_blank=False)
     password = serializers.CharField(write_only=True, min_length=6)
 
 class LoginSerializer(serializers.Serializer):

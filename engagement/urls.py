@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from .views import (
     RegisterView, LoginView, LogoutView, MeView,
     PasswordResetRequestView, PasswordResetConfirmView,
+    EmailVerifyConfirmView, EmailVerifyResendView,
     GoogleSignInView,
     AccountDeletionRequestView,
     StartSessionView,
@@ -23,6 +24,8 @@ urlpatterns = [
     path('auth/me',       MeView.as_view()),
     path('auth/password-reset/request', PasswordResetRequestView.as_view()),
     path('auth/password-reset/confirm', PasswordResetConfirmView.as_view()),
+    path('auth/verify-email/confirm', EmailVerifyConfirmView.as_view()),
+    path('auth/verify-email/resend',  EmailVerifyResendView.as_view()),
     path('auth/google',   GoogleSignInView.as_view()),
     path('auth/delete-account-request', AccountDeletionRequestView.as_view()),
 

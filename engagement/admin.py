@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from .models import PlaySession, EscapeCompletion, Rating, PasswordResetToken
+from .models import PlaySession, EscapeCompletion, Rating, PasswordResetToken, UserProfile, EmailVerificationToken
 
 User = get_user_model()
 
@@ -198,3 +198,71 @@ class PasswordResetTokenAdmin(admin.ModelAdmin):
                 'border-radius: 3px;">✗ Expiré</span>'
             )
     status_badge.short_description = 'Statut'
+
+
+@admin.register(EmailVerificationToken)
+class EmailVerificationTokenAdmin(admin.ModelAdmin):
+    list_display = [
+        'id',
+        'user_link',
+        'code',
+        'created_at',
+        'expires_at',
+        'status_badge'
+    ]
+    list_filter = ['used', 'created_at']
+    search_fields = ['user__username', 'user__email', 'code']
+    readonly_fields = ['created_at', 'code']
+
+    fieldsets = (
+        ('Token', {
+            'fields': ('user', 'code', 'created_at', 'expires_at', 'used')
+        }),
+    )
+
+    def user_link(self, obj):
+        url = reverse('admin:auth_user_change', args=[obj.user.id])
+        return format_html('<a href="{}">{}</a>', url, obj.user.username)
+    user_link.short_description = 'Utilisateur'
+
+    def status_badge(self, obj):
+        if obj.used:
+            return format_html(
+                '<span style="background-color: #6c757d; color: white; padding: 3px 10px; '
+                'border-radius: 3px;">✓ Utilisé</span>'
+            )
+        elif obj.is_valid():
+            return format_html(
+                '<span style="background-color: #28a745; color: white; padding: 3px 10px; '
+                'border-radius: 3px;">✓ Valide</span>'
+            )
+        else:
+            return format_html(
+                '<span style="background-color: #dc3545; color: white; padding: 3px 10px; '
+                'border-radius: 3px;">✗ Expiré</span>'
+            )
+    status_badge.short_description = 'Statut'
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user_link', 'email_verified_badge']
+    list_filter = ['email_verified']
+    search_fields = ['user__username', 'user__email']
+
+    def user_link(self, obj):
+        url = reverse('admin:auth_user_change', args=[obj.user.id])
+        return format_html('<a href="{}">{}</a>', url, obj.user.username)
+    user_link.short_description = 'Utilisateur'
+
+    def email_verified_badge(self, obj):
+        if obj.email_verified:
+            return format_html(
+                '<span style="background-color: #28a745; color: white; padding: 3px 10px; '
+                'border-radius: 3px;">✓ Vérifié</span>'
+            )
+        return format_html(
+            '<span style="background-color: #dc3545; color: white; padding: 3px 10px; '
+            'border-radius: 3px;">✗ Non vérifié</span>'
+        )
+    email_verified_badge.short_description = 'Email'
