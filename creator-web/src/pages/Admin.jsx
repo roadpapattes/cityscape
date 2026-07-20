@@ -20,7 +20,25 @@ function Admin() {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
   const [isSuperuser, setIsSuperuser] = useState(false);
-  const [activeTab, setActiveTab] = useState('stats'); // 'stats' | 'users' | 'escapes'
+  const [activeTab, setActiveTab] = useState('stats'); // 'stats' | 'users' | 'escapes' | 'sessions'
+
+  // Filtres pilotables depuis le dashboard (clic sur un chiffre)
+  const [usersActiveOnly, setUsersActiveOnly] = useState(false);
+  const [escapesStatusFilter, setEscapesStatusFilter] = useState('submitted');
+  const [sessionsStatusFilter, setSessionsStatusFilter] = useState('in_progress');
+
+  const goToUsers = (activeOnly) => {
+    setUsersActiveOnly(activeOnly);
+    setActiveTab('users');
+  };
+  const goToEscapes = (statusValue) => {
+    setEscapesStatusFilter(statusValue);
+    setActiveTab('escapes');
+  };
+  const goToSessions = (statusValue) => {
+    setSessionsStatusFilter(statusValue);
+    setActiveTab('sessions');
+  };
 
   useEffect(() => {
     checkAccess();
@@ -74,6 +92,7 @@ function Admin() {
             { key: 'stats', label: '📊 Tableau de bord' },
             { key: 'users', label: '👥 Utilisateurs' },
             { key: 'escapes', label: '🎯 Modération escapes' },
+            { key: 'sessions', label: '🕹️ Sessions' },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -94,9 +113,18 @@ function Admin() {
         </div>
 
         <div style={{ padding: '24px' }}>
-          {activeTab === 'stats' && <StatsTab />}
-          {activeTab === 'users' && <UsersTab isSuperuser={isSuperuser} />}
-          {activeTab === 'escapes' && <EscapesTab />}
+          {activeTab === 'stats' && (
+            <StatsTab onGoToUsers={goToUsers} onGoToEscapes={goToEscapes} onGoToSessions={goToSessions} />
+          )}
+          {activeTab === 'users' && (
+            <UsersTab isSuperuser={isSuperuser} activeOnly={usersActiveOnly} onActiveOnlyChange={setUsersActiveOnly} />
+          )}
+          {activeTab === 'escapes' && (
+            <EscapesTab statusFilter={escapesStatusFilter} onStatusFilterChange={setEscapesStatusFilter} />
+          )}
+          {activeTab === 'sessions' && (
+            <SessionsTab statusFilter={sessionsStatusFilter} onStatusFilterChange={setSessionsStatusFilter} />
+          )}
         </div>
       </div>
     </div>
@@ -104,7 +132,7 @@ function Admin() {
 }
 
 // ---------------- Tableau de bord ----------------
-function StatsTab() {
+function StatsTab({ onGoToUsers, onGoToEscapes, onGoToSessions }) {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -120,8 +148,12 @@ function StatsTab() {
   if (error) return <div className="alert alert-error">{error}</div>;
   if (!stats) return null;
 
-  const statCard = (label, value) => (
-    <div className="card" style={{ textAlign: 'center', marginBottom: 0 }}>
+  const statCard = (label, value, onClick) => (
+    <div
+      className="card"
+      style={{ textAlign: 'center', marginBottom: 0, cursor: onClick ? 'pointer' : 'default' }}
+      onClick={onClick}
+    >
       <div style={{ fontSize: '32px', fontWeight: 700, color: 'var(--primary)' }}>{value}</div>
       <div style={{ color: 'var(--text-muted)' }}>{label}</div>
     </div>
@@ -130,15 +162,21 @@ function StatsTab() {
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        {statCard('Utilisateurs actifs', `${stats.users_active} / ${stats.users_total}`)}
-        {statCard('Sessions en cours', stats.sessions_in_progress)}
-        {statCard('Sessions terminées', stats.sessions_completed)}
+        {statCard('Utilisateurs actifs', `${stats.users_active} / ${stats.users_total}`, () => onGoToUsers(true))}
+        {statCard('Sessions en cours', stats.sessions_in_progress, () => onGoToSessions('in_progress'))}
+        {statCard('Sessions terminées', stats.sessions_completed, () => onGoToSessions('completed'))}
       </div>
 
       <h3>Escapes par statut</h3>
+      <p style={{ marginTop: '-8px', marginBottom: '16px', fontSize: '14px' }}>Cliquez sur un chiffre pour voir la liste correspondante.</p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
         {Object.entries(stats.escapes_by_status).map(([st, count]) => (
-          <div key={st} className="card" style={{ textAlign: 'center', marginBottom: 0 }}>
+          <div
+            key={st}
+            className="card"
+            style={{ textAlign: 'center', marginBottom: 0, cursor: 'pointer' }}
+            onClick={() => onGoToEscapes(st)}
+          >
             <div style={{ fontSize: '24px', fontWeight: 700 }}>{count}</div>
             <span className={`badge badge-${st}`}>{STATUS_LABELS[st] || st}</span>
           </div>
@@ -149,7 +187,7 @@ function StatsTab() {
 }
 
 // ---------------- Utilisateurs ----------------
-function UsersTab({ isSuperuser }) {
+function UsersTab({ isSuperuser, activeOnly, onActiveOnlyChange }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -205,12 +243,25 @@ function UsersTab({ isSuperuser }) {
 
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
 
+  const visibleUsers = activeOnly ? users.filter((u) => u.is_active) : users;
+
   return (
     <div>
+      <div className="form-group" style={{ maxWidth: '300px' }}>
+        <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={activeOnly}
+            onChange={(e) => onActiveOnlyChange(e.target.checked)}
+          />
+          Afficher uniquement les comptes actifs
+        </label>
+      </div>
+
       {error && <div className="alert alert-error">{error}</div>}
 
       <div style={{ display: 'grid', gap: '12px' }}>
-        {users.map((user) => (
+        {visibleUsers.map((user) => (
           <div key={user.id} className="card" style={{ marginBottom: 0 }}>
             <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: '12px' }}>
               <div>
@@ -254,10 +305,9 @@ function UsersTab({ isSuperuser }) {
 }
 
 // ---------------- Modération escapes ----------------
-function EscapesTab() {
+function EscapesTab({ statusFilter, onStatusFilterChange }) {
   const navigate = useNavigate();
   const [escapes, setEscapes] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('submitted');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState(null);
@@ -314,7 +364,7 @@ function EscapesTab() {
         <select
           className="form-select"
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => onStatusFilterChange(e.target.value)}
         >
           <option value="submitted">En révision</option>
           <option value="published">Publiés</option>
@@ -389,6 +439,71 @@ function EscapesTab() {
               </div>
             );
           })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------- Sessions ----------------
+function SessionsTab({ statusFilter, onStatusFilterChange }) {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    loadSessions();
+  }, [statusFilter]);
+
+  const loadSessions = async () => {
+    setLoading(true);
+    try {
+      const data = await apiClient.getAdminSessions(statusFilter);
+      setSessions(data);
+    } catch (err) {
+      setError(err.message || 'Erreur lors du chargement des sessions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="form-group" style={{ maxWidth: '240px' }}>
+        <label className="form-label">Filtrer</label>
+        <select
+          className="form-select"
+          value={statusFilter}
+          onChange={(e) => onStatusFilterChange(e.target.value)}
+        >
+          <option value="in_progress">En cours</option>
+          <option value="completed">Terminées</option>
+        </select>
+      </div>
+
+      {error && <div className="alert alert-error">{error}</div>}
+
+      {loading ? (
+        <div className="loading-container"><div className="spinner"></div></div>
+      ) : sessions.length === 0 ? (
+        <p style={{ color: 'var(--text-muted)' }}>Aucune session dans ce statut.</p>
+      ) : (
+        <div style={{ display: 'grid', gap: '12px' }}>
+          {sessions.map((sess) => (
+            <div key={sess.id} className="card" style={{ marginBottom: 0 }}>
+              <div className="flex items-center gap-2" style={{ marginBottom: '4px' }}>
+                <strong>{sess.username}</strong>
+                <span style={{ color: 'var(--text-muted)' }}>→</span>
+                <span>{sess.escape_title}</span>
+              </div>
+              <p style={{ marginBottom: 0, fontSize: '14px' }}>
+                Étape {sess.current_step_index}/{sess.total_steps} ({sess.progress_percent}%)
+                {' · '}{Math.floor((sess.play_time_seconds || 0) / 60)} min de jeu
+                {' · '}débuté le {new Date(sess.started_at).toLocaleString('fr-FR')}
+                {sess.completed_at && <> · terminé le {new Date(sess.completed_at).toLocaleString('fr-FR')}</>}
+              </p>
+            </div>
+          ))}
         </div>
       )}
     </div>

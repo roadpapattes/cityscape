@@ -156,6 +156,10 @@ class ApiClient {
     return await this.request('/api/admin/stats');
   }
 
+  async getAdminSessions(status) {
+    return await this.request(`/api/admin/sessions?status=${encodeURIComponent(status)}`);
+  }
+
   async getEscapesByStatus(status) {
     return await this.request(`/api/creator/escapes?status=${encodeURIComponent(status)}`);
   }

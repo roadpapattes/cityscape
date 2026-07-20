@@ -108,6 +108,42 @@ class AdminUserViewSet(
         return self.partial_update(request, *args, **kwargs)
 
 
+class AdminSessionsView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        status_param = request.query_params.get("status", "in_progress")
+        if status_param not in ("in_progress", "completed"):
+            return Response({"detail": "status doit être 'in_progress' ou 'completed'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        sessions = (
+            PlaySession.objects
+            .filter(completed_at__isnull=(status_param == "in_progress"))
+            .select_related("user", "escape")
+            .order_by("-started_at")
+        )
+
+        data = []
+        for sess in sessions:
+            total = sess.escape.creator_steps.count()
+            idx = sess.current_step_index or 0
+            data.append({
+                "id": sess.id,
+                "user_id": sess.user_id,
+                "username": sess.user.username,
+                "escape_id": sess.escape_id,
+                "escape_title": sess.escape.title,
+                "current_step_index": idx,
+                "total_steps": total,
+                "progress_percent": round(min(idx, total) / total * 100) if total else 0,
+                "started_at": sess.started_at.isoformat() if sess.started_at else None,
+                "completed_at": sess.completed_at.isoformat() if sess.completed_at else None,
+                "play_time_seconds": sess.play_time_seconds,
+            })
+
+        return Response(data)
+
+
 class AdminStatsView(APIView):
     permission_classes = [IsAdminUser]
 

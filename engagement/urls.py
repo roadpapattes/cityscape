@@ -13,7 +13,7 @@ from .views import (
     SessionSyncTimeView,
     CanRateView, ReportEscapeView, RatingsListCreateView,
 )
-from .views_admin import AdminUserViewSet, AdminStatsView
+from .views_admin import AdminUserViewSet, AdminStatsView, AdminSessionsView
 
 urlpatterns = [
     # Ping/health (engagement scope)
@@ -46,6 +46,7 @@ urlpatterns = [
 
     # Admin
     path('admin/stats', AdminStatsView.as_view(), name='admin-stats'),
+    path('admin/sessions', AdminSessionsView.as_view(), name='admin-sessions'),
 ]
 
 # Routes "admin" (staff/superuser requis)
