@@ -450,9 +450,13 @@ function SessionsTab({ statusFilter, onStatusFilterChange }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [userFilter, setUserFilter] = useState('');
+  const [escapeFilter, setEscapeFilter] = useState('');
 
   useEffect(() => {
     loadSessions();
+    setUserFilter('');
+    setEscapeFilter('');
   }, [statusFilter]);
 
   const loadSessions = async () => {
@@ -467,43 +471,83 @@ function SessionsTab({ statusFilter, onStatusFilterChange }) {
     }
   };
 
+  const uniqueUsers = [...new Set(sessions.map((s) => s.username))].sort();
+  const uniqueEscapes = [...new Set(sessions.map((s) => s.escape_title))].sort();
+
+  const visibleSessions = sessions.filter(
+    (s) => (!userFilter || s.username === userFilter) && (!escapeFilter || s.escape_title === escapeFilter)
+  );
+
   return (
     <div>
-      <div className="form-group" style={{ maxWidth: '240px' }}>
-        <label className="form-label">Filtrer</label>
-        <select
-          className="form-select"
-          value={statusFilter}
-          onChange={(e) => onStatusFilterChange(e.target.value)}
-        >
-          <option value="in_progress">En cours</option>
-          <option value="completed">Terminées</option>
-        </select>
+      <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
+        <div className="form-group" style={{ maxWidth: '220px' }}>
+          <label className="form-label">Statut</label>
+          <select
+            className="form-select"
+            value={statusFilter}
+            onChange={(e) => onStatusFilterChange(e.target.value)}
+          >
+            <option value="in_progress">En cours</option>
+            <option value="completed">Terminées</option>
+          </select>
+        </div>
+
+        <div className="form-group" style={{ maxWidth: '220px' }}>
+          <label className="form-label">Joueur</label>
+          <select className="form-select" value={userFilter} onChange={(e) => setUserFilter(e.target.value)}>
+            <option value="">Tous</option>
+            {uniqueUsers.map((u) => (
+              <option key={u} value={u}>{u}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group" style={{ maxWidth: '220px' }}>
+          <label className="form-label">Escape</label>
+          <select className="form-select" value={escapeFilter} onChange={(e) => setEscapeFilter(e.target.value)}>
+            <option value="">Tous</option>
+            {uniqueEscapes.map((e) => (
+              <option key={e} value={e}>{e}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
 
       {loading ? (
         <div className="loading-container"><div className="spinner"></div></div>
-      ) : sessions.length === 0 ? (
-        <p style={{ color: 'var(--text-muted)' }}>Aucune session dans ce statut.</p>
+      ) : visibleSessions.length === 0 ? (
+        <p style={{ color: 'var(--text-muted)' }}>Aucune session ne correspond à ce filtre.</p>
       ) : (
-        <div style={{ display: 'grid', gap: '12px' }}>
-          {sessions.map((sess) => (
-            <div key={sess.id} className="card" style={{ marginBottom: 0 }}>
-              <div className="flex items-center gap-2" style={{ marginBottom: '4px' }}>
-                <strong>{sess.username}</strong>
-                <span style={{ color: 'var(--text-muted)' }}>→</span>
-                <span>{sess.escape_title}</span>
-              </div>
-              <p style={{ marginBottom: 0, fontSize: '14px' }}>
-                Étape {sess.current_step_index}/{sess.total_steps} ({sess.progress_percent}%)
-                {' · '}{Math.floor((sess.play_time_seconds || 0) / 60)} min de jeu
-                {' · '}débuté le {new Date(sess.started_at).toLocaleString('fr-FR')}
-                {sess.completed_at && <> · terminé le {new Date(sess.completed_at).toLocaleString('fr-FR')}</>}
-              </p>
-            </div>
-          ))}
+        <div style={{ overflowX: 'auto' }}>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Joueur</th>
+                <th>Escape</th>
+                <th>Progression</th>
+                <th>Temps de jeu</th>
+                <th>Débuté le</th>
+                {statusFilter === 'completed' && <th>Terminé le</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {visibleSessions.map((sess) => (
+                <tr key={sess.id}>
+                  <td>{sess.username}</td>
+                  <td>{sess.escape_title}</td>
+                  <td>{sess.current_step_index}/{sess.total_steps} ({sess.progress_percent}%)</td>
+                  <td>{Math.floor((sess.play_time_seconds || 0) / 60)} min</td>
+                  <td>{new Date(sess.started_at).toLocaleString('fr-FR')}</td>
+                  {statusFilter === 'completed' && (
+                    <td>{sess.completed_at ? new Date(sess.completed_at).toLocaleString('fr-FR') : '-'}</td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
