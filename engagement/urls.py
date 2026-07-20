@@ -1,6 +1,7 @@
 # engagement/urls.py
 from django.urls import path
 from django.http import JsonResponse
+from rest_framework.routers import DefaultRouter
 from .views import (
     RegisterView, LoginView, LogoutView, MeView,
     PasswordResetRequestView, PasswordResetConfirmView,
@@ -12,6 +13,7 @@ from .views import (
     SessionSyncTimeView,
     CanRateView, ReportEscapeView, RatingsListCreateView,
 )
+from .views_admin import AdminUserViewSet, AdminStatsView
 
 urlpatterns = [
     # Ping/health (engagement scope)
@@ -41,4 +43,13 @@ urlpatterns = [
     # Ratings
     path('escapes/<int:escape_id>/can_rate',  CanRateView.as_view()),
     path('escapes/<int:escape_id>/ratings',   RatingsListCreateView.as_view()),
+
+    # Admin
+    path('admin/stats', AdminStatsView.as_view(), name='admin-stats'),
 ]
+
+# Routes "admin" (staff/superuser requis)
+admin_router = DefaultRouter(trailing_slash=False)
+admin_router.register(r'admin/users', AdminUserViewSet, basename='admin-users')
+
+urlpatterns += admin_router.urls

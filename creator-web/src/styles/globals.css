@@ -220,6 +220,36 @@ p {
   color: #991b1b;
 }
 
+.badge-role-superadmin {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.badge-role-staff {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-role-createur {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-role-joueur {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.badge-active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 /* Loading spinner */
 .spinner {
   display: inline-block;

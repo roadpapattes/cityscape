@@ -7,10 +7,12 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     loadEscapes();
+    apiClient.getUserProfile().then((profile) => setIsStaff(!!profile.is_staff)).catch(() => {});
   }, []);
 
   const loadEscapes = async () => {
@@ -78,6 +80,11 @@ function Dashboard() {
             <p style={{ marginBottom: 0 }}>Gérez vos escapes urbains</p>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
+            {isStaff && (
+              <button className="btn btn-secondary btn-small" onClick={() => navigate('/admin')}>
+                🛠️ Administration
+              </button>
+            )}
             <button className="btn btn-secondary btn-small" onClick={() => navigate('/profile')}>
               👤 Mon profil
             </button>

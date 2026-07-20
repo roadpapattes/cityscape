@@ -140,6 +140,39 @@ class ApiClient {
     });
   }
 
+  // Admin endpoints
+  async getAdminUsers() {
+    return await this.request('/api/admin/users');
+  }
+
+  async updateAdminUser(id, data) {
+    return await this.request(`/api/admin/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getAdminStats() {
+    return await this.request('/api/admin/stats');
+  }
+
+  async getEscapesByStatus(status) {
+    return await this.request(`/api/creator/escapes?status=${encodeURIComponent(status)}`);
+  }
+
+  async publishEscape(id) {
+    return await this.request(`/api/creator/escapes/${id}/publish`, {
+      method: 'POST',
+    });
+  }
+
+  async rejectEscape(id, reason) {
+    return await this.request(`/api/creator/escapes/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
   // Step endpoints
   async getSteps(escapeId) {
     return await this.request(`/api/creator/escapes/${escapeId}/steps`);

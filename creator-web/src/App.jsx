@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import EscapeEditor from './pages/EscapeEditor';
 import Profile from './pages/Profile';
+import Admin from './pages/Admin';
 import './styles/globals.css';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/escape/:id" element={<EscapeEditor />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
