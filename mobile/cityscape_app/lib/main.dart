@@ -2039,46 +2039,48 @@ class _VictoryPageState extends State<VictoryPage> {
       },
       child: Scaffold(
         appBar: AppBar(title: const Text('Bravo !')),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.emoji_events, size: 96),
-                const SizedBox(height: 12),
-                Text('Escape terminé : ${widget.escape.title}',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Text('Temps: $timeText', style: const TextStyle(fontSize: 16)),
-                if (vm != null) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    vm,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 15),
+        body: SingleChildScrollView(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.emoji_events, size: 96),
+                  const SizedBox(height: 12),
+                  Text('Escape terminé : ${widget.escape.title}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Text('Temps: $timeText', style: const TextStyle(fontSize: 16)),
+                  if (vm != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      vm,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+
+                  // Bouton "Noter"
+                  FilledButton.icon(
+                    icon: const Icon(Icons.star_border),
+                    label: Text(_checkingCanRate
+                        ? '...'
+                        : (_canRate ? 'Noter cet escape' : 'Déjà noté')),
+                    onPressed: (_checkingCanRate || !_canRate)
+                        ? null
+                        : () => _openRatingDialog(context, widget.escape),
+                  ),
+
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('Revenir à la liste'),
                   ),
                 ],
-                const SizedBox(height: 24),
-
-                // Bouton "Noter"
-                FilledButton.icon(
-                  icon: const Icon(Icons.star_border),
-                  label: Text(_checkingCanRate
-                      ? '...' 
-                      : (_canRate ? 'Noter cet escape' : 'Déjà noté')),
-                  onPressed: (_checkingCanRate || !_canRate)
-                      ? null
-                      : () => _openRatingDialog(context, widget.escape),
-                ),
-
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Revenir à la liste'),
-                ),
-              ],
+              ),
             ),
           ),
         ),
