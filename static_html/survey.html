@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CityScape — Vos retours</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Public+Sans:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#E8EAE5; --card:#FFFFFF;
+  --ink:#17201C; --ink-soft:#5C6862; --ink-faint:#96A09A;
+  --plaque:#1D5C4E; --plaque-line:#7FB89C;
+  --brass:#A87C1F; --signal:#A8352B;
+  --rule:#D3D8D2;
+  --r:3px;
+  --pad:clamp(16px,4vw,28px);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Public Sans",system-ui,sans-serif; font-size:16px; line-height:1.5;
+  padding-bottom:96px;
+}
+.wrap{max-width:660px;margin:0 auto;padding:0 var(--pad)}
+
+/* ---- progression : un itinéraire pointillé qui se remplit ---- */
+.progress{position:sticky;top:0;z-index:20;background:var(--paper);padding:10px var(--pad) 8px;
+  border-bottom:1px solid var(--rule)}
+.progress-inner{max-width:660px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.route{flex:1;height:3px;background-image:radial-gradient(circle,var(--ink-faint) 1.2px,transparent 1.3px);
+  background-size:7px 3px;background-repeat:repeat-x;background-position:0 center;position:relative}
+.route span{position:absolute;inset:0 auto 0 0;background:var(--brass);width:0%;transition:width .35s ease;
+  border-radius:2px}
+.count{font-family:"Roboto Mono",monospace;font-size:12px;color:var(--ink-soft);white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+
+/* ---- en-tête ---- */
+header{padding:32px 0 8px}
+.kicker{font-family:"Roboto Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--brass);margin:0 0 10px}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:clamp(30px,7vw,42px);
+  line-height:1.04;letter-spacing:.01em;margin:0 0 12px;text-transform:uppercase}
+.lede{color:var(--ink-soft);font-size:15px;margin:0;max-width:46ch}
+
+/* ---- sélecteur de questionnaire ---- */
+.picker{display:grid;gap:10px;margin:24px 0 8px}
+.picker button{all:unset;cursor:pointer;background:var(--card);border:1px solid var(--rule);
+  border-radius:var(--r);padding:16px 18px;display:block;transition:border-color .15s,transform .1s}
+.picker button:hover{border-color:var(--plaque)}
+.picker button:active{transform:translateY(1px)}
+.picker button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.picker b{font-family:"Barlow Condensed",sans-serif;font-size:21px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.02em;display:block}
+.picker small{color:var(--ink-soft);font-size:13.5px;display:block;margin-top:3px}
+
+/* ---- plaque de rue = titre de section ---- */
+.plaque{background:var(--plaque);color:#fff;border-radius:var(--r);padding:11px 16px 13px;margin:38px 0 18px;
+  box-shadow:inset 0 0 0 1px var(--plaque),inset 0 0 0 3px var(--plaque-line);}
+.plaque em{font-family:"Roboto Mono",monospace;font-style:normal;font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;opacity:.72;display:block;margin-bottom:2px}
+.plaque strong{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:23px;line-height:1.1;
+  text-transform:uppercase;letter-spacing:.02em;display:block}
+
+/* ---- question ---- */
+.q{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);padding:16px 16px 18px;
+  margin-bottom:10px}
+.q.hidden{display:none}
+.q-head{display:flex;gap:10px;margin-bottom:13px}
+.q-num{font-family:"Roboto Mono",monospace;font-size:11.5px;color:var(--ink-faint);padding-top:3px;
+  font-variant-numeric:tabular-nums;flex:none}
+.q-label{font-weight:500;font-size:15.5px;line-height:1.38}
+.q-note{display:block;font-weight:400;font-size:13px;color:var(--ink-soft);margin-top:4px}
+.req{color:var(--signal);font-weight:700}
+
+/* ---- contrôles ---- */
+.opts{display:grid;gap:7px}
+.opt{all:unset;cursor:pointer;border:1px solid var(--rule);border-radius:var(--r);padding:11px 13px;
+  font-size:14.5px;transition:background .12s,border-color .12s;display:flex;align-items:center;gap:10px}
+.opt:hover{border-color:var(--ink-faint)}
+.opt:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
+.opt[aria-pressed="true"]{background:var(--plaque);border-color:var(--plaque);color:#fff}
+.opt .tick{width:14px;height:14px;border:1.5px solid var(--ink-faint);border-radius:50%;flex:none}
+.opt[aria-pressed="true"] .tick{border-color:#fff;background:#fff;box-shadow:inset 0 0 0 3px var(--plaque)}
+
+.scale{display:flex;gap:5px}
+.scale .opt{flex:1;justify-content:center;padding:13px 2px;font-family:"Roboto Mono",monospace;
+  font-size:14px;font-variant-numeric:tabular-nums}
+.scale-ends{display:flex;justify-content:space-between;margin-top:7px;font-size:12px;color:var(--ink-soft)}
+.nps{display:grid;grid-template-columns:repeat(11,1fr);gap:3px}
+.nps .opt{justify-content:center;padding:11px 0;font-family:"Roboto Mono",monospace;font-size:12.5px}
+
+/* échelle juste-milieu : la cible est le centre, jamais l'extrémité */
+.balance .opt[aria-pressed="true"]{background:var(--ink-soft);border-color:var(--ink-soft)}
+.balance .opt.center[aria-pressed="true"]{background:var(--plaque);border-color:var(--plaque)}
+.balance .opt.center{border-style:dashed;border-color:var(--brass)}
+.target{font-family:"Roboto Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--brass);text-align:center;margin-top:7px}
+
+textarea,input[type=text],input[type=email]{width:100%;font:inherit;font-size:15px;color:var(--ink);
+  background:#FCFCFB;border:1px solid var(--rule);border-radius:var(--r);padding:11px 12px;resize:vertical}
+textarea:focus,input:focus{outline:2px solid var(--brass);outline-offset:-1px;border-color:transparent}
+textarea{min-height:78px}
+
+.ctx{background:transparent;border:1px dashed var(--rule);border-radius:var(--r);padding:12px 14px;
+  margin-bottom:10px;font-size:13px;color:var(--ink-soft)}
+.ctx b{color:var(--ink);font-weight:500}
+
+/* ---- pied ---- */
+.submit-bar{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--rule);
+  padding:12px var(--pad) calc(12px + env(safe-area-inset-bottom));z-index:20}
+.submit-inner{max-width:660px;margin:0 auto;display:flex;gap:12px;align-items:center}
+.btn{all:unset;cursor:pointer;background:var(--plaque);color:#fff;font-family:"Barlow Condensed",sans-serif;
+  font-weight:600;font-size:19px;text-transform:uppercase;letter-spacing:.04em;padding:13px 24px;
+  border-radius:var(--r);text-align:center;flex:1;transition:opacity .15s}
+.btn:hover{opacity:.9}
+.btn:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--rule);flex:none;padding:13px 16px}
+.hint{font-size:12.5px;color:var(--signal);margin:0 0 8px;max-width:660px;margin-inline:auto}
+
+.done{text-align:center;padding:80px 0}
+.done h2{font-family:"Barlow Condensed",sans-serif;font-size:34px;text-transform:uppercase;margin:0 0 12px}
+.done p{color:var(--ink-soft);max-width:40ch;margin:0 auto}
+.payload{margin-top:26px;text-align:left;background:var(--card);border:1px solid var(--rule);
+  border-radius:var(--r);padding:14px;font-family:"Roboto Mono",monospace;font-size:11.5px;
+  white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SOURCE DE VÉRITÉ (CONFIG / ESCAPES / SURVEYS) : injectée par le serveur
+     depuis surveys/schema.json. Elle n'existe donc qu'à UN seul endroit
+     dans le dépôt. Voir surveys/views.py -> survey_page().
+     ═══════════════════════════════════════════════════════════════════ -->
+<!--__CITYSCAPE_SCHEMA__-->
+
+<div class="progress" id="progress" hidden>
+  <div class="progress-inner">
+    <div class="route"><span id="routeFill"></span></div>
+    <div class="count" id="count">0 / 0</div>
+  </div>
+</div>
+
+<div class="wrap" id="app"></div>
+
+<div class="submit-bar" id="submitBar" hidden>
+  <p class="hint" id="hint" hidden></p>
+  <div class="submit-inner">
+    <button class="btn ghost" id="backBtn" type="button">Retour</button>
+    <button class="btn" id="sendBtn" type="button">Envoyer mes retours</button>
+  </div>
+</div>
+
+<script>
+const LIKERT = ["Pas du tout d'accord","Plutôt pas d'accord","Neutre","Plutôt d'accord","Tout à fait d'accord"];
+const params = new URLSearchParams(location.search);
+const app = document.getElementById("app");
+let survey = null, answers = {};
+
+/* Identifiant de session anonyme : fourni par l'app via ?session=…, sinon
+   généré et conservé en localStorage pour qu'un rechargement de page ne
+   produise pas de doublon (l'anti-doublon serveur s'appuie dessus). */
+function sessionId(){
+  let sid = params.get("session");
+  if (sid) return sid;
+  try {
+    sid = localStorage.getItem("cs_survey_session");
+    if (!sid){
+      sid = "web-" + Math.random().toString(36).slice(2,10);
+      localStorage.setItem("cs_survey_session", sid);
+    }
+  } catch(e){
+    sid = "web-" + Math.random().toString(36).slice(2,10);
+  }
+  return sid;
+}
+
+/* Contexte transmis par l'application via l'URL.
+   ?survey=parcours&escape=...&session=...&duree=42&indices=3&version=1.4.0&os=Android */
+function context(){
+  const c = { submitted_at:new Date().toISOString(), form_version:CONFIG.version, session:sessionId() };
+  ["escape","duree","indices","version","os","appareil","etape_abandon","lang"]
+    .forEach(k => { const v = params.get(k); if(v) c[k]=v; });
+  return c;
+}
+
+function boot(){
+  const pre = params.get("survey");
+  if (SURVEYS[pre]) return render(SURVEYS[pre]);
+  app.innerHTML = `
+    <header>
+      <p class="kicker">CityScape · phase de test</p>
+      <h1>Dites-nous ce que<br>vous en avez pensé</h1>
+      <p class="lede">Deux questionnaires courts et indépendants. Le premier après chaque parcours, le second une seule fois sur l'application.</p>
+    </header>
+    <div class="picker">
+      <button type="button" data-s="parcours">
+        <b>Un parcours</b>
+        <small>À remplir juste après avoir joué · environ 3 minutes</small>
+      </button>
+      <button type="button" data-s="application">
+        <b>L'application</b>
+        <small>Une seule fois, après votre première sortie · environ 3 minutes</small>
+      </button>
+    </div>`;
+  app.querySelectorAll("[data-s]").forEach(b =>
+    b.onclick = () => render(SURVEYS[b.dataset.s]));
+}
+
+function render(s){
+  survey = s; answers = {};
+  const ctx = context();
+  const auto = [];
+  if (ctx.escape) auto.push(`Parcours : <b>${esc(ctx.escape)}</b>`);
+  if (ctx.duree) auto.push(`Durée : <b>${esc(ctx.duree)} min</b>`);
+  if (ctx.indices) auto.push(`Indices consultés : <b>${esc(ctx.indices)}</b>`);
+  if (ctx.version) auto.push(`Version : <b>${esc(ctx.version)}</b>`);
+
+  let html = `<header>
+      <p class="kicker">CityScape · ${s.key === "parcours" ? "retour parcours" : "retour application"}</p>
+      <h1>${esc(s.title)}</h1>
+      <p class="lede">${esc(s.lede)} Vos réponses restent anonymes.</p>
+    </header>`;
+  if (auto.length) html += `<div class="ctx" style="margin-top:20px">${auto.join(" &nbsp;·&nbsp; ")}</div>`;
+
+  s.sections.forEach(sec => {
+    html += `<div class="plaque"><em>${esc(sec.eyebrow)}</em><strong>${esc(sec.title)}</strong></div>`;
+    sec.questions.forEach(q => { html += question(q); });
+  });
+  app.innerHTML = html;
+
+  // Pré-remplissage depuis l'URL
+  s.sections.flatMap(x => x.questions).forEach(q => {
+    if (q.auto && ctx[q.auto]) {
+      const match = (q.options||[]).find(o => o === ctx[q.auto]);
+      if (match) set(q.id, match);
+    }
+  });
+
+  bind();
+  document.getElementById("progress").hidden = false;
+  document.getElementById("submitBar").hidden = false;
+  refresh();
+  scrollTo(0,0);
+}
+
+function question(q){
+  const n = q.required ? ` <span class="req" title="obligatoire">*</span>` : "";
+  const note = q.note ? `<span class="q-note">${esc(q.note)}</span>` : "";
+  let body = "";
+
+  if (q.type === "likert"){
+    body = `<div class="scale" data-q="${q.id}" role="group">` +
+      [1,2,3,4,5].map(v =>
+        `<button type="button" class="opt" data-v="${v}" aria-pressed="false" title="${LIKERT[v-1]}">${v}</button>`).join("") +
+      `</div><div class="scale-ends"><span>Pas du tout d'accord</span><span>Tout à fait</span></div>`;
+  }
+  else if (q.type === "nps"){
+    body = `<div class="nps" data-q="${q.id}" role="group">` +
+      Array.from({length:11},(_,v) =>
+        `<button type="button" class="opt" data-v="${v}" aria-pressed="false">${v}</button>`).join("") +
+      `</div><div class="scale-ends"><span>${esc(q.ends[0])}</span><span>${esc(q.ends[1])}</span></div>`;
+  }
+  else if (q.type === "balance"){
+    const mid = Math.floor(q.options.length/2);
+    body = `<div class="opts balance" data-q="${q.id}" role="group">` +
+      q.options.map((o,i) =>
+        `<button type="button" class="opt${i===mid?" center":""}" data-v="${esc(o)}" aria-pressed="false">
+           <span class="tick"></span><span>${esc(o)}</span></button>`).join("") +
+      `</div><div class="target">↑ la réponse idéale est au centre</div>`;
+  }
+  else if (q.type === "single"){
+    body = `<div class="opts" data-q="${q.id}" role="group">` +
+      q.options.map(o =>
+        `<button type="button" class="opt" data-v="${esc(o)}" aria-pressed="false">
+           <span class="tick"></span><span>${esc(o)}</span></button>`).join("") + `</div>`;
+  }
+  else if (q.type === "text"){
+    body = `<textarea data-q="${q.id}" placeholder="Votre réponse"></textarea>`;
+  }
+  else if (q.type === "shorttext"){
+    body = `<input type="text" data-q="${q.id}" placeholder="${esc(q.placeholder||"")}">`;
+  }
+
+  return `<div class="q${q.showIf ? " hidden" : ""}" id="q_${q.id}">
+      <div class="q-head">
+        <span class="q-num">${q.showIf ? "↳" : ""}</span>
+        <span class="q-label">${esc(q.label)}${n}${note}</span>
+      </div>${body}</div>`;
+}
+
+function bind(){
+  app.querySelectorAll("[data-q] .opt").forEach(b => {
+    b.onclick = () => {
+      const group = b.closest("[data-q]");
+      const raw = b.dataset.v;
+      const val = /^-?\d+$/.test(raw) ? Number(raw) : raw;
+      const already = b.getAttribute("aria-pressed") === "true";
+      group.querySelectorAll(".opt").forEach(o => o.setAttribute("aria-pressed","false"));
+      if (already) { delete answers[group.dataset.q]; }
+      else { b.setAttribute("aria-pressed","true"); answers[group.dataset.q] = val; }
+      refresh();
+    };
+  });
+  app.querySelectorAll("textarea[data-q],input[data-q]").forEach(f => {
+    f.oninput = () => {
+      const v = f.value.trim();
+      if (v) answers[f.dataset.q] = v; else delete answers[f.dataset.q];
+      refresh();
+    };
+  });
+}
+
+function set(id,val){
+  const g = app.querySelector(`[data-q="${id}"]`);
+  if (!g) return;
+  const b = g.querySelector(`.opt[data-v="${CSS.escape(String(val))}"]`);
+  if (b){ b.setAttribute("aria-pressed","true"); answers[id]=val; }
+}
+
+function visible(q){
+  if (!q.showIf) return true;
+  const v = answers[q.showIf.q];
+  return v !== undefined && q.showIf.is.includes(v);
+}
+
+function refresh(){
+  const all = survey.sections.flatMap(s => s.questions);
+  all.forEach(q => {
+    const el = document.getElementById("q_"+q.id);
+    const show = visible(q);
+    el.classList.toggle("hidden", !show);
+    if (!show && answers[q.id] !== undefined) delete answers[q.id];
+  });
+  const shown = all.filter(visible);
+  const done = shown.filter(q => answers[q.id] !== undefined).length;
+  document.getElementById("routeFill").style.width = (done/shown.length*100) + "%";
+  document.getElementById("count").textContent = `${done} / ${shown.length}`;
+}
+
+document.getElementById("backBtn").onclick = () => {
+  document.getElementById("progress").hidden = true;
+  document.getElementById("submitBar").hidden = true;
+  document.getElementById("hint").hidden = true;
+  boot();
+};
+
+document.getElementById("sendBtn").onclick = async () => {
+  const hint = document.getElementById("hint");
+  const missing = survey.sections.flatMap(s => s.questions)
+    .filter(q => q.required && visible(q) && answers[q.id] === undefined);
+  if (missing.length){
+    hint.hidden = false;
+    hint.textContent = `Il reste ${missing.length} question${missing.length>1?"s":""} obligatoire${missing.length>1?"s":""} à renseigner.`;
+    document.getElementById("q_"+missing[0].id).scrollIntoView({behavior:"smooth",block:"center"});
+    return;
+  }
+  hint.hidden = true;
+  const payload = { survey:survey.key, ...context(), reponses:answers };
+  const btn = document.getElementById("sendBtn");
+  btn.disabled = true; btn.textContent = "Envoi…";
+
+  // Pas de collecteur configuré : on affiche le JSON (mode test).
+  if (!CONFIG.endpoint) return finish(payload, true);
+  try {
+    const res = await fetch(CONFIG.endpoint, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok){
+      let msg = "";
+      try { msg = (await res.json()).detail || ""; } catch(e){}
+      throw new Error(msg || ("HTTP " + res.status));
+    }
+    finish(payload, false);
+  } catch(e){
+    btn.disabled = false; btn.textContent = "Réessayer l'envoi";
+    hint.hidden = false;
+    hint.textContent = e.message
+      ? ("L'envoi n'a pas abouti : " + e.message)
+      : "L'envoi n'a pas abouti. Vérifiez votre connexion et réessayez.";
+  }
+};
+
+function finish(payload, showPayload){
+  document.getElementById("progress").hidden = true;
+  document.getElementById("submitBar").hidden = true;
+  app.innerHTML = `<div class="done">
+      <h2>C'est envoyé</h2>
+      <p>Merci pour le temps que vous y avez passé. Chaque retour fait bouger quelque chose dans le parcours suivant.</p>
+      ${showPayload ? `<p style="margin-top:22px;font-size:13px">Aucun collecteur n'est configuré. Voici les données brutes :</p>
+        <div class="payload">${esc(JSON.stringify(payload,null,2))}</div>` : ""}
+    </div>`;
+  scrollTo(0,0);
+}
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+boot();
+</script>
+</body>
+</html>
