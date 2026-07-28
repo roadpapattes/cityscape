@@ -93,6 +93,7 @@ function Admin() {
             { key: 'users', label: '👥 Utilisateurs' },
             { key: 'escapes', label: '🎯 Modération escapes' },
             { key: 'sessions', label: '🕹️ Sessions' },
+            { key: 'surveys', label: '📝 Surveys' },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -125,6 +126,7 @@ function Admin() {
           {activeTab === 'sessions' && (
             <SessionsTab statusFilter={sessionsStatusFilter} onStatusFilterChange={setSessionsStatusFilter} />
           )}
+          {activeTab === 'surveys' && <SurveysTab />}
         </div>
       </div>
     </div>
@@ -550,6 +552,298 @@ function SessionsTab({ statusFilter, onStatusFilterChange }) {
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------------- Surveys (questionnaires de satisfaction) ----------------
+const SURVEY_LABELS = {
+  parcours: 'Parcours (retour à chaud)',
+  application: 'Application',
+};
+
+// Champs résumés sur la ligne repliée de chaque réponse
+const SUMMARY_FIELDS = {
+  parcours: ['note', 'reco_parcours', 'difficulte'],
+  application: ['reco_app', 'nb_parcours', 'bug'],
+};
+
+const STAT_LABELS = {
+  total: 'Réponses',
+  nps_parcours: 'NPS parcours',
+  nps_app: 'NPS application',
+  taux_completion: 'Complétion',
+  taux_difficulte_ok: 'Difficulté bien dosée',
+  note_moyenne: 'Note moyenne',
+  umux_lite: 'UMUX-Lite',
+};
+
+// Certains indicateurs sont des pourcentages
+const STAT_SUFFIX = {
+  taux_completion: '%',
+  taux_difficulte_ok: '%',
+};
+
+function SurveysTab() {
+  const [survey, setSurvey] = useState('parcours');
+  const [schema, setSchema] = useState(null);
+  const [stats, setStats] = useState(null);
+  const [responses, setResponses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [downloading, setDownloading] = useState(false);
+
+  // Charge le schéma une fois (pour afficher les libellés des questions)
+  useEffect(() => {
+    apiClient.getSurveySchema().then(setSchema).catch(() => setSchema(null));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+    Promise.all([apiClient.getSurveyStats(survey), apiClient.getSurveyResponses(survey)])
+      .then(([s, r]) => {
+        if (cancelled) return;
+        setStats(s);
+        setResponses(r.results || []);
+      })
+      .catch((err) => !cancelled && setError(err.message || 'Erreur lors du chargement'))
+      .finally(() => !cancelled && setLoading(false));
+    return () => { cancelled = true; };
+  }, [survey]);
+
+  // Définition du questionnaire courant (sections/questions) + map {id: {label, type}}
+  const surveyDef = schema?.surveys?.[survey] || null;
+  const questionMeta = {};
+  if (surveyDef) {
+    surveyDef.sections.forEach((sec) =>
+      sec.questions.forEach((q) => { questionMeta[q.id] = { label: q.label, type: q.type }; })
+    );
+  }
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    setError('');
+    try {
+      await apiClient.downloadSurveyCsv(survey);
+    } catch (err) {
+      setError(err.message || 'Export impossible');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: '12px' }}>
+        <div className="form-group" style={{ maxWidth: '280px', marginBottom: 0 }}>
+          <label className="form-label">Questionnaire</label>
+          <select className="form-select" value={survey} onChange={(e) => setSurvey(e.target.value)}>
+            <option value="parcours">Parcours</option>
+            <option value="application">Application</option>
+          </select>
+        </div>
+        <button className="btn btn-secondary btn-small" onClick={handleDownload} disabled={downloading || !responses.length}>
+          {downloading ? 'Export…' : '⬇️ Exporter en CSV'}
+        </button>
+      </div>
+
+      {error && <div className="alert alert-error" style={{ marginTop: '16px' }}>{error}</div>}
+
+      {loading ? (
+        <div className="loading-container"><div className="spinner"></div></div>
+      ) : (
+        <>
+          {stats && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', margin: '20px 0' }}>
+              {Object.entries(stats).map(([k, v]) => (
+                <div key={k} className="card" style={{ textAlign: 'center', marginBottom: 0 }}>
+                  <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--primary)' }}>
+                    {v === null || v === undefined ? '—' : `${v}${STAT_SUFFIX[k] || ''}`}
+                  </div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{STAT_LABELS[k] || k}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <h3>Réponses · {SURVEY_LABELS[survey]}</h3>
+          {responses.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)' }}>Aucune réponse pour ce questionnaire.</p>
+          ) : (
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {responses.map((r) => (
+                <SurveyResponseRow
+                  key={r.id}
+                  response={r}
+                  survey={survey}
+                  surveyDef={surveyDef}
+                  questionMeta={questionMeta}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// Libellés courts pour la ligne de récap (repliée)
+const CHIP_LABEL = {
+  note: 'Note', reco_parcours: 'Reco', reco_app: 'Reco',
+  difficulte: 'Diff.', nb_parcours: 'Parcours', bug: 'Bug',
+};
+
+// Ligne de récap cliquable → dépliable en détail graphique condensé
+function SurveyResponseRow({ response, survey, surveyDef, questionMeta }) {
+  const [open, setOpen] = useState(false);
+  const rep = response.reponses || {};
+
+  const chips = (SUMMARY_FIELDS[survey] || [])
+    .filter((id) => rep[id] !== undefined)
+    .map((id) => ({ id, value: rep[id] }));
+  const commentCount = Object.keys(rep).filter(
+    (id) => ['text', 'shorttext'].includes(questionMeta[id]?.type)
+  ).length;
+
+  return (
+    <div className="card" style={{ marginBottom: 0, padding: 0, overflow: 'hidden' }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        style={{ all: 'unset', cursor: 'pointer', display: 'block', width: '100%', padding: '12px 16px', boxSizing: 'border-box' }}
+      >
+        <div className="flex items-center gap-2" style={{ flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', width: '12px' }}>{open ? '▾' : '▸'}</span>
+          {response.escape && <strong>{response.escape}</strong>}
+          {response.session && (
+            <span title="Identifiant de session anonyme" style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--text-muted)' }}>
+              👤 {response.session}
+            </span>
+          )}
+          {response.os && <span className="badge">{response.os}</span>}
+          <span style={{ marginLeft: 'auto', display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {chips.map((c) => (
+              <span key={c.id} style={{ fontSize: '13px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>{CHIP_LABEL[c.id] || c.id} </span>
+                <strong>{String(c.value)}</strong>
+              </span>
+            ))}
+            {commentCount > 0 && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>💬 {commentCount}</span>}
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              {response.received_at ? new Date(response.received_at).toLocaleDateString('fr-FR') : ''}
+            </span>
+          </span>
+        </div>
+      </button>
+
+      {open && (
+        <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border)' }}>
+          {surveyDef ? (
+            surveyDef.sections.map((sec) => {
+              const answered = sec.questions.filter((q) => rep[q.id] !== undefined);
+              if (!answered.length) return null;
+              return (
+                <div key={sec.id} style={{ marginTop: '14px' }}>
+                  <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--text-muted)', marginBottom: '10px' }}>
+                    {sec.title}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
+                    {answered.map((q) => (
+                      <div key={q.id} style={{ gridColumn: ['text', 'shorttext'].includes(q.type) ? '1 / -1' : 'auto' }}>
+                        <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginBottom: '5px' }}>{q.label}</div>
+                        <AnswerDisplay q={q} value={rep[q.id]} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p style={{ color: 'var(--text-muted)', marginTop: '12px' }}>Schéma indisponible.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Rendu graphique condensé d'une réponse, selon le type de question
+function AnswerDisplay({ q, value }) {
+  if (q.type === 'likert') return <MiniScale count={5} start={1} value={value} ends={['Pas du tout', 'Tout à fait']} />;
+  if (q.type === 'nps') return <MiniScale count={11} start={0} value={value} ends={q.ends} />;
+  if (q.type === 'balance') return <MiniBalance options={q.options} value={value} />;
+  if (q.type === 'single') return <MiniChoice options={q.options} value={value} />;
+  return <div style={{ fontSize: '14px', whiteSpace: 'pre-wrap' }}>{String(value)}</div>;
+}
+
+// Échelle numérique (likert 1-5, nps 0-10) : la cellule choisie est mise en avant
+function MiniScale({ count, start, value, ends }) {
+  const cells = [];
+  for (let i = 0; i < count; i++) {
+    const v = start + i;
+    const active = v === value;
+    cells.push(
+      <span key={v} style={{
+        flex: 1, textAlign: 'center', padding: '4px 0', fontSize: '11px',
+        fontFamily: 'monospace', borderRadius: '3px', border: '1px solid var(--border)',
+        background: active ? 'var(--primary)' : 'var(--bg-light)',
+        color: active ? '#fff' : 'var(--text-muted)',
+        fontWeight: active ? 700 : 400,
+      }}>{v}</span>
+    );
+  }
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: '3px' }}>{cells}</div>
+      {ends && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>
+          <span>{ends[0]}</span><span>{ends[1]}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Échelle « juste-milieu » : le centre est la cible (vert), les extrêmes neutres
+function MiniBalance({ options, value }) {
+  const mid = Math.floor(options.length / 2);
+  return (
+    <div style={{ display: 'flex', gap: '3px' }}>
+      {options.map((o, i) => {
+        const active = o === value;
+        const isCenter = i === mid;
+        return (
+          <span key={o} style={{
+            flex: 1, textAlign: 'center', padding: '5px 4px', fontSize: '11px', borderRadius: '3px',
+            border: isCenter ? '1px dashed var(--primary)' : '1px solid var(--border)',
+            background: active ? (isCenter ? 'var(--primary)' : 'var(--text-muted)') : 'var(--bg-light)',
+            color: active ? '#fff' : 'var(--text-muted)',
+            fontWeight: active ? 700 : 400,
+          }}>{o}</span>
+        );
+      })}
+    </div>
+  );
+}
+
+// Choix unique : la valeur retenue est mise en avant parmi les options
+function MiniChoice({ options, value }) {
+  const opts = options && options.length ? options : [value];
+  return (
+    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+      {opts.map((o) => {
+        const active = o === value;
+        return (
+          <span key={o} style={{
+            padding: '3px 10px', fontSize: '12px', borderRadius: '12px', border: '1px solid var(--border)',
+            background: active ? 'var(--primary)' : 'var(--bg-light)',
+            color: active ? '#fff' : 'var(--text-muted)',
+            fontWeight: active ? 600 : 400,
+          }}>{o}</span>
+        );
+      })}
     </div>
   );
 }

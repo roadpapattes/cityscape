@@ -4,6 +4,7 @@ from django.http import JsonResponse, HttpResponse
 from django.conf import settings
 from django.conf.urls.static import static
 from engagement.views import CreatorFeedbackView
+from surveys.views import survey_page
 import os
 
 def health(_):
@@ -49,8 +50,10 @@ urlpatterns = [
     path('privacy-policy', privacy_policy),
     path('delete-account', delete_account),
     path('admin/', admin.site.urls),
+    path('survey', survey_page),                # page HTML des questionnaires
     path('api/', include('games.urls')),       # puis games (catalogue)
     path('api/', include('engagement.urls')),  # engagement D'ABORD
+    path('api/', include('surveys.urls')),     # collecte + schéma questionnaires
     path('api/creator/feedback/', CreatorFeedbackView.as_view(), name='creator-feedback'),
 
 ]
