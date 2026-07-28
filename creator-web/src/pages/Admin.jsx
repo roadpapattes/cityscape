@@ -93,6 +93,7 @@ function Admin() {
             { key: 'users', label: '👥 Utilisateurs' },
             { key: 'escapes', label: '🎯 Modération escapes' },
             { key: 'sessions', label: '🕹️ Sessions' },
+            { key: 'surveys', label: '📝 Surveys' },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -125,6 +126,7 @@ function Admin() {
           {activeTab === 'sessions' && (
             <SessionsTab statusFilter={sessionsStatusFilter} onStatusFilterChange={setSessionsStatusFilter} />
           )}
+          {activeTab === 'surveys' && <SurveysTab />}
         </div>
       </div>
     </div>
@@ -550,6 +552,164 @@ function SessionsTab({ statusFilter, onStatusFilterChange }) {
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------------- Surveys (questionnaires de satisfaction) ----------------
+const SURVEY_LABELS = {
+  parcours: 'Parcours (retour à chaud)',
+  application: 'Application',
+};
+
+const STAT_LABELS = {
+  total: 'Réponses',
+  nps_parcours: 'NPS parcours',
+  nps_app: 'NPS application',
+  taux_completion: 'Complétion',
+  taux_difficulte_ok: 'Difficulté bien dosée',
+  note_moyenne: 'Note moyenne',
+  umux_lite: 'UMUX-Lite',
+};
+
+// Certains indicateurs sont des pourcentages
+const STAT_SUFFIX = {
+  taux_completion: '%',
+  taux_difficulte_ok: '%',
+};
+
+function SurveysTab() {
+  const [survey, setSurvey] = useState('parcours');
+  const [schema, setSchema] = useState(null);
+  const [stats, setStats] = useState(null);
+  const [responses, setResponses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [downloading, setDownloading] = useState(false);
+
+  // Charge le schéma une fois (pour afficher les libellés des questions)
+  useEffect(() => {
+    apiClient.getSurveySchema().then(setSchema).catch(() => setSchema(null));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+    Promise.all([apiClient.getSurveyStats(survey), apiClient.getSurveyResponses(survey)])
+      .then(([s, r]) => {
+        if (cancelled) return;
+        setStats(s);
+        setResponses(r.results || []);
+      })
+      .catch((err) => !cancelled && setError(err.message || 'Erreur lors du chargement'))
+      .finally(() => !cancelled && setLoading(false));
+    return () => { cancelled = true; };
+  }, [survey]);
+
+  // Map {q.id: {label, type}} pour le questionnaire courant
+  const questionMeta = {};
+  if (schema?.surveys?.[survey]) {
+    schema.surveys[survey].sections.forEach((sec) =>
+      sec.questions.forEach((q) => { questionMeta[q.id] = { label: q.label, type: q.type }; })
+    );
+  }
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    setError('');
+    try {
+      await apiClient.downloadSurveyCsv(survey);
+    } catch (err) {
+      setError(err.message || 'Export impossible');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: '12px' }}>
+        <div className="form-group" style={{ maxWidth: '280px', marginBottom: 0 }}>
+          <label className="form-label">Questionnaire</label>
+          <select className="form-select" value={survey} onChange={(e) => setSurvey(e.target.value)}>
+            <option value="parcours">Parcours</option>
+            <option value="application">Application</option>
+          </select>
+        </div>
+        <button className="btn btn-secondary btn-small" onClick={handleDownload} disabled={downloading || !responses.length}>
+          {downloading ? 'Export…' : '⬇️ Exporter en CSV'}
+        </button>
+      </div>
+
+      {error && <div className="alert alert-error" style={{ marginTop: '16px' }}>{error}</div>}
+
+      {loading ? (
+        <div className="loading-container"><div className="spinner"></div></div>
+      ) : (
+        <>
+          {stats && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', margin: '20px 0' }}>
+              {Object.entries(stats).map(([k, v]) => (
+                <div key={k} className="card" style={{ textAlign: 'center', marginBottom: 0 }}>
+                  <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--primary)' }}>
+                    {v === null || v === undefined ? '—' : `${v}${STAT_SUFFIX[k] || ''}`}
+                  </div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{STAT_LABELS[k] || k}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <h3>Réponses · {SURVEY_LABELS[survey]}</h3>
+          {responses.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)' }}>Aucune réponse pour ce questionnaire.</p>
+          ) : (
+            <div style={{ display: 'grid', gap: '12px' }}>
+              {responses.map((r) => (
+                <SurveyResponseCard key={r.id} response={r} questionMeta={questionMeta} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function SurveyResponseCard({ response, questionMeta }) {
+  const entries = Object.entries(response.reponses || {});
+  // On met en avant les champs libres (texte), le reste en ligne compacte
+  const freeText = entries.filter(([id]) => ['text', 'shorttext'].includes(questionMeta[id]?.type));
+  const scored = entries.filter(([id]) => !['text', 'shorttext'].includes(questionMeta[id]?.type));
+
+  return (
+    <div className="card" style={{ marginBottom: 0 }}>
+      <div className="flex items-center gap-2" style={{ flexWrap: 'wrap', marginBottom: '8px' }}>
+        {response.escape && <strong>{response.escape}</strong>}
+        {response.os && <span className="badge">{response.os}</span>}
+        {response.app_version && <span className="badge">v{response.app_version}</span>}
+        <span style={{ color: 'var(--text-muted)', fontSize: '13px', marginLeft: 'auto' }}>
+          {response.received_at ? new Date(response.received_at).toLocaleString('fr-FR') : ''}
+        </span>
+      </div>
+
+      {scored.length > 0 && (
+        <p style={{ fontSize: '14px', marginBottom: freeText.length ? '10px' : 0 }}>
+          {scored.map(([id, val]) => (
+            <span key={id} style={{ marginRight: '14px', display: 'inline-block' }}>
+              <span style={{ color: 'var(--text-muted)' }}>{questionMeta[id]?.label || id} :</span> <strong>{String(val)}</strong>
+            </span>
+          ))}
+        </p>
+      )}
+
+      {freeText.map(([id, val]) => (
+        <div key={id} style={{ marginTop: '8px' }}>
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{questionMeta[id]?.label || id}</div>
+          <div style={{ fontSize: '14px', whiteSpace: 'pre-wrap' }}>{String(val)}</div>
+        </div>
+      ))}
     </div>
   );
 }

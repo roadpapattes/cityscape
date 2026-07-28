@@ -135,6 +135,59 @@ class SubmitEndpointTests(TestCase):
 
 
 @override_settings(CACHES=LOCMEM)
+class AdminConsultationTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        from django.contrib.auth import get_user_model
+        from rest_framework.authtoken.models import Token
+        User = get_user_model()
+        self.admin = User.objects.create_user("boss", password="x", is_staff=True)
+        self.token = Token.objects.create(user=self.admin)
+        # jeu de données : 2 promoteurs, 1 détracteur sur reco_parcours
+        for reco, fini, diff in [(10, "Oui, entièrement", "Bien dosée"),
+                                 (9, "Oui, entièrement", "Un peu trop difficile"),
+                                 (3, "Non, abandon en cours", "Bien dosée")]:
+            SurveyResponse.objects.create(
+                survey="parcours", session=f"s{reco}",
+                escape="Parc du Poutyl (Olivet)",
+                reponses={"reco_parcours": reco, "fini": fini, "difficulte": diff,
+                          "note": 8, "plu": "les énigmes"},
+            )
+
+    def auth(self):
+        return {"HTTP_AUTHORIZATION": f"Token {self.token.key}"}
+
+    def test_responses_requires_staff(self):
+        r = self.client.get("/api/admin/surveys/responses?survey=parcours")
+        self.assertIn(r.status_code, (401, 403))
+
+    def test_responses_listed_for_staff(self):
+        r = self.client.get("/api/admin/surveys/responses?survey=parcours", **self.auth())
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["count"], 3)
+
+    def test_stats_nps_and_rates(self):
+        r = self.client.get("/api/admin/surveys/stats?survey=parcours", **self.auth())
+        body = r.json()
+        self.assertEqual(body["total"], 3)
+        self.assertEqual(body["nps_parcours"], 33)          # (2 prom - 1 detr)/3 = 33%
+        self.assertEqual(body["taux_completion"], 67)       # 2/3
+        self.assertEqual(body["taux_difficulte_ok"], 67)    # 2/3
+
+    def test_export_csv(self):
+        r = self.client.get("/api/admin/surveys/export?survey=parcours", **self.auth())
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r["Content-Type"].startswith("text/csv"))
+        content = r.content.decode("utf-8-sig")
+        self.assertIn("reco_parcours", content.splitlines()[0])
+        self.assertIn("les énigmes", content)
+
+    def test_bad_survey_key_400(self):
+        r = self.client.get("/api/admin/surveys/stats?survey=nope", **self.auth())
+        self.assertEqual(r.status_code, 400)
+
+
+@override_settings(CACHES=LOCMEM)
 class PageAndSchemaTests(TestCase):
     def test_schema_route(self):
         r = self.client.get("/api/survey/schema")

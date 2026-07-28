@@ -160,6 +160,35 @@ class ApiClient {
     return await this.request(`/api/admin/sessions?status=${encodeURIComponent(status)}`);
   }
 
+  // Surveys (questionnaires de satisfaction)
+  async getSurveyStats(survey) {
+    return await this.request(`/api/admin/surveys/stats?survey=${encodeURIComponent(survey)}`);
+  }
+
+  async getSurveyResponses(survey) {
+    return await this.request(`/api/admin/surveys/responses?survey=${encodeURIComponent(survey)}`);
+  }
+
+  async getSurveySchema() {
+    return await this.request('/api/survey/schema');
+  }
+
+  async downloadSurveyCsv(survey) {
+    const url = `${API_BASE_URL}/api/admin/surveys/export?survey=${encodeURIComponent(survey)}`;
+    const headers = {};
+    if (this.token) headers['Authorization'] = `Token ${this.token}`;
+    const response = await fetch(url, { headers });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const blob = await response.blob();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `survey_${survey}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(link.href);
+  }
+
   async getEscapesByStatus(status) {
     return await this.request(`/api/creator/escapes?status=${encodeURIComponent(status)}`);
   }
