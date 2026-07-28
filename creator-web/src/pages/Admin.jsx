@@ -717,6 +717,11 @@ function SurveyResponseRow({ response, survey, surveyDef, questionMeta }) {
         <div className="flex items-center gap-2" style={{ flexWrap: 'wrap' }}>
           <span style={{ fontSize: '12px', color: 'var(--text-muted)', width: '12px' }}>{open ? '▾' : '▸'}</span>
           {response.escape && <strong>{response.escape}</strong>}
+          {response.session && (
+            <span title="Identifiant de session anonyme" style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--text-muted)' }}>
+              👤 {response.session}
+            </span>
+          )}
           {response.os && <span className="badge">{response.os}</span>}
           <span style={{ marginLeft: 'auto', display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
             {chips.map((c) => (
