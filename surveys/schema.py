@@ -94,15 +94,29 @@ def _hidden_qids(survey):
     return hidden
 
 
-def question_order(key):
-    """Liste ordonnée des q.id d'un questionnaire (colonnes CSV)."""
+def hidden_qids(key):
+    """q.id retirés du formulaire (flag `hidden` sur la question ou sa section)
+    pour un questionnaire donné. Sert à exclure ces éléments du rapport admin
+    (colonnes CSV, indicateurs, réponses brutes). Les données restent en base :
+    réafficher l'élément les fait réapparaître."""
+    survey = get_survey(key)
+    return _hidden_qids(survey) if survey else set()
+
+
+def question_order(key, include_hidden=False):
+    """Liste ordonnée des q.id d'un questionnaire (colonnes CSV).
+
+    Par défaut, exclut les questions masquées (`hidden`) : elles ne doivent plus
+    figurer dans le rapport admin. Passer include_hidden=True pour l'ordre complet."""
     survey = get_survey(key)
     if not survey:
         return []
+    hidden = set() if include_hidden else _hidden_qids(survey)
     ids = []
     for section in survey.get("sections", []):
         for q in section.get("questions", []):
-            ids.append(q["id"])
+            if q["id"] not in hidden:
+                ids.append(q["id"])
     return ids
 
 

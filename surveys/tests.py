@@ -208,6 +208,36 @@ class AdminConsultationTests(TestCase):
         r = self.client.get("/api/admin/surveys/stats?survey=nope", **self.auth())
         self.assertEqual(r.status_code, 400)
 
+    def test_hidden_elements_excluded_from_report(self):
+        # Une réponse application avec des champs masqués (appareil, section C
+        # UMUX, gps) enregistrés en base.
+        SurveyResponse.objects.create(
+            survey="application", session="app1",
+            reponses={"reco_app": 9, "appareil": "Android",
+                      "umux_besoins": 5, "umux_facile": 4, "gps": 3, "reseau": "Non"},
+        )
+        # Indicateurs : pas d'UMUX-Lite (section masquée), NPS app conservé.
+        s = self.client.get("/api/admin/surveys/stats?survey=application", **self.auth()).json()
+        self.assertNotIn("umux_lite", s)
+        self.assertIn("nps_app", s)
+
+        # Réponses brutes : clés masquées retirées, données visibles conservées.
+        rep = self.client.get(
+            "/api/admin/surveys/responses?survey=application", **self.auth()
+        ).json()["results"][0]["reponses"]
+        for masked in ("appareil", "umux_besoins", "umux_facile", "gps"):
+            self.assertNotIn(masked, rep)
+        self.assertIn("reseau", rep)
+        self.assertIn("reco_app", rep)
+
+        # Export CSV : colonnes masquées absentes de l'en-tête.
+        header = self.client.get(
+            "/api/admin/surveys/export?survey=application", **self.auth()
+        ).content.decode("utf-8-sig").splitlines()[0]
+        for masked in ("appareil", "umux_besoins", "gps"):
+            self.assertNotIn(masked, header)
+        self.assertIn("reco_app", header)
+
 
 @override_settings(CACHES=LOCMEM)
 class PageAndSchemaTests(TestCase):
