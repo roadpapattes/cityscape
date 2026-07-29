@@ -71,6 +71,15 @@ class ApiClient {
     return response;
   }
 
+  async googleLogin(idToken) {
+    const response = await this.request('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ id_token: idToken }),
+    });
+    this.setToken(response.token);
+    return response;
+  }
+
   async register(username, email, password) {
     const response = await this.request('/api/auth/register', {
       method: 'POST',
