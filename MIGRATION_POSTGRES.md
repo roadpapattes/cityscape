@@ -62,12 +62,17 @@ SQL
 
 ---
 
-## Étape 2 — Renseigner `.env`
+## Étape 2 — Renseigner `.env` (DB_ENGINE encore commenté)
 
-À partir de `.env.example` (ne jamais committer `.env`) :
+> ⚠️ Sur ce déploiement, **systemd lit le même `.env`** (`EnvironmentFile`).
+> Tant que la bascule n'est pas faite, on laisse `DB_ENGINE` **commenté** :
+> la prod reste sur SQLite même en cas de redémarrage.
+
+À partir de `.env.example`, renseigner les paramètres PG mais garder
+`DB_ENGINE` commenté (ne jamais committer `.env`) :
 
 ```
-DB_ENGINE=postgres
+#DB_ENGINE=postgres
 DB_NAME=cityscape
 DB_USER=cityscape
 DB_PASSWORD=UN_MDP_FORT
@@ -75,22 +80,22 @@ DB_HOST=127.0.0.1
 DB_PORT=5432
 ```
 
-Vérifier la connexion (doit ouvrir psql sur la base `cityscape`) :
+Vérifier la connexion PG (override par le shell, sans activer `.env`) :
 
 ```bash
-python manage.py dbshell
+DB_ENGINE=postgres python manage.py dbshell   # doit ouvrir psql sur cityscape
 ```
 
 ---
 
 ## Étape 3 — Répétition à blanc (fortement recommandé)
 
-Déroule toute la bascule **sans stopper le service** : construit le schéma sur
-PG, importe les données, contrôle la parité des comptes, mais ne touche pas à
-la prod. À faire au moins une fois avant la vraie bascule.
+Déroule toute la bascule **sans stopper le service ni activer `.env`** :
+construit le schéma sur PG, importe les données, contrôle la parité, mais ne
+touche pas à la prod (toujours sur SQLite). À faire au moins une fois.
 
 ```bash
-REHEARSE=1 bash scripts/migrate_to_postgres.sh
+DB_ENGINE=postgres REHEARSE=1 bash scripts/migrate_to_postgres.sh
 ```
 
 Attendu en fin d'exécution : **`PARITÉ OK`**. En cas d'écart, le script
@@ -107,8 +112,16 @@ affiche le `diff` par modèle et s'arrête sans rien casser.
 
 ## Étape 4 — Bascule réelle
 
-Fenêtre de maintenance : le script stoppe les écritures, transfère, contrôle
-la parité, puis redémarre. Si la parité échoue, il **ne redémarre pas** sur PG.
+D'abord **activer** la bascule en décommentant la ligne dans `.env` (c'est ce
+qui fera repartir gunicorn sur PG après le transfert) :
+
+```
+DB_ENGINE=postgres
+```
+
+Puis lancer le script. Fenêtre de maintenance : il stoppe les écritures,
+transfère, contrôle la parité, puis redémarre. Si la parité échoue, il **ne
+redémarre pas** sur PG.
 
 ```bash
 bash scripts/migrate_to_postgres.sh

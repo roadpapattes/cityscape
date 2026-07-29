@@ -9,13 +9,20 @@
 # Réversible : la base SQLite est lue seule, jamais modifiée. En cas de
 # problème, on recommente DB_ENGINE=postgres dans .env et on redémarre.
 #
-# Pré-requis :
-#   - .env renseigné avec DB_ENGINE=postgres + DB_* (base PG déjà créée en UTF-8)
-#   - le service applicatif est arrêté (ce script le fait si SERVICE est défini)
+# Cible PostgreSQL : désignée soit par la variable de shell DB_ENGINE=postgres
+# (répétition à blanc : .env de prod NON modifié), soit par une ligne active
+# DB_ENGINE=postgres dans .env (bascule réelle). Les paramètres DB_NAME/USER/
+# PASSWORD/HOST/PORT sont lus dans .env (ou surchargés par le shell).
+#
+# ATTENTION : sur ce déploiement, systemd lit le même .env (EnvironmentFile).
+# Activer DB_ENGINE=postgres dans .env bascule donc la prod au prochain
+# redémarrage — à ne faire qu'au moment de la bascule réelle (étape 4).
 #
 # Usage :
+#   # Répétition à blanc (n'active PAS .env, ne stoppe pas le service) :
+#   DB_ENGINE=postgres REHEARSE=1 bash scripts/migrate_to_postgres.sh
+#   # Bascule réelle (DB_ENGINE=postgres décommenté dans .env au préalable) :
 #   bash scripts/migrate_to_postgres.sh
-#   REHEARSE=1 bash scripts/migrate_to_postgres.sh   # répétition à blanc (ne stoppe pas le service)
 #
 set -euo pipefail
 
@@ -56,8 +63,11 @@ for label, n in sorted(rows):
 
 # --- 0. Pré-vol -------------------------------------------------------------
 [ -f manage.py ] || die "manage.py introuvable dans $APP_DIR"
-grep -q '^DB_ENGINE=postgres' .env 2>/dev/null \
-  || die ".env doit contenir DB_ENGINE=postgres (base PG cible déjà créée)."
+# Cible PG désignée par la variable de shell OU une ligne active dans .env.
+if [ "${DB_ENGINE:-}" != "postgres" ] \
+   && ! grep -q '^[[:space:]]*DB_ENGINE=postgres' .env 2>/dev/null; then
+  die "Cible PG non définie. Répétition à blanc : préfixer 'DB_ENGINE=postgres'. Bascule réelle : décommenter DB_ENGINE=postgres dans .env."
+fi
 
 log "Vérification de la connexion PostgreSQL"
 DB_ENGINE=postgres "$PY" manage.py check --database default \
