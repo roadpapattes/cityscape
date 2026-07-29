@@ -70,7 +70,11 @@ def get_survey(key):
 
 
 def _questions(survey):
-    """Aplatit les questions d'un questionnaire en dict {id: question}."""
+    """Aplatit les questions d'un questionnaire en dict {id: question}.
+
+    Inclut les questions masquées (`hidden`) : elles restent *connues* du
+    serveur, donc acceptées si un client (app en transition) les envoie encore.
+    Elles ne sont simplement plus rendues ni exigées (cf. _hidden_qids)."""
     out = {}
     for section in survey.get("sections", []):
         for q in section.get("questions", []):
@@ -78,15 +82,41 @@ def _questions(survey):
     return out
 
 
-def question_order(key):
-    """Liste ordonnée des q.id d'un questionnaire (colonnes CSV)."""
+def _hidden_qids(survey):
+    """q.id des questions retirées du formulaire : flag `hidden` sur la question
+    ou sur sa section. Ces questions ne peuvent pas bloquer un envoi (required)."""
+    hidden = set()
+    for section in survey.get("sections", []):
+        sec_hidden = bool(section.get("hidden"))
+        for q in section.get("questions", []):
+            if sec_hidden or q.get("hidden"):
+                hidden.add(q["id"])
+    return hidden
+
+
+def hidden_qids(key):
+    """q.id retirés du formulaire (flag `hidden` sur la question ou sa section)
+    pour un questionnaire donné. Sert à exclure ces éléments du rapport admin
+    (colonnes CSV, indicateurs, réponses brutes). Les données restent en base :
+    réafficher l'élément les fait réapparaître."""
+    survey = get_survey(key)
+    return _hidden_qids(survey) if survey else set()
+
+
+def question_order(key, include_hidden=False):
+    """Liste ordonnée des q.id d'un questionnaire (colonnes CSV).
+
+    Par défaut, exclut les questions masquées (`hidden`) : elles ne doivent plus
+    figurer dans le rapport admin. Passer include_hidden=True pour l'ordre complet."""
     survey = get_survey(key)
     if not survey:
         return []
+    hidden = set() if include_hidden else _hidden_qids(survey)
     ids = []
     for section in survey.get("sections", []):
         for q in section.get("questions", []):
-            ids.append(q["id"])
+            if q["id"] not in hidden:
+                ids.append(q["id"])
     return ids
 
 
@@ -166,10 +196,12 @@ def validate_submission(survey_key, answers):
     visible = {qid for qid, q in questions.items() if _is_visible(q, cleaned)}
     cleaned = {qid: v for qid, v in cleaned.items() if qid in visible}
 
-    # 4) Obligatoires visibles manquants
+    # 4) Obligatoires visibles manquants (on ignore les questions masquées)
+    hidden = _hidden_qids(survey)
     missing = [
         qid for qid, q in questions.items()
-        if q.get("required") and _is_visible(q, cleaned) and cleaned.get(qid) in (None, "")
+        if q.get("required") and qid not in hidden
+        and _is_visible(q, cleaned) and cleaned.get(qid) in (None, "")
     ]
     if missing:
         raise SurveyValidationError(

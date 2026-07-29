@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import SurveyResponse
-from .schema import get_survey, question_order
+from .schema import get_survey, question_order, hidden_qids
 
 SURVEY_KEYS = ("parcours", "application")
 
@@ -55,6 +55,8 @@ class AdminSurveyResponsesView(APIView):
         if not key:
             return Response({"detail": "survey invalide."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Les questions masquées sont retirées du rapport (données conservées en base).
+        hidden = hidden_qids(key)
         qs = SurveyResponse.objects.filter(survey=key).order_by("-received_at")
         data = [{
             "id": r.id,
@@ -65,7 +67,7 @@ class AdminSurveyResponsesView(APIView):
             "duree": r.duree,
             "indices": r.indices,
             "received_at": r.received_at.isoformat() if r.received_at else None,
-            "reponses": r.reponses or {},
+            "reponses": {k: v for k, v in (r.reponses or {}).items() if k not in hidden},
         } for r in qs]
         return Response({"count": len(data), "results": data})
 
@@ -82,16 +84,26 @@ class AdminSurveyStatsView(APIView):
         rows = list(SurveyResponse.objects.filter(survey=key).values_list("reponses", flat=True))
         col = lambda qid: [(r or {}).get(qid) for r in rows]
 
+        # Un indicateur dont la question source est masquée n'est plus publié.
+        hidden = hidden_qids(key)
+        shown = lambda *qids: not any(q in hidden for q in qids)
+
         stats = {"total": len(rows)}
         if key == "parcours":
-            stats["nps_parcours"] = _nps(col("reco_parcours"))
-            stats["taux_completion"] = _rate(col("fini"), lambda v: v == "Oui, entièrement")
-            stats["taux_difficulte_ok"] = _rate(col("difficulte"), lambda v: v == "Bien dosée")
-            stats["note_moyenne"] = _mean(col("note"))
+            if shown("reco_parcours"):
+                stats["nps_parcours"] = _nps(col("reco_parcours"))
+            if shown("fini"):
+                stats["taux_completion"] = _rate(col("fini"), lambda v: v == "Oui, entièrement")
+            if shown("difficulte"):
+                stats["taux_difficulte_ok"] = _rate(col("difficulte"), lambda v: v == "Bien dosée")
+            if shown("note"):
+                stats["note_moyenne"] = _mean(col("note"))
         else:
-            stats["nps_app"] = _nps(col("reco_app"))
-            umux = [v for v in (col("umux_besoins") + col("umux_facile")) if isinstance(v, int)]
-            stats["umux_lite"] = round(sum(umux) / len(umux), 2) if umux else None
+            if shown("reco_app"):
+                stats["nps_app"] = _nps(col("reco_app"))
+            if shown("umux_besoins", "umux_facile"):
+                umux = [v for v in (col("umux_besoins") + col("umux_facile")) if isinstance(v, int)]
+                stats["umux_lite"] = round(sum(umux) / len(umux), 2) if umux else None
         return Response(stats)
 
 

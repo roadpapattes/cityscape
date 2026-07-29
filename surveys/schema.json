@@ -12,7 +12,7 @@
       "title": "Le parcours que vous venez de terminer",
       "lede": "Trois minutes à chaud. Vos réponses nous servent à régler la difficulté et l'itinéraire.",
       "sections": [
-        { "id": "A", "eyebrow": "Section A", "title": "Votre partie", "questions": [
+        { "id": "A", "title": "Votre partie", "questions": [
           { "id": "escape", "type": "single", "label": "Quel parcours venez-vous de jouer ?", "required": true, "options": "$escapes", "auto": "escape" },
           { "id": "fini", "type": "single", "label": "Avez-vous terminé le parcours ?", "required": true,
             "options": ["Oui, entièrement", "Oui, mais avec beaucoup d'indices", "Non, abandon en cours"] },
@@ -31,14 +31,14 @@
           { "id": "moment", "type": "single", "label": "Vous avez joué :", "options": ["En journée", "En fin de journée", "De nuit"] },
           { "id": "meteo", "type": "single", "label": "Le temps était :", "options": ["Beau", "Couvert", "Pluvieux"] }
         ]},
-        { "id": "B", "eyebrow": "Section B", "title": "Votre ressenti", "questions": [
+        { "id": "B", "title": "Votre ressenti", "questions": [
           { "id": "note", "type": "nps", "label": "Quelle note donnez-vous à ce parcours ?", "required": true,
             "ends": ["0 — mauvais", "10 — excellent"] },
           { "id": "reco_parcours", "type": "nps", "label": "Recommanderiez-vous ce parcours à un ami ?", "required": true,
             "ends": ["0 — jamais", "10 — sans hésiter"] },
           { "id": "bon_moment", "type": "likert", "label": "J'ai passé un bon moment." }
         ]},
-        { "id": "C", "eyebrow": "Section C", "title": "Difficulté et rythme", "questions": [
+        { "id": "C", "title": "Difficulté et rythme", "questions": [
           { "id": "difficulte", "type": "balance", "label": "La difficulté des énigmes était :", "required": true,
             "options": ["Beaucoup trop facile", "Un peu trop facile", "Bien dosée", "Un peu trop difficile", "Beaucoup trop difficile"] },
           { "id": "duree", "type": "balance", "label": "La durée du parcours était :", "options": ["Trop courte", "Bien", "Trop longue"] },
@@ -46,7 +46,7 @@
             "options": ["Trop courte", "Bien", "Trop longue"] },
           { "id": "rythme", "type": "likert", "label": "Le rythme était régulier, sans temps mort ni surcharge." }
         ]},
-        { "id": "D", "eyebrow": "Section D", "title": "Les énigmes", "questions": [
+        { "id": "D", "title": "Les énigmes", "questions": [
           { "id": "consignes", "type": "likert", "label": "Les consignes étaient claires et sans ambiguïté." },
           { "id": "logique", "type": "likert", "label": "Quand j'ai trouvé une solution, elle me semblait logique après coup.",
             "note": "Repère les énigmes devinables mais pas déductibles." },
@@ -57,7 +57,13 @@
           { "id": "injuste", "type": "text", "label": "Une énigme vous a-t-elle semblé injuste ou impossible à résoudre sur place ?",
             "note": "Facultatif." }
         ]},
-        { "id": "E", "eyebrow": "Section E", "title": "Sur le terrain", "questions": [
+        { "id": "E", "title": "Les indices", "questions": [
+          { "id": "indice_facile", "type": "likert", "label": "Demander un indice était facile et rapide." },
+          { "id": "indice_dose", "type": "likert", "label": "Les indices aidaient sans donner la réponse." },
+          { "id": "indice_plaisir", "type": "single", "label": "Prendre un indice a-t-il gâché votre plaisir ?",
+            "options": ["Pas du tout", "Un peu", "Beaucoup"] }
+        ]},
+        { "id": "F", "title": "Sur le terrain", "questions": [
           { "id": "orientation", "type": "likert", "label": "J'ai toujours su où je devais me rendre." },
           { "id": "visible", "type": "likert", "label": "Les éléments à observer étaient encore visibles et accessibles." },
           { "id": "visible_quoi", "type": "text", "label": "Qu'est-ce qui manquait ou était inaccessible ?",
@@ -66,14 +72,14 @@
           { "id": "securite", "type": "likert", "label": "Je me suis senti(e) en sécurité tout au long du parcours." },
           { "id": "praticable", "type": "likert", "label": "Le parcours était praticable : trottoirs, foule, circulation." }
         ]},
-        { "id": "F", "eyebrow": "Section F", "title": "L'histoire", "questions": [
+        { "id": "G", "title": "L'histoire", "questions": [
           { "id": "envie", "type": "likert", "label": "L'histoire m'a donné envie de continuer." },
           { "id": "integration", "type": "likert", "label": "Les énigmes s'intégraient naturellement au récit." },
           { "id": "appris", "type": "likert", "label": "J'ai appris quelque chose sur le lieu ou son histoire." },
           { "id": "textes", "type": "balance", "label": "Les textes étaient :", "options": ["Trop courts", "À la bonne longueur", "Trop longs"] },
           { "id": "marquant", "type": "text", "label": "Un moment vous a particulièrement marqué ?", "note": "Facultatif." }
         ]},
-        { "id": "G", "eyebrow": "Section G", "title": "Pour finir", "questions": [
+        { "id": "H", "title": "Pour finir", "questions": [
           { "id": "plu", "type": "text", "label": "Ce qui vous a le plus plu :" },
           { "id": "decu", "type": "text", "label": "Ce qui vous a le plus déçu ou agacé :" },
           { "id": "changer", "type": "text", "label": "Si une seule chose devait changer dans ce parcours :" }
@@ -85,29 +91,30 @@
       "title": "L'application CityScape",
       "lede": "Ce questionnaire porte sur l'application elle-même, pas sur le contenu des parcours.",
       "sections": [
-        { "id": "A", "eyebrow": "Section A", "title": "Votre usage", "questions": [
+        { "id": "A", "title": "Votre usage", "questions": [
           { "id": "nb_parcours", "type": "single", "label": "Combien de parcours avez-vous joués ?", "required": true,
             "options": ["1", "2 à 3", "Plus de 3"] },
-          { "id": "appareil", "type": "single", "label": "Sur quel appareil ?", "options": ["Android", "iPhone"], "auto": "os" },
+          { "id": "appareil", "type": "single", "label": "Sur quel appareil ?", "options": ["Android", "iPhone"], "auto": "os", "hidden": true },
           { "id": "aisance", "type": "single", "label": "Êtes-vous à l'aise avec les applications mobiles en général ?",
             "options": ["Pas du tout", "Un peu", "Plutôt", "Très"],
             "note": "Sert à distinguer un défaut d'interface d'un défaut d'accompagnement." }
         ]},
-        { "id": "B", "eyebrow": "Section B", "title": "Premiers pas", "questions": [
+        { "id": "B", "title": "Premiers pas", "questions": [
           { "id": "install", "type": "likert", "label": "L'installation et le démarrage se sont faits sans difficulté." },
           { "id": "compris", "type": "likert", "label": "J'ai compris comment jouer sans aide extérieure." },
+          { "id": "tutoriel", "type": "likert", "label": "Le tutoriel m'a été utile et était suffisant." },
           { "id": "attentes", "type": "likert", "label": "Avant de commencer, je savais à quoi m'attendre : durée, distance, difficulté, âge conseillé." },
-          { "id": "catalogue", "type": "likert", "label": "Choisir un parcours dans le catalogue était simple." }
+          { "id": "catalogue", "type": "likert", "label": "Trouver un parcours était simple." }
         ]},
-        { "id": "C", "eyebrow": "Section C", "title": "L'application au quotidien", "questions": [
+        { "id": "C", "title": "L'application au quotidien", "hidden": true, "questions": [
           { "id": "umux_besoins", "type": "likert", "label": "Les fonctionnalités de l'application répondent à mes besoins." },
           { "id": "umux_facile", "type": "likert", "label": "L'application est facile à utiliser." }
         ]},
-        { "id": "D", "eyebrow": "Section D", "title": "Dehors, en marchant", "questions": [
+        { "id": "D", "title": "Dehors, en marchant", "questions": [
           { "id": "lisible", "type": "likert", "label": "L'écran restait lisible en extérieur." },
-          { "id": "gps", "type": "likert", "label": "La validation par GPS a fonctionné correctement." },
+          { "id": "gps", "type": "likert", "label": "La validation par GPS a fonctionné correctement.", "hidden": true },
           { "id": "gps_ou", "type": "text", "label": "Sur quel parcours et à quelle étape le GPS a-t-il posé problème ?",
-            "showIf": { "q": "gps", "is": [1, 2, 3] } },
+            "showIf": { "q": "gps", "is": [1, 2, 3] }, "hidden": true },
           { "id": "batterie", "type": "likert", "label": "La consommation de batterie est restée acceptable." },
           { "id": "reseau", "type": "single", "label": "Avez-vous rencontré un problème de réseau bloquant ?",
             "options": ["Oui", "Non", "Je ne sais pas"] },
@@ -115,19 +122,13 @@
           { "id": "partage", "type": "text", "label": "Un seul téléphone pour plusieurs joueurs : cela a-t-il posé problème ?",
             "note": "Facultatif." }
         ]},
-        { "id": "E", "eyebrow": "Section E", "title": "Les indices", "questions": [
-          { "id": "indice_facile", "type": "likert", "label": "Demander un indice était facile et rapide." },
-          { "id": "indice_dose", "type": "likert", "label": "Les indices aidaient sans donner la réponse." },
-          { "id": "indice_plaisir", "type": "single", "label": "Prendre un indice a-t-il gâché votre plaisir ?",
-            "options": ["Pas du tout", "Un peu", "Beaucoup"] }
-        ]},
-        { "id": "F", "eyebrow": "Section F", "title": "Fiabilité", "questions": [
+        { "id": "E", "title": "Fiabilité", "questions": [
           { "id": "bug", "type": "single", "label": "Avez-vous rencontré un bug ou un blocage technique ?", "options": ["Oui", "Non"] },
           { "id": "bug_quoi", "type": "text", "label": "Décrivez-le : écran, étape, ce qui s'est passé.",
             "showIf": { "q": "bug", "is": ["Oui"] } },
           { "id": "confiance", "type": "likert", "label": "Je n'ai pas eu peur de perdre ma progression." }
         ]},
-        { "id": "G", "eyebrow": "Section G", "title": "Et ensuite", "questions": [
+        { "id": "F", "title": "Et ensuite", "questions": [
           { "id": "reco_app", "type": "nps", "label": "Recommanderiez-vous l'application CityScape ?", "required": true,
             "ends": ["0 — jamais", "10 — sans hésiter"] },
           { "id": "refaire", "type": "likert", "label": "Je serais prêt(e) à refaire un autre parcours." },

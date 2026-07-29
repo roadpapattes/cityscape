@@ -48,6 +48,28 @@ class SchemaValidationTests(TestCase):
         with self.assertRaises(SurveyValidationError):
             validate_submission("parcours", {"fini": "Oui, entièrement"})  # manque escape/note/...
 
+    def test_indices_moved_to_parcours(self):
+        # « Les indices » est désormais rattaché au questionnaire parcours.
+        cleaned = validate_submission("parcours", {
+            "escape": "Parc du Poutyl (Olivet)", "fini": "Oui, entièrement",
+            "note": 8, "reco_parcours": 9, "difficulte": "Bien dosée",
+            "indice_facile": 4,
+        })
+        self.assertEqual(cleaned["indice_facile"], 4)
+
+    def test_indices_no_longer_in_application(self):
+        # …et n'appartient plus au questionnaire application (q.id inconnu → 400).
+        with self.assertRaises(SurveyValidationError):
+            validate_submission("application", {"reco_app": 8, "indice_facile": 4})
+
+    def test_hidden_question_accepted_but_not_required(self):
+        # `appareil` est masqué : accepté s'il est envoyé, mais son absence ne
+        # bloque pas un envoi application par ailleurs valide.
+        cleaned = validate_submission("application", {
+            "nb_parcours": "1", "reco_app": 8,
+        })
+        self.assertNotIn("appareil", cleaned)
+
     def test_escape_options_resolved_from_schema(self):
         q = next(x for s in get_survey("parcours")["sections"] for x in s["questions"] if x["id"] == "escape")
         self.assertIn("Parc du Poutyl (Olivet)", q["options"])
@@ -185,6 +207,36 @@ class AdminConsultationTests(TestCase):
     def test_bad_survey_key_400(self):
         r = self.client.get("/api/admin/surveys/stats?survey=nope", **self.auth())
         self.assertEqual(r.status_code, 400)
+
+    def test_hidden_elements_excluded_from_report(self):
+        # Une réponse application avec des champs masqués (appareil, section C
+        # UMUX, gps) enregistrés en base.
+        SurveyResponse.objects.create(
+            survey="application", session="app1",
+            reponses={"reco_app": 9, "appareil": "Android",
+                      "umux_besoins": 5, "umux_facile": 4, "gps": 3, "reseau": "Non"},
+        )
+        # Indicateurs : pas d'UMUX-Lite (section masquée), NPS app conservé.
+        s = self.client.get("/api/admin/surveys/stats?survey=application", **self.auth()).json()
+        self.assertNotIn("umux_lite", s)
+        self.assertIn("nps_app", s)
+
+        # Réponses brutes : clés masquées retirées, données visibles conservées.
+        rep = self.client.get(
+            "/api/admin/surveys/responses?survey=application", **self.auth()
+        ).json()["results"][0]["reponses"]
+        for masked in ("appareil", "umux_besoins", "umux_facile", "gps"):
+            self.assertNotIn(masked, rep)
+        self.assertIn("reseau", rep)
+        self.assertIn("reco_app", rep)
+
+        # Export CSV : colonnes masquées absentes de l'en-tête.
+        header = self.client.get(
+            "/api/admin/surveys/export?survey=application", **self.auth()
+        ).content.decode("utf-8-sig").splitlines()[0]
+        for masked in ("appareil", "umux_besoins", "gps"):
+            self.assertNotIn(masked, header)
+        self.assertIn("reco_app", header)
 
 
 @override_settings(CACHES=LOCMEM)
