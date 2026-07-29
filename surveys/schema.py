@@ -70,12 +70,28 @@ def get_survey(key):
 
 
 def _questions(survey):
-    """Aplatit les questions d'un questionnaire en dict {id: question}."""
+    """Aplatit les questions d'un questionnaire en dict {id: question}.
+
+    Inclut les questions masquées (`hidden`) : elles restent *connues* du
+    serveur, donc acceptées si un client (app en transition) les envoie encore.
+    Elles ne sont simplement plus rendues ni exigées (cf. _hidden_qids)."""
     out = {}
     for section in survey.get("sections", []):
         for q in section.get("questions", []):
             out[q["id"]] = q
     return out
+
+
+def _hidden_qids(survey):
+    """q.id des questions retirées du formulaire : flag `hidden` sur la question
+    ou sur sa section. Ces questions ne peuvent pas bloquer un envoi (required)."""
+    hidden = set()
+    for section in survey.get("sections", []):
+        sec_hidden = bool(section.get("hidden"))
+        for q in section.get("questions", []):
+            if sec_hidden or q.get("hidden"):
+                hidden.add(q["id"])
+    return hidden
 
 
 def question_order(key):
@@ -166,10 +182,12 @@ def validate_submission(survey_key, answers):
     visible = {qid for qid, q in questions.items() if _is_visible(q, cleaned)}
     cleaned = {qid: v for qid, v in cleaned.items() if qid in visible}
 
-    # 4) Obligatoires visibles manquants
+    # 4) Obligatoires visibles manquants (on ignore les questions masquées)
+    hidden = _hidden_qids(survey)
     missing = [
         qid for qid, q in questions.items()
-        if q.get("required") and _is_visible(q, cleaned) and cleaned.get(qid) in (None, "")
+        if q.get("required") and qid not in hidden
+        and _is_visible(q, cleaned) and cleaned.get(qid) in (None, "")
     ]
     if missing:
         raise SurveyValidationError(

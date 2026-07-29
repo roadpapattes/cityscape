@@ -48,6 +48,28 @@ class SchemaValidationTests(TestCase):
         with self.assertRaises(SurveyValidationError):
             validate_submission("parcours", {"fini": "Oui, entièrement"})  # manque escape/note/...
 
+    def test_indices_moved_to_parcours(self):
+        # « Les indices » est désormais rattaché au questionnaire parcours.
+        cleaned = validate_submission("parcours", {
+            "escape": "Parc du Poutyl (Olivet)", "fini": "Oui, entièrement",
+            "note": 8, "reco_parcours": 9, "difficulte": "Bien dosée",
+            "indice_facile": 4,
+        })
+        self.assertEqual(cleaned["indice_facile"], 4)
+
+    def test_indices_no_longer_in_application(self):
+        # …et n'appartient plus au questionnaire application (q.id inconnu → 400).
+        with self.assertRaises(SurveyValidationError):
+            validate_submission("application", {"reco_app": 8, "indice_facile": 4})
+
+    def test_hidden_question_accepted_but_not_required(self):
+        # `appareil` est masqué : accepté s'il est envoyé, mais son absence ne
+        # bloque pas un envoi application par ailleurs valide.
+        cleaned = validate_submission("application", {
+            "nb_parcours": "1", "reco_app": 8,
+        })
+        self.assertNotIn("appareil", cleaned)
+
     def test_escape_options_resolved_from_schema(self):
         q = next(x for s in get_survey("parcours")["sections"] for x in s["questions"] if x["id"] == "escape")
         self.assertIn("Parc du Poutyl (Olivet)", q["options"])

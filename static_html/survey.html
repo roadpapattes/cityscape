@@ -229,14 +229,22 @@ function render(s){
     </header>`;
   if (auto.length) html += `<div class="ctx" style="margin-top:20px">${auto.join(" &nbsp;·&nbsp; ")}</div>`;
 
+  // Sections et questions masquées (`hidden`) : ni rendues, ni comptées, ni
+  // validées. La lettre de section (« Section A/B/C… ») est calculée sur les
+  // seules sections visibles, pour qu'un masquage ne laisse aucun trou.
+  let secLetter = 0;
   s.sections.forEach(sec => {
-    html += `<div class="plaque"><em>${esc(sec.eyebrow)}</em><strong>${esc(sec.title)}</strong></div>`;
-    sec.questions.forEach(q => { html += question(q); });
+    if (sec.hidden) return;
+    const qs = sec.questions.filter(q => !q.hidden);
+    if (!qs.length) return;
+    const eyebrow = "Section " + String.fromCharCode(65 + secLetter++);
+    html += `<div class="plaque"><em>${esc(eyebrow)}</em><strong>${esc(sec.title)}</strong></div>`;
+    qs.forEach(q => { html += question(q); });
   });
   app.innerHTML = html;
 
   // Pré-remplissage depuis l'URL
-  s.sections.flatMap(x => x.questions).forEach(q => {
+  activeQuestions().forEach(q => {
     if (q.auto && ctx[q.auto]) {
       const match = (q.options||[]).find(o => o === ctx[q.auto]);
       if (match) set(q.id, match);
@@ -324,6 +332,14 @@ function set(id,val){
   if (b){ b.setAttribute("aria-pressed","true"); answers[id]=val; }
 }
 
+/* Questions actives = celles réellement présentes dans le formulaire :
+   on écarte les sections et les questions marquées `hidden`. */
+function activeQuestions(){
+  return survey.sections
+    .filter(sec => !sec.hidden)
+    .flatMap(sec => sec.questions.filter(q => !q.hidden));
+}
+
 function visible(q){
   if (!q.showIf) return true;
   const v = answers[q.showIf.q];
@@ -331,7 +347,7 @@ function visible(q){
 }
 
 function refresh(){
-  const all = survey.sections.flatMap(s => s.questions);
+  const all = activeQuestions();
   all.forEach(q => {
     const el = document.getElementById("q_"+q.id);
     const show = visible(q);
@@ -353,7 +369,7 @@ document.getElementById("backBtn").onclick = () => {
 
 document.getElementById("sendBtn").onclick = async () => {
   const hint = document.getElementById("hint");
-  const missing = survey.sections.flatMap(s => s.questions)
+  const missing = activeQuestions()
     .filter(q => q.required && visible(q) && answers[q.id] === undefined);
   if (missing.length){
     hint.hidden = false;
