@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import SurveyResponse
-from .schema import load_schema, validate_submission, SurveyValidationError
+from .schema import load_schema, validate_submission, SurveyValidationError, get_survey
 
 log = logging.getLogger(__name__)
 
@@ -85,22 +85,37 @@ class SurveySubmitView(APIView):
         else:
             obj, created = SurveyResponse.objects.create(**fields), True
 
-        self._maybe_alert(obj)
+        # Alerte maintenance (prioritaire, ciblée) sinon notification générique.
+        # On ne cumule pas les deux e-mails pour un même avis.
+        alerted = self._maybe_alert(obj)
+        if created and not alerted:
+            self._notify_new_response(obj)
 
         return Response(
             {"ok": True, "id": obj.id, "created": created},
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 
+    def _from_email(self):
+        # Gmail SMTP : l'expéditeur doit être le compte authentifié.
+        return (getattr(settings, "EMAIL_HOST_USER", "")
+                or getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@localhost"))
+
+    def _recipients(self, setting_name, default):
+        raw = getattr(settings, setting_name, None) or default
+        return [a.strip() for a in str(raw).split(",") if a.strip()]
+
     def _maybe_alert(self, obj):
         """Alerte de maintenance (brief 4.4) : un élément de terrain signalé
-        disparu/inaccessible peut rendre un parcours injouable → notif immédiate."""
+        disparu/inaccessible peut rendre un parcours injouable → notif immédiate.
+
+        Renvoie True si la condition d'alerte est remplie (→ on n'envoie pas en
+        plus la notification générique pour ce même avis)."""
         if obj.survey != SurveyResponse.PARCOURS:
-            return
+            return False
         r = obj.reponses or {}
         if r.get("visible") in (1, 2) and (r.get("visible_quoi") or "").strip():
-            to = getattr(settings, "CREATOR_FEEDBACK_EMAIL", None) or "feedback.enigmapolis@gmail.com"
-            from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@localhost")
+            to = self._recipients("CREATOR_FEEDBACK_EMAIL", "feedback.enigmapolis@gmail.com")
             body = (
                 "⚠️ Élément de terrain signalé disparu ou inaccessible.\n\n"
                 f"Parcours : {obj.escape or '(non précisé)'}\n"
@@ -112,11 +127,63 @@ class SurveySubmitView(APIView):
             try:
                 send_mail(
                     subject=f"[CityScape][Maintenance] {obj.escape or 'Parcours'} — élément à vérifier",
-                    message=body, from_email=from_email, recipient_list=[to],
+                    message=body, from_email=self._from_email(), recipient_list=to,
                     fail_silently=True,   # la donnée est déjà sauvegardée
                 )
             except Exception as e:  # pragma: no cover
                 log.error("Alerte maintenance non envoyée: %s", e)
+            return True
+        return False
+
+    def _notify_new_response(self, obj):
+        """Notifie par e-mail chaque nouvel avis reçu (suivi en temps réel)."""
+        to = self._recipients("SURVEY_NOTIFY_EMAIL", "")
+        if not to:
+            return
+        r = obj.reponses or {}
+        is_parcours = obj.survey == SurveyResponse.PARCOURS
+        label = "Parcours" if is_parcours else "Application"
+
+        lines = [f"Questionnaire : {label}"]
+        if obj.escape:
+            lines.append(f"Parcours : {obj.escape}")
+        if is_parcours:
+            if isinstance(r.get("note"), int):
+                lines.append(f"Note : {r['note']}/10")
+            if isinstance(r.get("reco_parcours"), int):
+                lines.append(f"Recommandation : {r['reco_parcours']}/10")
+            if r.get("fini"):
+                lines.append(f"Parcours terminé : {r['fini']}")
+        else:
+            if isinstance(r.get("reco_app"), int):
+                lines.append(f"Recommandation app : {r['reco_app']}/10")
+
+        # Nombre de champs libres remplis (là où se trouve l'information exploitable)
+        survey_def = get_survey(obj.survey) or {}
+        text_ids = {
+            q["id"] for s in survey_def.get("sections", [])
+            for q in s.get("questions", []) if q.get("type") in ("text", "shorttext")
+        }
+        comments = [k for k in r if k in text_ids and str(r.get(k) or "").strip()]
+        if comments:
+            lines.append(f"Commentaires libres renseignés : {len(comments)}")
+
+        lines += [
+            "",
+            f"Session : {obj.session or 'anonyme'}",
+            f"Reçu le : {obj.received_at.isoformat()}",
+            "",
+            "Détail complet dans l'espace admin, onglet « Surveys ».",
+        ]
+        subject = f"[CityScape] Nouvel avis — {label}" + (f" · {obj.escape}" if obj.escape else "")
+        try:
+            send_mail(
+                subject=subject, message="\n".join(lines),
+                from_email=self._from_email(), recipient_list=to,
+                fail_silently=True,   # la donnée est déjà sauvegardée
+            )
+        except Exception as e:  # pragma: no cover
+            log.error("Notification nouvel avis non envoyée: %s", e)
 
 
 class SurveySchemaView(APIView):
