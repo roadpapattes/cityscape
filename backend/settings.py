@@ -97,6 +97,10 @@ if os.getenv('DB_ENGINE') == 'postgres':
             'HOST': os.getenv('DB_HOST', '127.0.0.1'),
             'PORT': os.getenv('DB_PORT', '5432'),
             'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '60')),
+            # Revalide une connexion persistante avant réutilisation : évite un
+            # plantage sur la 1re requête si PG a coupé la connexion entretemps
+            # (restart, timeout réseau). Va de pair avec CONN_MAX_AGE > 0.
+            'CONN_HEALTH_CHECKS': True,
         }
     }
 else:

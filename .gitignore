@@ -9,7 +9,10 @@ __pycache__/
 /django_cache/
 # Environnements & secrets
 .env.*
+!.env.example
 env/
+# Export transitoire de données (bascule SQLite -> PostgreSQL)
+dump.json
 venv/
 .venv/
 # IDE
