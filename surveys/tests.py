@@ -138,11 +138,34 @@ class SubmitEndpointTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn("Maintenance", mail.outbox[0].subject)
 
-    def test_no_alert_when_visible_ok(self):
+    def test_no_maintenance_alert_when_visible_ok(self):
         p = _valid_parcours()
         p["reponses"].update({"visible": 5})
         self.post(p)
-        self.assertEqual(len(mail.outbox), 0)
+        # Pas d'alerte maintenance, mais une notification générique de nouvel avis.
+        self.assertFalse(any("Maintenance" in m.subject for m in mail.outbox))
+        self.assertTrue(any("Nouvel avis" in m.subject for m in mail.outbox))
+
+    def test_new_response_notification_sent(self):
+        r = self.post(_valid_parcours())
+        self.assertEqual(r.status_code, 201)
+        notif = [m for m in mail.outbox if "Nouvel avis" in m.subject]
+        self.assertEqual(len(notif), 1)
+        self.assertIn("damien.gilbon@gmail.com", notif[0].to)
+
+    def test_notification_only_on_first_submission(self):
+        self.post(_valid_parcours())
+        self.post(_valid_parcours(duree="70"))  # rechargement → update, pas de doublon
+        notif = [m for m in mail.outbox if "Nouvel avis" in m.subject]
+        self.assertEqual(len(notif), 1)  # une seule notification malgré 2 POST
+
+    def test_maintenance_alert_suppresses_generic(self):
+        p = _valid_parcours()
+        p["reponses"].update({"visible": 2, "visible_quoi": "La plaque a été retirée"})
+        self.post(p)
+        # Un seul e-mail : l'alerte maintenance, pas la notification générique.
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Maintenance", mail.outbox[0].subject)
 
     def test_anonymous_without_session_not_deduped(self):
         self.post(_valid_parcours(session=""))

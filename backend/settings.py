@@ -171,8 +171,15 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'feedback.enigmapolis@gmail.com')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
-DEFAULT_FROM_EMAIL = "Escape City <toncompte@gmail.com>"
+# Expéditeur = le compte Gmail authentifié (obligatoire pour que Gmail SMTP
+# n'écrase/ne rejette pas l'envoi). Surchargeable via l'env.
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f"CityScape <{EMAIL_HOST_USER}>")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL  # emails d'erreur Django (optionnel)
+
+# Destinataire des notifications « nouvel avis » (questionnaires de satisfaction).
+# Un e-mail est envoyé à chaque nouvel avis reçu. Surchargeable via l'env
+# (plusieurs adresses possibles, séparées par des virgules).
+SURVEY_NOTIFY_EMAIL = os.getenv('SURVEY_NOTIFY_EMAIL', 'damien.gilbon@gmail.com')
 
 
 
