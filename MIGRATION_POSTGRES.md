@@ -156,16 +156,37 @@ python manage.py shell -c "from django.contrib.auth.models import User; print('u
 
 ---
 
-## Étape 6 — Post-migration
+## Étape 6 — Post-migration : sauvegardes automatiques
 
-Sauvegardes automatiques (remplacent la copie de `db.sqlite3`). Cron quotidien :
+Le script `scripts/backup_postgres.sh` fait le `pg_dump` + gzip + rotation
+(lit les `DB_*` dans `.env`). Remplace l'ancienne copie de `db.sqlite3`.
+
+Test manuel :
 
 ```bash
-pg_dump -U cityscape -h 127.0.0.1 cityscape | gzip > /srv/cityscape/backups/cityscape-$(date +\%F).sql.gz
+bash scripts/backup_postgres.sh          # -> /srv/cityscape/backups/cityscape-AAAA-MM-JJ-HHMM.sql.gz
 ```
 
-Prévoir une rotation (7–14 jours) + un test de restauration.
-Conserver `db.sqlite3.backup-*` plusieurs jours avant archivage.
+Cron quotidien (2 h du matin, rétention 14 jours par défaut) :
+
+```bash
+mkdir -p /srv/cityscape/backups
+( crontab -l 2>/dev/null; \
+  echo "0 2 * * * cd /srv/cityscape/app && bash scripts/backup_postgres.sh >> /srv/cityscape/backups/backup.log 2>&1" \
+) | crontab -
+crontab -l    # vérifier la ligne
+```
+
+Test de restauration (à faire une fois, dans une base jetable) :
+
+```bash
+sudo -u postgres psql -c "CREATE DATABASE restore_test OWNER cityscape TEMPLATE template0;"
+zcat /srv/cityscape/backups/cityscape-*.sql.gz | \
+  PGPASSWORD="$DB_PASSWORD" psql -U cityscape -h 127.0.0.1 restore_test
+sudo -u postgres psql -c "DROP DATABASE restore_test;"
+```
+
+Conserver `db.sqlite3.backup-*` plusieurs jours avant archivage (rollback).
 
 ---
 
