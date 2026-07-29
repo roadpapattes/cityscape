@@ -1,7 +1,9 @@
 Django>=4.2,<5.1
 djangorestframework>=3.14
 django-filter>=24.2
+django-cors-headers>=4.3.0
 google-auth>=2.23.0
 python-dotenv
 python-magic>=0.4.27
 django-ratelimit>=4.1.0
+psycopg[binary]>=3.1
