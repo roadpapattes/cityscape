@@ -302,3 +302,30 @@ class PageAndSchemaTests(TestCase):
         content = resp.content.decode("utf-8-sig")
         self.assertIn("note", content.splitlines()[0])   # colonne question
         self.assertIn("Bien dosée", content)
+
+    def test_print_action_parcours(self):
+        SurveyResponse.objects.create(
+            survey="parcours", session="s1", escape="Parc du Poutyl (Olivet)",
+            reponses={"note": 8, "difficulte": "Bien dosée", "plu": "les énigmes"},
+        )
+        from django.contrib.admin.sites import site
+        from .models import SurveyResponse as SR
+        admin_obj = site._registry[SR]
+        html = admin_obj.print_selected(None, SR.objects.all()).content.decode("utf-8")
+        self.assertIn("Parc du Poutyl (Olivet)", html)
+        self.assertIn("les énigmes", html)              # champ libre imprimé
+        self.assertIn("8 / 10", html)                    # note (nps) formatée
+        self.assertIn("page-break-after", html)          # un avis par page
+
+    def test_print_action_excludes_hidden(self):
+        # Réponse application avec un champ masqué (appareil) enregistré.
+        SurveyResponse.objects.create(
+            survey="application", session="a1",
+            reponses={"reco_app": 8, "appareil": "Android", "manque": "un mode hors-ligne"},
+        )
+        from django.contrib.admin.sites import site
+        from .models import SurveyResponse as SR
+        admin_obj = site._registry[SR]
+        html = admin_obj.print_selected(None, SR.objects.all()).content.decode("utf-8")
+        self.assertIn("un mode hors-ligne", html)        # champ visible imprimé
+        self.assertNotIn("Android", html)                # masqué → exclu de l'impression
