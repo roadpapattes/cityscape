@@ -70,6 +70,16 @@ class SchemaValidationTests(TestCase):
         })
         self.assertNotIn("appareil", cleaned)
 
+    def test_numeric_single_option_kept_as_string(self):
+        # nb_parcours a l'option "1" (chaîne) : la chaîne du schéma est acceptée.
+        cleaned = validate_submission("application", {"nb_parcours": "1", "reco_app": 8})
+        self.assertEqual(cleaned["nb_parcours"], "1")
+
+    def test_numeric_single_option_rejects_int(self):
+        # L'entier 1 est refusé : le client doit envoyer le libellé exact "1".
+        with self.assertRaises(SurveyValidationError):
+            validate_submission("application", {"nb_parcours": 1, "reco_app": 8})
+
     def test_escape_options_resolved_from_schema(self):
         q = next(x for s in get_survey("parcours")["sections"] for x in s["questions"] if x["id"] == "escape")
         self.assertIn("Parc du Poutyl (Olivet)", q["options"])

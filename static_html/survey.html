@@ -308,7 +308,12 @@ function bind(){
     b.onclick = () => {
       const group = b.closest("[data-q]");
       const raw = b.dataset.v;
-      const val = /^-?\d+$/.test(raw) ? Number(raw) : raw;
+      // Coercition en entier uniquement pour les échelles numériques (likert/nps).
+      // Pour single/balance, la valeur est le libellé exact du schéma — même une
+      // option comme « 1 » doit rester la chaîne "1", sinon la validation
+      // serveur la rejette (1 ∉ ["1", …]).
+      const numeric = group.classList.contains("scale") || group.classList.contains("nps");
+      const val = numeric ? Number(raw) : raw;
       const already = b.getAttribute("aria-pressed") === "true";
       group.querySelectorAll(".opt").forEach(o => o.setAttribute("aria-pressed","false"));
       if (already) { delete answers[group.dataset.q]; }
