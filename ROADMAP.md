@@ -34,9 +34,12 @@ Document de suivi vivant. On coche au fur et à mesure. Légende portée :
 - [ ] **app** : afficher « Créé par … » sur la fiche descriptive
 
 ### #7 — Rejouer un escape terminé
-- [ ] **décision** : un replay est-il comptabilisé dans les stats/notes ? (proposition : non → « mode entraînement »)
-- [ ] **back** : autoriser une nouvelle `PlaySession` sur un escape déjà terminé
-- [ ] **app** : réactiver le bouton « Démarrer » avec libellé « Rejouer »
+- [x] **décision** : replay **écrase** la partie existante (une seule `PlaySession`/escape, remise à zéro). Note conservée (modèle `Rating` distinct) → « note initiale fait foi ». Pas de migration.
+- [x] **back** : `StartSessionView` accepte `{"replay": true}` → remet la session à zéro (progression, temps, pénalité, indices) et renvoie un état frais
+- [ ] **app** : bouton « Rejouer » sur un escape terminé → `POST …/sessions/start` avec `{"replay": true}`
+
+### Modèle Dart (prépa affichage #3/#8a)
+- [x] **app** : `EscapeGame` (Dart) parse `age_rating` et `creator` depuis l'API
 
 ---
 

@@ -509,6 +509,7 @@ class StartSessionView(APIView):
 
     def post(self, request, escape_id: int):
         escape = get_object_or_404(EscapeGame, pk=escape_id)
+        replay = bool(request.data.get("replay"))
         try:
             sess, created = PlaySession.objects.get_or_create(
                 user=request.user,
@@ -518,6 +519,19 @@ class StartSessionView(APIView):
         except IntegrityError:
             sess = PlaySession.objects.get(user=request.user, escape=escape)
             created = False
+
+        # #7 Rejouer : on écrase la partie existante (progression remise à zéro).
+        # Choix assumé : une seule PlaySession par escape. La note éventuelle
+        # (modèle Rating distinct) est conservée → « note initiale fait foi ».
+        if replay and not created:
+            sess.current_step_index = 0
+            sess.completed_at = None
+            sess.answers = {}
+            sess.hints_used = {}
+            sess.penalty = 0
+            sess.play_time_seconds = 0
+            sess.started_at = timezone.now()
+            sess.save()
 
         if created and not sess.started_at:
             sess.started_at = timezone.now()
