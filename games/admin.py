@@ -20,7 +20,7 @@ class EscapeGameAdmin(admin.ModelAdmin):
         'steps_count',
         'created_at',
     ]
-    list_filter = ['status', 'difficulty', 'is_private', 'created_at', 'city']
+    list_filter = ['status', 'difficulty', 'age_rating', 'is_private', 'created_at', 'city']
     search_fields = ['title', 'city', 'description', 'owner__username']
     readonly_fields = ['created_at', 'rating', 'preview_map']
 
@@ -33,7 +33,7 @@ class EscapeGameAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
         ('Configuration', {
-            'fields': ('status', 'difficulty', 'duration_minutes', 'rating', 'is_private', 'allowed_users')
+            'fields': ('status', 'difficulty', 'age_rating', 'duration_minutes', 'rating', 'is_private', 'allowed_users')
         }),
         ('Pénalités', {
             'fields': ('penalize_wrong_answers', 'wrong_answer_penalty'),

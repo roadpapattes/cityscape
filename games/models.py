@@ -34,6 +34,21 @@ class EscapeGame(models.Model):
     )
 
     difficulty = models.IntegerField(default=1)  # 1..3
+
+    # Âge minimum conseillé (type PEGI), renseigné par le créateur.
+    AGE_3 = "3"
+    AGE_12 = "12"
+    AGE_18 = "18"
+    AGE_CHOICES = (
+        (AGE_3, "3 ans et +"),
+        (AGE_12, "12 ans et +"),
+        (AGE_18, "18 ans et +"),
+    )
+    age_rating = models.CharField(
+        max_length=2, choices=AGE_CHOICES, default=AGE_3,
+        help_text="Âge minimum conseillé (type PEGI)."
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     owner = models.ForeignKey(
