@@ -22,7 +22,7 @@ Document de suivi vivant. On coche au fur et à mesure. Légende portée :
 ### #3 — Catégorie d'âge (PEGI +3 / +12 / +18)
 - [x] **back** : champ `age_rating` sur `EscapeGame` (+3/+12/+18) + migration
 - [x] **back** : exposé en lecture/écriture dans `EscapeGameSerializer` + admin (filtre + formulaire)
-- [ ] **creator** : sélecteur dans l'éditeur d'escape
+- [x] **creator** : sélecteur « Âge conseillé » dans l'éditeur d'escape
 - [ ] **app** : affichage sur la fiche + filtre au catalogue
 
 ### #4 — Icône « Historique » plus visible
@@ -30,7 +30,7 @@ Document de suivi vivant. On coche au fur et à mesure. Légende portée :
 
 ### #8a — Crédit créateur sur la fiche escape
 - [x] **back** : champ `creator` (lecture seule) exposé dans `EscapeGameSerializer`
-- [ ] **creator** : affichage du crédit
+- [x] **creator** : affichage « Créé par … » dans l'éditeur
 - [ ] **app** : afficher « Créé par … » sur la fiche descriptive
 
 ### #7 — Rejouer un escape terminé
