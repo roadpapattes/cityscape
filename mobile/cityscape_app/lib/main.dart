@@ -463,6 +463,34 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
     }
   }
 
+  Future<void> _startOrReplay(BuildContext context, {bool replay = false}) async {
+    final e = widget.escape;
+    try {
+      await _api.startSession(e.id, replay: replay); // crée/reprend/réinitialise la session
+
+      if (!GameTimer.instance.isRunning) {
+        GameTimer.instance.start();
+      }
+      if (!context.mounted) return;
+
+      // On navigue vers la partie, puis on rafraîchit au retour
+      await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => SessionPlayerPage(escape: e)),
+      );
+
+      if (!mounted) return;
+      await _checkStatus();
+      setState(() {
+        _futureComments = _api.fetchComments(e.id, limit: 3);
+      });
+    } catch (err) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Impossible de démarrer : $err')),
+      );
+    }
+  }
+
   Future<void> _openDirections() async {
     final e = widget.escape;
     final url = Uri.parse(
@@ -598,6 +626,20 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
               'Durée ${e.durationMinutes} min • diff ${e.difficulty} • note ${e.rating.toStringAsFixed(1)}',
             ),
           ),
+          if (e.creator.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Icon(Icons.person_outline, size: 16, color: Colors.grey.shade600),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Créé par ${e.creator}',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
           const SizedBox(height: 8),
 
           // --- Démarrer / reprendre la session ---
@@ -618,32 +660,7 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
                     ),
                     onPressed: _alreadyFinished
                         ? null
-                        : () async {
-                            try {
-                              await _api.startSession(e.id); // crée/reprend la session
-
-                              if (!GameTimer.instance.isRunning) {
-                                GameTimer.instance.start();
-                              }
-                              if (!context.mounted) return;
-
-                              // On navigue vers la partie, puis on rafraîchit au retour
-                              await Navigator.of(context).push<bool>(
-                                MaterialPageRoute(builder: (_) => SessionPlayerPage(escape: e)),
-                              );
-
-                              if (!mounted) return;
-                              await _checkStatus();
-                              setState(() {
-                                _futureComments = _api.fetchComments(e.id, limit: 3);
-                              });
-                            } catch (err) {
-                              if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Impossible de démarrer : $err')),
-                              );
-                            }
-                          },
+                        : () => _startOrReplay(context),
                   ),
                 ),
               ),
@@ -675,6 +692,12 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.replay),
+              label: const Text('Rejouer'),
+              onPressed: () => _startOrReplay(context, replay: true),
             ),
           ],
 
@@ -1732,9 +1755,10 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
       appBar: AppBar(
   title: Text('Étape ${_index + 1} / $_total'),
   actions: [
-    IconButton(
-      tooltip: 'Étapes passées',
+    TextButton.icon(
+      style: TextButton.styleFrom(foregroundColor: Colors.white),
       icon: const Icon(Icons.history),
+      label: const Text('Historique'),
       onPressed: () async {
         try {
           final steps = await _api.getPastSteps(widget.escape.id);

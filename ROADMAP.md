@@ -23,20 +23,20 @@ Document de suivi vivant. On coche au fur et à mesure. Légende portée :
 - [x] **back** : champ `age_rating` sur `EscapeGame` (+3/+12/+18) + migration
 - [x] **back** : exposé en lecture/écriture dans `EscapeGameSerializer` + admin (filtre + formulaire)
 - [x] **creator** : sélecteur « Âge conseillé » dans l'éditeur d'escape
-- [ ] **app** : affichage sur la fiche + filtre au catalogue
+- [x] **app** : badge âge sur la fiche (`escape_bottom_sheet.dart`) — filtre au catalogue pas encore fait
 
 ### #4 — Icône « Historique » plus visible
-- [ ] **app** : icône + libellé texte (ou coach-mark au 1ᵉʳ lancement) pour la rendre repérable
+- [x] **app** : icône + libellé texte dans l'AppBar de la partie (`SessionPlayerPage`)
 
 ### #8a — Crédit créateur sur la fiche escape
 - [x] **back** : champ `creator` (lecture seule) exposé dans `EscapeGameSerializer`
 - [x] **creator** : affichage « Créé par … » dans l'éditeur
-- [ ] **app** : afficher « Créé par … » sur la fiche descriptive
+- [x] **app** : affiché sur `EscapeDetailsPage` (sous les infos ville/durée)
 
 ### #7 — Rejouer un escape terminé
 - [x] **décision** : replay **écrase** la partie existante (une seule `PlaySession`/escape, remise à zéro). Note conservée (modèle `Rating` distinct) → « note initiale fait foi ». Pas de migration.
 - [x] **back** : `StartSessionView` accepte `{"replay": true}` → remet la session à zéro (progression, temps, pénalité, indices) et renvoie un état frais
-- [ ] **app** : bouton « Rejouer » sur un escape terminé → `POST …/sessions/start` avec `{"replay": true}`
+- [x] **app** : bouton « Rejouer » sur un escape terminé → `POST …/sessions/start` avec `{"replay": true}`
 
 ### Modèle Dart (prépa affichage #3/#8a)
 - [x] **app** : `EscapeGame` (Dart) parse `age_rating` et `creator` depuis l'API

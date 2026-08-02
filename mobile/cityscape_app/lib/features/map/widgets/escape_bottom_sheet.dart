@@ -235,24 +235,29 @@ class _EscapeBottomSheetState extends State<EscapeBottomSheet>
                   const SizedBox(height: 16),
 
                   // Badges
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
                       _buildBadge(
                         icon: Icons.signal_cellular_alt,
                         label: _getDifficultyLabel(),
                         color: _getDifficultyColor(),
                       ),
-                      const SizedBox(width: 8),
                       _buildBadge(
                         icon: Icons.access_time,
                         label: '${widget.escape.durationMinutes} min',
                         color: Colors.blue,
                       ),
-                      const SizedBox(width: 8),
                       _buildBadge(
                         icon: Icons.directions_walk,
                         label: _getDistance(),
                         color: Colors.green,
+                      ),
+                      _buildBadge(
+                        icon: Icons.shield_outlined,
+                        label: _getAgeLabel(),
+                        color: _getAgeColor(),
                       ),
                     ],
                   ),
@@ -407,6 +412,19 @@ class _EscapeBottomSheetState extends State<EscapeBottomSheet>
         return Colors.red;
       default:
         return Colors.grey;
+    }
+  }
+
+  String _getAgeLabel() => 'PEGI ${widget.escape.ageRating}+';
+
+  Color _getAgeColor() {
+    switch (widget.escape.ageRating) {
+      case '12':
+        return Colors.orange;
+      case '18':
+        return Colors.red;
+      default:
+        return Colors.green;
     }
   }
 }
