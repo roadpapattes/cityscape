@@ -65,6 +65,8 @@ def _to_dict_escape(obj) -> dict:
         "created_at": _first("created_at", default=None),
         "status": _first("status", default="published"),
         "image_url": _first("image_url", default=None),
+        "age_rating": _first("age_rating", default="3"),
+        "creator": getattr(obj, "creator_display_name", "") or "",
     }
 
 
@@ -86,6 +88,8 @@ def _visible_qs(request):
         return []
 
     qs = EscapeModel.objects.all()
+    if any(f.name == "owner" for f in EscapeModel._meta.fields):
+        qs = qs.select_related("owner")
 
     # status='published' si le champ existe
     if any(f.name == "status" for f in EscapeModel._meta.fields):
@@ -144,7 +148,9 @@ def escapes_nearby(request):
         res = [e for e in FALLBACK_ESCAPES if _haversine_km(lat, lon, e["latitude"], e["longitude"]) <= radius]
         return Response(res)
 
-    qs = _visible_qs(request).only("id", "title", "latitude", "longitude", "city", "image_url")
+    qs = _visible_qs(request).only(
+        "id", "title", "latitude", "longitude", "city", "image_url", "age_rating", "owner"
+    )
     out: List[dict] = []
     for e in qs:
         d = _to_dict_escape(e)

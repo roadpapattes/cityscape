@@ -66,11 +66,7 @@ class EscapeGameSerializer(serializers.ModelSerializer):
 
     # ---------- Crédit créateur (#8a) ----------
     def get_creator(self, obj):
-        u = getattr(obj, "owner", None)
-        if not u:
-            return ""
-        full = (getattr(u, "get_full_name", lambda: "")() or "").strip()
-        return full or getattr(u, "username", "") or ""
+        return obj.creator_display_name
 
     # ---------- READ ----------
     def get_reject_reason(self, obj):
