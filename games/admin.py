@@ -26,7 +26,7 @@ class EscapeGameAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Informations principales', {
-            'fields': ('title', 'description', 'city', 'image_url', 'owner')
+            'fields': ('title', 'description', 'city', 'image_url', 'image_credit', 'owner')
         }),
         ('Localisation', {
             'fields': ('latitude', 'longitude', 'preview_map'),
@@ -143,7 +143,7 @@ class GameStepAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Informations', {
-            'fields': ('escape', 'order', 'title', 'text', 'image_url')
+            'fields': ('escape', 'order', 'title', 'text', 'image_url', 'image_credit')
         }),
         ('Localisation', {
             'fields': ('latitude', 'longitude', 'preview_map'),

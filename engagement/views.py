@@ -483,6 +483,7 @@ def _step_payload(step: GameStep, hints_used_map: Dict[str, Any]) -> Dict[str, A
         "title": step.title,
         "text": step.text or "",
         "image_url": getattr(step, "image_url", None),
+        "image_credit": getattr(step, "image_credit", "") or "",
         "latitude": getattr(step, "latitude", None),
         "longitude": getattr(step, "longitude", None),
         "show_location": getattr(step, "show_location", True),  # True par défaut
@@ -744,6 +745,7 @@ class SessionHistoryView(APIView):
                 "title": step.title,
                 "text": step.text or "",
                 "image_url": getattr(step, "image_url", None),
+                "image_credit": getattr(step, "image_credit", "") or "",
                 "latitude": getattr(step, "latitude", None),
                 "longitude": getattr(step, "longitude", None),
                 "show_location": getattr(step, "show_location", True),

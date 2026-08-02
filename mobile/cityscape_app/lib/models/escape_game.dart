@@ -41,6 +41,7 @@ class EscapeGame {
   final String? createdAt;
   final String? rejectReason;  // null si vide
   final String? imageUrl;
+  final String imageCredit; // crédit/source de l'image, '' si absent
   final String description;
   final String victoryMessage;
 
@@ -65,6 +66,7 @@ class EscapeGame {
     this.createdAt,
     this.rejectReason,
     this.imageUrl,
+    this.imageCredit = '',
     this.description = '',
     this.victoryMessage = '',
     this.penalizeWrongAnswers = false,
@@ -98,6 +100,7 @@ class EscapeGame {
         j['moderation_reason'],
       ),
       imageUrl: img,
+      imageCredit: _asNonEmptyString(j['image_credit']) ?? '',
       description: (j['description'] ?? '') as String,
       victoryMessage: (j['victory_message'] ?? '') as String,
       penalizeWrongAnswers: (j['penalize_wrong_answers'] as bool?) ?? false,

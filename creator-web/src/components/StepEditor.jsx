@@ -15,6 +15,7 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
     longitude: step?.longitude || '',
     show_location: step?.show_location !== false, // true par défaut
     image_url: step?.image_url || '',
+    image_credit: step?.image_credit || '',
 
     // Text answer
     answer_text: step?.answer_text || '',
@@ -73,6 +74,7 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
         longitude: formData.longitude || null,
         show_location: formData.show_location,
         image_url: formData.image_url || null,
+        image_credit: formData.image_credit || '',
         hints: formData.hints,
         hint_penalty: formData.hint_penalty,
       };
@@ -355,6 +357,8 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
             label="Image de l'étape (optionnel)"
             currentImageUrl={formData.image_url}
             onImageUploaded={(url) => updateField('image_url', url)}
+            currentCredit={formData.image_credit}
+            onCreditChange={(credit) => updateField('image_credit', credit)}
             disabled={loading}
           />
 

@@ -610,6 +610,18 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
                 ),
               ),
             ),
+          if (e.imageCredit.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '© ${e.imageCredit}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ),
           const SizedBox(height: 12),
 
           Text(
@@ -804,6 +816,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
   int? _currentStepId;
   String _stepTitle = '';
   String? _stepImageUrl;
+  String _stepImageCredit = '';
   String _prompt = '';
   // String? _revealedHint;
   List<String> _revealedHints = [];
@@ -987,6 +1000,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
 
       _stepTitle = '';
       _stepImageUrl = null;
+      _stepImageCredit = '';
       _prompt = '';
       _stepLatitude = null;
       _stepLongitude = null;
@@ -1027,6 +1041,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
       _stepTitle = '${st['title'] ?? ''}'.trim();
       final imgAny = st['image_url'] ?? st['image'] ?? st['imageUrl'];
       _stepImageUrl = (imgAny == null) ? null : '$imgAny'.trim();
+      _stepImageCredit = '${st['image_credit'] ?? ''}'.trim();
       _prompt = '${st['text'] ?? st['description'] ?? st['prompt'] ?? ''}'.trim();
 
       // coordonnées de l'étape (pour afficher carte popup)
@@ -1836,6 +1851,18 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
                                     ),
                                   ),
                                 ),
+                                if (_stepImageCredit.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      '© $_stepImageCredit',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontStyle: FontStyle.italic,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ),
                                 const SizedBox(height: 12),
                               ],
 
@@ -2193,6 +2220,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
 
   late TextEditingController _titleCtrl;
   late TextEditingController _imageCtrl;
+  late TextEditingController _imageCreditCtrl;
   late TextEditingController _descCtrl;
   late TextEditingController _durationCtrl;
   late TextEditingController _victoryCtrl;
@@ -2252,6 +2280,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
 
     _titleCtrl    = TextEditingController(text: widget.escape.title);
     _imageCtrl    = TextEditingController(text: widget.escape.imageUrl ?? '');
+    _imageCreditCtrl = TextEditingController(text: widget.escape.imageCredit);
     _descCtrl     = TextEditingController(text: widget.escape.description);
     _durationCtrl = TextEditingController(text: widget.escape.durationMinutes.toString());
     _victoryCtrl  = TextEditingController(text: widget.escape.victoryMessage ?? '');
@@ -2308,6 +2337,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
   void dispose() {
     _titleCtrl.dispose();
     _imageCtrl.dispose();
+    _imageCreditCtrl.dispose();
     _descCtrl.dispose();
     _durationCtrl.dispose();
     _victoryCtrl.dispose();
@@ -2332,6 +2362,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
     _initial = {
       'title': _titleCtrl.text,
       'image_url': _imageCtrl.text,
+      'image_credit': _imageCreditCtrl.text,
       'description': _descCtrl.text,
       'victory_message': _victoryCtrl.text,
       'duration_minutes': _durationCtrl.text,
@@ -2346,6 +2377,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
   bool _hasChangedSinceSnapshot() {
     return _initial['title'] != _titleCtrl.text ||
         _initial['image_url'] != _imageCtrl.text ||
+        _initial['image_credit'] != _imageCreditCtrl.text ||
         _initial['description'] != _descCtrl.text ||
         _initial['victory_message'] != _victoryCtrl.text ||
         _initial['duration_minutes'] != _durationCtrl.text ||
@@ -2365,6 +2397,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
         // Meta
         _titleCtrl.text    = fresh.title;
         _imageCtrl.text    = fresh.imageUrl ?? '';
+        _imageCreditCtrl.text = fresh.imageCredit;
         _descCtrl.text     = fresh.description;
         _victoryCtrl.text  = fresh.victoryMessage;
         _durationCtrl.text = '${fresh.durationMinutes}';
@@ -2518,6 +2551,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
       final patch = <String, dynamic>{
         'title': _titleCtrl.text.trim(),
         'image_url': img.isEmpty ? null : img,
+        'image_credit': _imageCreditCtrl.text.trim(),
         'description': _descCtrl.text.trim(),
         'victory_message': _victoryCtrl.text.trim(),
         if (dur != null) 'duration_minutes': dur,
@@ -2553,6 +2587,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
   void _applyServerEscape(EscapeGame eg) {
     _titleCtrl.text    = eg.title;
     _imageCtrl.text    = eg.imageUrl ?? '';
+    _imageCreditCtrl.text = eg.imageCredit;
     _descCtrl.text     = eg.description;
     _victoryCtrl.text  = eg.victoryMessage;
     _durationCtrl.text = '${eg.durationMinutes}';
@@ -2843,6 +2878,15 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
                 onPressed: _isSubmitted ? null : () => _uploadAndPersist(ImageSource.camera),
               ),
             ],
+          ),
+
+          const SizedBox(height: 8),
+          TextField(
+            controller: _imageCreditCtrl,
+            enabled: !_isSubmitted,
+            decoration: const InputDecoration(
+              labelText: 'Crédit / source de l\'image (optionnel)',
+            ),
           ),
 
           const SizedBox(height: 8),
@@ -3179,6 +3223,7 @@ class _StepEditorPageState extends State<StepEditorPage> {
   late TextEditingController _title;
   late TextEditingController _text;
   late TextEditingController _imageUrl;
+  late TextEditingController _imageCredit;
   late TextEditingController _lat;
   late TextEditingController _lon;
   bool _showLocation = true;
@@ -3313,6 +3358,7 @@ class _StepEditorPageState extends State<StepEditorPage> {
     _title        = TextEditingController(text: s?.title ?? '');
     _text         = TextEditingController(text: s?.text ?? '');
     _imageUrl     = TextEditingController(text: s?.imageUrl ?? '');
+    _imageCredit  = TextEditingController(text: s?.imageCredit ?? '');
     _lat          = TextEditingController(text: s?.latitude?.toString() ?? '');
     _lon          = TextEditingController(text: s?.longitude?.toString() ?? '');
     _hintPenalty  = TextEditingController(text: s?.hintPenalty.toString() ?? '0');
@@ -3394,6 +3440,7 @@ class _StepEditorPageState extends State<StepEditorPage> {
     _title.dispose();
     _text.dispose();
     _imageUrl.dispose();
+    _imageCredit.dispose();
     _lat.dispose();
     _lon.dispose();
     _hintPenalty.dispose();
@@ -3580,6 +3627,7 @@ class _StepEditorPageState extends State<StepEditorPage> {
       latitude: lat,
       longitude: lon,
       imageUrl: _imageUrl.text.trim().isEmpty ? null : _imageUrl.text.trim(),
+      imageCredit: _imageCredit.text.trim(),
       answerType: _answerType,
       answerText: _answerText.text.trim(),
       options: _options.map((c) => c.text.trim()).where((s) => s.isNotEmpty).toList(),
@@ -3969,6 +4017,14 @@ class _StepEditorPageState extends State<StepEditorPage> {
                 },
               ),
             ],
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _imageCredit,
+            enabled: !widget.readOnly,
+            decoration: const InputDecoration(
+              labelText: 'Crédit / source de l\'image (optionnel)',
+            ),
           ),
           const SizedBox(height: 6),
           ExpansionTile(
