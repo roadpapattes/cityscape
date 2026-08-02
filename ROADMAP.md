@@ -48,7 +48,7 @@ Document de suivi vivant. On coche au fur et à mesure. Légende portée :
 ### Moyens
 - [ ] **#1 — Guidage carte in-app** : tracer l'itinéraire piéton (Directions API) sur la carte déjà intégrée, avec position live. *(≠ navigation vocale, payante.)* Prévoir un **cache d'itinéraire par escape**. Nécessite une clé API + compte de facturation Google.
 - [ ] **#2 — Fond sonore** : champ `audio_url` + lib audio Flutter. Format conseillé **AAC/`.m4a`** ~96–128 kbps.
-- [ ] **#8b — Crédit par image** : aujourd'hui une image = juste une URL. Ajouter un crédit par image (champs parallèles ou petit modèle `Image {url, credit}`).
+- [x] **#8b — Crédit par image** : champ `image_credit` (texte libre, optionnel) sur `EscapeGame` et `GameStep`. Exposé back (serializers, admin, endpoints publics) + creator-web (ImageUploader) + app mobile (modèles, affichage, éditeur in-app).
 
 ### Gros — nouveaux types d'énigmes (`GameStep.answer_type`)
 - [ ] **#5 — Code de César** : nouveau type + champs (message, décalage, sens) + validation moteur + **widget roue à décaler** (app).
