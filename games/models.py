@@ -71,6 +71,15 @@ class EscapeGame(models.Model):
     def __str__(self):
         return f"{self.title} ({self.city})"
 
+    @property
+    def creator_display_name(self):
+        """Crédit créateur (#8a) : nom complet ou pseudo de l'owner, "" si absent."""
+        u = self.owner
+        if not u:
+            return ""
+        full = (u.get_full_name() or "").strip()
+        return full or u.username or ""
+
 
 class GameStep(models.Model):
     ANSWER_TEXT  = "text"
