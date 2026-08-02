@@ -847,12 +847,19 @@ class ApiService {
   }
 
   // ---------- SESSIONS ----------
-  Future<Map<String, dynamic>> startSession(int escapeId) async {
+  Future<Map<String, dynamic>> startSession(int escapeId, {bool replay = false}) async {
     final token = await AuthService.instance.getToken();
     if (token == null) throw Exception('Non connecté');
     final url = '$baseUrl/api$kEngagementPrefix/escapes/$escapeId/sessions/start';
-    debugPrint('[START] POST $url');
-    final r = await _post(Uri.parse(url), headers: {'Authorization': 'Token $token'});
+    debugPrint('[START] POST $url replay=$replay');
+    final r = await _post(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Token $token',
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: replay ? jsonEncode({'replay': true}) : null,
+    );
     if (r.statusCode != 200 && r.statusCode != 201) {
       throw Exception('Start: ${r.statusCode} ${r.body}');
     }

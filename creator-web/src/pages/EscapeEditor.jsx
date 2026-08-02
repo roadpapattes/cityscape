@@ -237,6 +237,11 @@ function EscapeEditor() {
 function InfoTab({ escape, setEscape, canEdit, saving, onSave }) {
   return (
     <form onSubmit={onSave}>
+      {escape.creator && (
+        <div style={{ marginBottom: '16px', fontSize: '13px', color: 'var(--text-muted)' }}>
+          Créé par <strong>{escape.creator}</strong>
+        </div>
+      )}
       <div className="form-group">
         <label className="form-label">Titre *</label>
         <input
@@ -308,6 +313,20 @@ function InfoTab({ escape, setEscape, canEdit, saving, onSave }) {
           <option value="1">⭐ Facile</option>
           <option value="2">⭐⭐ Moyen</option>
           <option value="3">⭐⭐⭐ Difficile</option>
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Âge conseillé</label>
+        <select
+          className="form-select"
+          value={escape.age_rating || '3'}
+          onChange={(e) => setEscape({ ...escape, age_rating: e.target.value })}
+          disabled={!canEdit || saving}
+        >
+          <option value="3">3 ans et +</option>
+          <option value="12">12 ans et +</option>
+          <option value="18">18 ans et +</option>
         </select>
       </div>
 

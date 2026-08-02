@@ -38,6 +38,8 @@ def _coerce_usernames(raw):
 
 class EscapeGameSerializer(serializers.ModelSerializer):
     reject_reason = serializers.SerializerMethodField(read_only=True)
+    # Crédit créateur affiché sur la fiche descriptive (lecture seule).
+    creator = serializers.SerializerMethodField(read_only=True)
 
     # Privacy
     is_private = serializers.BooleanField(required=False)
@@ -53,13 +55,22 @@ class EscapeGameSerializer(serializers.ModelSerializer):
         fields = (
             "id", "title", "city", "status", "created_at", "image_url",
             "description", "victory_message", "duration_minutes", "difficulty",
+            "age_rating", "creator",
             "latitude", "longitude",
             "penalize_wrong_answers", "wrong_answer_penalty",
             "reject_reason",
             # privacy
             "is_private", "allowed_usernames",
         )
-        read_only_fields = ("id", "created_at", "owner")
+        read_only_fields = ("id", "created_at", "owner", "creator")
+
+    # ---------- Crédit créateur (#8a) ----------
+    def get_creator(self, obj):
+        u = getattr(obj, "owner", None)
+        if not u:
+            return ""
+        full = (getattr(u, "get_full_name", lambda: "")() or "").strip()
+        return full or getattr(u, "username", "") or ""
 
     # ---------- READ ----------
     def get_reject_reason(self, obj):

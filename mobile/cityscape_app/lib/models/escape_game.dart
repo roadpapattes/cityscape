@@ -35,6 +35,8 @@ class EscapeGame {
   final double rating;
   final int durationMinutes;
   final int difficulty;
+  final String ageRating;      // "3" | "12" | "18" (âge conseillé, type PEGI)
+  final String creator;        // crédit créateur (nom complet ou pseudo), '' si absent
   final String status;         // draft | submitted | published | rejected
   final String? createdAt;
   final String? rejectReason;  // null si vide
@@ -57,6 +59,8 @@ class EscapeGame {
     required this.rating,
     required this.durationMinutes,
     required this.difficulty,
+    this.ageRating = '3',
+    this.creator = '',
     required this.status,
     this.createdAt,
     this.rejectReason,
@@ -83,6 +87,8 @@ class EscapeGame {
       rating: asDouble(j['rating'] ?? j['avg_rating']),
       durationMinutes: asInt(j['duration_minutes'] ?? j['duration'] ?? 60, 60),
       difficulty: asInt(j['difficulty'] ?? 1, 1),
+      ageRating: _asNonEmptyString(j['age_rating']) ?? '3',
+      creator: _asNonEmptyString(j['creator']) ?? '',
       status: _normalizeStatus(j['status'] ?? 'published'),
       createdAt: j['created_at'] as String?,
       rejectReason: _asNonEmptyString(
