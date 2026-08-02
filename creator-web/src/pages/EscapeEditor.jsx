@@ -421,6 +421,8 @@ function InfoTab({ escape, setEscape, canEdit, saving, onSave }) {
         label="Image de l'escape"
         currentImageUrl={escape.image_url}
         onImageUploaded={(url) => setEscape({ ...escape, image_url: url })}
+        currentCredit={escape.image_credit}
+        onCreditChange={(credit) => setEscape({ ...escape, image_credit: credit })}
         disabled={!canEdit || saving}
       />
 

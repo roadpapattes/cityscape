@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import apiClient from '../api/client';
 
-function ImageUploader({ label, currentImageUrl, onImageUploaded, disabled }) {
+function ImageUploader({ label, currentImageUrl, onImageUploaded, currentCredit, onCreditChange, disabled }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
@@ -50,6 +50,19 @@ function ImageUploader({ label, currentImageUrl, onImageUploaded, disabled }) {
               borderRadius: '8px',
               objectFit: 'cover',
             }}
+          />
+        </div>
+      )}
+
+      {currentImageUrl && onCreditChange && (
+        <div style={{ marginBottom: '12px' }}>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Crédit / source de l'image (optionnel)"
+            value={currentCredit || ''}
+            onChange={(e) => onCreditChange(e.target.value)}
+            disabled={disabled}
           />
         </div>
       )}

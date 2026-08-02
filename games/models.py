@@ -7,6 +7,7 @@ class EscapeGame(models.Model):
     description = models.TextField(blank=True)
     city = models.CharField(max_length=100, blank=True)
     image_url = models.URLField(blank=True, null=True)
+    image_credit = models.CharField(max_length=255, blank=True, default="")
     latitude = models.FloatField()
     longitude = models.FloatField()
     rating = models.FloatField(default=0)
@@ -111,6 +112,7 @@ class GameStep(models.Model):
     show_location = models.BooleanField(default=True, help_text="Afficher le point sur la carte au joueur")
 
     image_url = models.URLField(blank=True, null=True)
+    image_credit = models.CharField(max_length=255, blank=True, default="")
 
     answer_type = models.CharField(max_length=10, choices=ANSWER_CHOICES, default=ANSWER_TEXT)
 

@@ -12,6 +12,7 @@ class GameStep {
   double? latitude;
   double? longitude;
   String? imageUrl;
+  String imageCredit; // crédit/source de l'image, '' si absent
 
   /// 'text' | 'mcq' | 'numeric' | 'matching' | 'narration'
   final String answerType;
@@ -50,6 +51,7 @@ class GameStep {
     this.latitude,
     this.longitude,
     this.imageUrl,
+    this.imageCredit = '',
     this.answerText = '',
     List<String>? options,
     this.correctIndex,
@@ -110,6 +112,7 @@ class GameStep {
       latitude: (j['latitude'] as num?)?.toDouble(),
       longitude: (j['longitude'] as num?)?.toDouble(),
       imageUrl: normalizeImageUrl(j['image_url'] as String?, baseUrl),
+      imageCredit: (j['image_credit'] ?? '') as String,
       answerType: (j['answer_type'] ?? 'text') as String,
       answerText: (j['answer_text'] ?? '') as String,
       options: ((j['options'] as List?) ?? const []).map((e) => '$e').toList(),
@@ -141,6 +144,7 @@ class GameStep {
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
       if (imageUrl != null && imageUrl!.isNotEmpty) 'image_url': imageUrl,
+      'image_credit': imageCredit,
       'answer_type': answerType,
       'hint_penalty': hintPenalty,
       'show_location': showLocation,
