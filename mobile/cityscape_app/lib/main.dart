@@ -2224,6 +2224,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
   late TextEditingController _descCtrl;
   late TextEditingController _durationCtrl;
   late TextEditingController _victoryCtrl;
+  String _ageRating = '3'; // "3" | "12" | "18" (âge conseillé, type PEGI)
 
   // Pénalités “mauvaise réponse”
   bool _penalizeWrong = false;
@@ -2284,6 +2285,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
     _descCtrl     = TextEditingController(text: widget.escape.description);
     _durationCtrl = TextEditingController(text: widget.escape.durationMinutes.toString());
     _victoryCtrl  = TextEditingController(text: widget.escape.victoryMessage ?? '');
+    _ageRating    = widget.escape.ageRating;
     _wrongPenaltyCtrl = TextEditingController(text: '0');
 
     // Pré-remplissage pénalités si présents sur le modèle
@@ -2365,6 +2367,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
       'image_credit': _imageCreditCtrl.text,
       'description': _descCtrl.text,
       'victory_message': _victoryCtrl.text,
+      'age_rating': _ageRating,
       'duration_minutes': _durationCtrl.text,
       'latitude': _startLat?.toString() ?? '',
       'longitude': _startLon?.toString() ?? '',
@@ -2380,6 +2383,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
         _initial['image_credit'] != _imageCreditCtrl.text ||
         _initial['description'] != _descCtrl.text ||
         _initial['victory_message'] != _victoryCtrl.text ||
+        _initial['age_rating'] != _ageRating ||
         _initial['duration_minutes'] != _durationCtrl.text ||
         _initial['latitude'] != (_startLat?.toString() ?? '') ||
         _initial['longitude'] != (_startLon?.toString() ?? '') ||
@@ -2400,6 +2404,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
         _imageCreditCtrl.text = fresh.imageCredit;
         _descCtrl.text     = fresh.description;
         _victoryCtrl.text  = fresh.victoryMessage;
+        _ageRating         = fresh.ageRating;
         _durationCtrl.text = '${fresh.durationMinutes}';
         _startLat          = fresh.latitude;
         _startLon          = fresh.longitude;
@@ -2554,6 +2559,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
         'image_credit': _imageCreditCtrl.text.trim(),
         'description': _descCtrl.text.trim(),
         'victory_message': _victoryCtrl.text.trim(),
+        'age_rating': _ageRating,
         if (dur != null) 'duration_minutes': dur,
         if (_startLat != null) 'latitude': _startLat,
         if (_startLon != null) 'longitude': _startLon,
@@ -2590,6 +2596,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
     _imageCreditCtrl.text = eg.imageCredit;
     _descCtrl.text     = eg.description;
     _victoryCtrl.text  = eg.victoryMessage;
+    _ageRating         = eg.ageRating;
     _durationCtrl.text = '${eg.durationMinutes}';
     _startLat          = eg.latitude;
     _startLon          = eg.longitude;
@@ -2908,6 +2915,18 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
             ),
             minLines: 2,
             maxLines: 5,
+          ),
+
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            initialValue: _ageRating,
+            decoration: const InputDecoration(labelText: 'Âge conseillé'),
+            items: const [
+              DropdownMenuItem(value: '3', child: Text('3 ans et +')),
+              DropdownMenuItem(value: '12', child: Text('12 ans et +')),
+              DropdownMenuItem(value: '18', child: Text('18 ans et +')),
+            ],
+            onChanged: _isSubmitted ? null : (v) => setState(() => _ageRating = v ?? '3'),
           ),
 
           const SizedBox(height: 8),
