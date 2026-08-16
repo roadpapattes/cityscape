@@ -502,6 +502,7 @@ function StepsTab({ escapeId, steps, canEdit, onStepsChanged }) {
                            step.answer_type === 'mcq' ? 'QCM' :
                            step.answer_type === 'numeric' ? 'Numérique' :
                            step.answer_type === 'matching' ? 'Association' :
+                           step.answer_type === 'cesar' ? 'Code de César' :
                            'Narration'}
                     {step.latitude && step.longitude && ' | 📍 Géolocalisée'}
                   </p>

@@ -44,7 +44,7 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
 
     try {
       // Validate based on answer type
-      if (formData.answer_type === 'text' && !formData.answer_text) {
+      if ((formData.answer_type === 'text' || formData.answer_type === 'cesar') && !formData.answer_text) {
         throw new Error('La réponse est requise pour une énigme de type texte');
       }
 
@@ -80,7 +80,7 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
       };
 
       // Add answer-specific fields
-      if (formData.answer_type === 'text' || formData.answer_type === 'numeric') {
+      if (formData.answer_type === 'text' || formData.answer_type === 'numeric' || formData.answer_type === 'cesar') {
         payload.answer_text = formData.answer_text;
       }
 
@@ -181,12 +181,13 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
               <option value="mcq">QCM (4 choix)</option>
               <option value="numeric">Numérique</option>
               <option value="matching">Association</option>
+              <option value="cesar">Code de César</option>
               <option value="narration">Narration (pas d'énigme)</option>
             </select>
           </div>
 
           {/* Answer fields based on type */}
-          {formData.answer_type === 'text' && (
+          {(formData.answer_type === 'text' || formData.answer_type === 'cesar') && (
             <div className="form-group">
               <label className="form-label">Réponse attendue *</label>
               <input
@@ -198,7 +199,11 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
                 disabled={loading}
                 placeholder="Ex: Paris"
               />
-              <p className="form-help">La comparaison est insensible à la casse et aux espaces</p>
+              <p className="form-help">
+                {formData.answer_type === 'cesar'
+                  ? 'Écrivez le message chiffré dans le champ "Énoncé / description" ci-dessus, et le message déchiffré ici. Comparaison insensible à la casse et aux espaces.'
+                  : 'La comparaison est insensible à la casse et aux espaces'}
+              </p>
             </div>
           )}
 

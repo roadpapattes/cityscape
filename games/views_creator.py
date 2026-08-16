@@ -103,7 +103,7 @@ class GameStepSerializer(serializers.ModelSerializer):
             attrs["hint"] = single_hint.strip() if single_hint else ("; ".join(clean_hints) if clean_hints else "")
 
         # ---- Validation selon le type ----
-        if at == GameStep.ANSWER_TEXT:
+        if at in (GameStep.ANSWER_TEXT, getattr(GameStep, "ANSWER_CAESAR", "cesar")):
             if not str(answer_text).strip():
                 raise serializers.ValidationError({"answer_text": 'Requis pour "Texte libre".'})
             attrs["options"] = []

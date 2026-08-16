@@ -83,18 +83,20 @@ class EscapeGame(models.Model):
 
 
 class GameStep(models.Model):
-    ANSWER_TEXT  = "text"
-    ANSWER_MCQ   = "mcq"
-    ANSWER_NUM   = "numeric"
-    ANSWER_MATCH = "matching"
-    ANSWER_NARR  = "narration"
+    ANSWER_TEXT   = "text"
+    ANSWER_MCQ    = "mcq"
+    ANSWER_NUM    = "numeric"
+    ANSWER_MATCH  = "matching"
+    ANSWER_CAESAR = "cesar"
+    ANSWER_NARR   = "narration"
 
     ANSWER_CHOICES = (
-        (ANSWER_TEXT,  "Texte libre"),
-        (ANSWER_MCQ,   "Choix multiple"),
-        (ANSWER_NUM,   "Numeric"),
-        (ANSWER_MATCH, "Association"),
-        (ANSWER_NARR,  "Narration"),
+        (ANSWER_TEXT,   "Texte libre"),
+        (ANSWER_MCQ,    "Choix multiple"),
+        (ANSWER_NUM,    "Numeric"),
+        (ANSWER_MATCH,  "Association"),
+        (ANSWER_CAESAR, "Code de César"),
+        (ANSWER_NARR,   "Narration"),
     )
 
     escape = models.ForeignKey(

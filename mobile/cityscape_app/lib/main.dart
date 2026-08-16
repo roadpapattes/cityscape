@@ -872,6 +872,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
 
   // Réponse (texte/numérique)
   final _answerCtrl = TextEditingController();
+  bool _showCaesarKeyboard = false; // clavier alphabétique custom (type 'cesar')
 
   // Type de réponse
   String _answerType = 'text';
@@ -1058,6 +1059,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
       _currentHintPenalty = 0;
       _revealedHints = [];       // <= reset
       _answerCtrl.clear();
+      _showCaesarKeyboard = false;
 
       _matchLeft = [];
       _matchRight = [];
@@ -1079,6 +1081,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
       if (stepChanged) {
         _currentStepId = sid;
         _revealedHints = [];     // <= reset à chaque changement d’étape
+        _showCaesarKeyboard = false;
       }
 
       // titre / image / énoncé
@@ -1671,6 +1674,92 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
   }
 }
 
+  // ---------- Clavier alphabétique custom (type 'cesar') ----------
+  // Remplace le clavier système : lettres dans l'ordre alphabétique, plus
+  // simple pour retrouver un décalage qu'un clavier AZERTY/QWERTY classique.
+  Widget _buildCaesarKeyboard() {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    void insert(String s) {
+      final sel = _answerCtrl.selection;
+      final text = _answerCtrl.text;
+      final start = sel.start >= 0 ? sel.start : text.length;
+      final end = sel.end >= 0 ? sel.end : text.length;
+      final newText = text.replaceRange(start, end, s);
+      _answerCtrl.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: start + s.length),
+      );
+    }
+
+    void backspace() {
+      final sel = _answerCtrl.selection;
+      final text = _answerCtrl.text;
+      if (sel.start != sel.end && sel.start >= 0) {
+        insert('');
+        return;
+      }
+      final pos = sel.start >= 0 ? sel.start : text.length;
+      if (pos <= 0) return;
+      final newText = text.replaceRange(pos - 1, pos, '');
+      _answerCtrl.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: pos - 1),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              for (final c in letters.split(''))
+                SizedBox(
+                  width: 32,
+                  height: 36,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(padding: EdgeInsets.zero),
+                    onPressed: () => insert(c),
+                    child: Text(c, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => insert(' '),
+                  child: const Text('Espace'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: backspace,
+                child: const Icon(Icons.backspace_outlined),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: () => setState(() => _showCaesarKeyboard = false),
+                child: const Icon(Icons.keyboard_hide_outlined),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   // ---------- UI Matching (clic-clic) ----------
   Widget _buildMatchingClickPair() {
     _ensureRightOrder();
@@ -1959,12 +2048,14 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
                                   ),
                                 ),
                               ] else ...[
-                                // text | numeric : un seul champ
+                                // text | numeric | cesar : un seul champ
                                 TextField(
                                   controller: _answerCtrl,
+                                  readOnly: _answerType == 'cesar',
+                                  showCursor: true,
                                   keyboardType: _answerType == 'numeric'
                                       ? const TextInputType.numberWithOptions(decimal: true, signed: false)
-                                      : TextInputType.text,
+                                      : (_answerType == 'cesar' ? TextInputType.none : TextInputType.text),
                                   decoration: InputDecoration(
                                     labelText: _answerType == 'numeric'
                                         ? 'Réponse attendue (nombre)'
@@ -1975,8 +2066,15 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
                                     ),
                                   ),
                                   enabled: !_submitting,
+                                  onTap: _answerType == 'cesar'
+                                      ? () => setState(() => _showCaesarKeyboard = true)
+                                      : null,
                                   onSubmitted: (_) => _submitting ? null : _submit(),
                                 ),
+                                if (_answerType == 'cesar' && _showCaesarKeyboard) ...[
+                                  const SizedBox(height: 8),
+                                  _buildCaesarKeyboard(),
+                                ],
                               ],
                             ],
                           ),
@@ -2335,6 +2433,8 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
 		case 'mcq':
 			final nb = s.options?.length ?? 0;
 			return 'Réponse: QCM ($nb option${nb > 1 ? 's' : ''})';
+		case 'cesar':
+			return 'Réponse: code de César';
 		case 'text':
 		default:
 			return 'Réponse: texte libre';
@@ -4160,6 +4260,7 @@ class _StepEditorPageState extends State<StepEditorPage> {
                   DropdownMenuItem(value: 'mcq',      child: Text('Choix multiple')),
                   DropdownMenuItem(value: 'numeric',  child: Text('Numérique')),
                   DropdownMenuItem(value: 'matching', child: Text('Association')),
+                  DropdownMenuItem(value: 'cesar',    child: Text('Code de César')),
                   DropdownMenuItem(value: 'narration', child: Text('Narration')),
                 ],
                 onChanged: widget.readOnly ? null : (v) => setState(() => _answerType = v ?? 'text'),
@@ -4168,11 +4269,17 @@ class _StepEditorPageState extends State<StepEditorPage> {
           ),
 
           const SizedBox(height: 8),
-          if (_answerType == 'text') ...[
+          if (_answerType == 'text' || _answerType == 'cesar') ...[
             TextField(
               controller: _answerText,
               enabled: !widget.readOnly,
-              decoration: const InputDecoration(labelText: 'Réponse attendue'),
+              decoration: InputDecoration(
+                labelText: 'Réponse attendue',
+                helperText: _answerType == 'cesar'
+                    ? 'Écrivez le message chiffré dans "Description", et le message déchiffré ici.'
+                    : null,
+                helperMaxLines: 2,
+              ),
             ),
           ] else if (_answerType == 'numeric') ...[
             TextField(
