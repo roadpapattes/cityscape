@@ -506,20 +506,33 @@ class ApiService {
     return L.map((e) => CommentItem.fromJson(e)).toList();
   }
 
-  Future<bool> canRate(int escapeId) async {
+  /// Statut de notation pour l'utilisateur courant : peut-il noter (= a terminé
+  /// l'escape) ? A-t-il déjà noté, et si oui avec quelle note/commentaire
+  /// (pour pré-remplir le formulaire d'édition) ?
+  Future<({bool canRate, bool alreadyRated, int? myStars, String? myComment})> getRatingStatus(
+    int escapeId,
+  ) async {
+    const none = (canRate: false, alreadyRated: false, myStars: null, myComment: null);
     final token = await AuthService.instance.getToken();
-    if (token == null) return false; // non connecté -> pas le droit de noter
+    if (token == null) return none;
 
     final r = await _get(
 		Uri.parse('$baseUrl/api$kEngagementPrefix/escapes/$escapeId/can_rate'),
 		headers: {'Authorization': 'Token $token'},
     );
 
-    if (r.statusCode != 200) return false;
-    final j = jsonDecode(r.body);
-    return (j['can_rate'] ?? false) as bool;
+    if (r.statusCode != 200) return none;
+    final j = jsonDecode(r.body) as Map<String, dynamic>;
+    final my = j['my_rating'] as Map<String, dynamic>?;
+    return (
+      canRate: (j['can_rate'] ?? false) as bool,
+      alreadyRated: (j['already_rated'] ?? false) as bool,
+      myStars: my == null ? null : (my['stars'] as num?)?.toInt(),
+      myComment: my == null ? null : my['comment'] as String?,
+    );
   }
 
+  /// Crée ou met à jour (upsert côté serveur) la note du joueur pour cet escape.
   Future<void> submitRating({
     required int escapeId,
     required int stars,
@@ -535,7 +548,7 @@ class ApiService {
       },
       body: {'escape': escapeId, 'stars': stars, 'comment': comment},
     );
-    if (r.statusCode != 201) {
+    if (r.statusCode != 201 && r.statusCode != 200) {
       throw Exception('Note refusée: ${r.statusCode} ${r.body}');
     }
   }

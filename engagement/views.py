@@ -1077,8 +1077,13 @@ class CanRateView(APIView):
         has_completed = PlaySession.objects.filter(
             user=request.user, escape=escape, completed_at__isnull=False
         ).exists()
-        already_rated = Rating.objects.filter(user=request.user, escape=escape).exists()
-        return Response({"can_rate": bool(has_completed and not already_rated)}, status=200)
+        existing = Rating.objects.filter(user=request.user, escape=escape).first()
+        return Response({
+            # Autorise à noter OU à éditer sa note dès que l'escape est terminé (#éditer sa note).
+            "can_rate": bool(has_completed),
+            "already_rated": existing is not None,
+            "my_rating": RatingSerializer(existing).data if existing else None,
+        }, status=200)
 
 class ReportEscapeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -1135,18 +1140,15 @@ class RatingsListCreateView(APIView):
         s = RatingSerializer(data=payload)
         s.is_valid(raise_exception=True)
 
-        try:
-            with transaction.atomic():
-                rating = Rating.objects.create(
-                    user=request.user,
-                    escape=escape,
-                    stars=s.validated_data["stars"],
-                    comment=s.validated_data.get("comment", ""),
-                )
-        except IntegrityError:
-            return Response(
-                {"detail": "Vous avez déjà noté cet escape."},
-                status=status.HTTP_400_BAD_REQUEST,
+        # Upsert : un joueur peut éditer sa note existante (au lieu du create-only d'origine).
+        with transaction.atomic():
+            rating, created = Rating.objects.update_or_create(
+                user=request.user,
+                escape=escape,
+                defaults={
+                    "stars": s.validated_data["stars"],
+                    "comment": s.validated_data.get("comment", ""),
+                },
             )
 
         agg = Rating.objects.filter(escape=escape).aggregate(
@@ -1162,7 +1164,7 @@ class RatingsListCreateView(APIView):
                     "count": int(agg["count"] or 0),
                 },
             },
-            status=status.HTTP_201_CREATED,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
         
 class CreatorFeedbackView(APIView):
