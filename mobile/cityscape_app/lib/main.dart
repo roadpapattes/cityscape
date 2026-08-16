@@ -358,6 +358,11 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
   int _totalSteps = 0;       // nombre total d'étapes
   DateTime? _completedAt;
 
+  bool _canRate = false;
+  bool _alreadyRated = false;
+  int? _myRatingStars;
+  String? _myRatingComment;
+
   Future<List<CommentItem>>? _futureComments;
 
   // Tutorial Phase 3
@@ -460,6 +465,23 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
       // on ignore et on laisse le bouton actif si on ne sait pas
     } finally {
       if (mounted) setState(() => _checkingStatus = false);
+    }
+
+    await _loadRatingStatus();
+  }
+
+  Future<void> _loadRatingStatus() async {
+    try {
+      final st = await _api.getRatingStatus(widget.escape.id);
+      if (!mounted) return;
+      setState(() {
+        _canRate = st.canRate;
+        _alreadyRated = st.alreadyRated;
+        _myRatingStars = st.myStars;
+        _myRatingComment = st.myComment;
+      });
+    } catch (_) {
+      // silencieux : le bouton de notation restera simplement masqué
     }
   }
 
@@ -706,10 +728,32 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
               ],
             ),
             const SizedBox(height: 8),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.replay),
-              label: const Text('Rejouer'),
-              onPressed: () => _startOrReplay(context, replay: true),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.replay),
+                    label: const Text('Rejouer'),
+                    onPressed: () => _startOrReplay(context, replay: true),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.star_border),
+                    label: Text(_alreadyRated ? 'Modifier ma note' : 'Noter'),
+                    onPressed: !_canRate
+                        ? null
+                        : () => showRatingDialog(
+                              context,
+                              escapeId: widget.escape.id,
+                              initialStars: _myRatingStars ?? 5,
+                              initialComment: _myRatingComment ?? '',
+                              onSubmitted: _loadRatingStatus,
+                            ),
+                  ),
+                ),
+              ],
             ),
           ],
 
@@ -2026,6 +2070,71 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
    WIDGETS : VICTORY + rating
 ============================ */
 
+/// Dialogue de notation partagé (création ou édition d'une note existante).
+Future<void> showRatingDialog(
+  BuildContext context, {
+  required int escapeId,
+  int initialStars = 5,
+  String initialComment = '',
+  VoidCallback? onSubmitted,
+}) {
+  int stars = initialStars;
+  final controller = TextEditingController(text: initialComment);
+  return showDialog(
+    context: context,
+    builder: (dialogCtx) => StatefulBuilder(
+      builder: (dialogCtx, setSt) => AlertDialog(
+        title: const Text('Votre note'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButton<int>(
+              value: stars,
+              onChanged: (v) => setSt(() => stars = v ?? stars),
+              items: List.generate(
+                5,
+                (i) => DropdownMenuItem(value: i + 1, child: Text('${i + 1} ★')),
+              ),
+            ),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(labelText: 'Commentaire (optionnel)'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Annuler')),
+          FilledButton(
+            onPressed: () async {
+              try {
+                await ApiService.instance.submitRating(
+                  escapeId: escapeId,
+                  stars: stars,
+                  comment: controller.text.trim(),
+                );
+                if (!dialogCtx.mounted) return;
+                Navigator.pop(dialogCtx); // ferme le dialog
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Merci pour votre note !')),
+                  );
+                }
+                onSubmitted?.call();
+              } catch (err) {
+                if (!dialogCtx.mounted) return;
+                ScaffoldMessenger.of(dialogCtx).showSnackBar(
+                  SnackBar(content: Text('Erreur: $err')),
+                );
+              }
+            },
+            child: const Text('Envoyer'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class VictoryPage extends StatefulWidget {
   final EscapeGame escape;
   final String? finalMessage;   // message renvoyé par l’API à la dernière étape (facultatif)
@@ -2045,6 +2154,9 @@ class VictoryPage extends StatefulWidget {
 class _VictoryPageState extends State<VictoryPage> {
   bool _checkingCanRate = true;
   bool _canRate = true; // par défaut on autorise, puis on confirme avec l’API
+  bool _alreadyRated = false;
+  int? _myStars;
+  String? _myComment;
 
   @override
   void initState() {
@@ -2054,10 +2166,13 @@ class _VictoryPageState extends State<VictoryPage> {
 
   Future<void> _loadCanRate() async {
     try {
-      final ok = await ApiService.instance.canRate(widget.escape.id);
+      final st = await ApiService.instance.getRatingStatus(widget.escape.id);
       if (!mounted) return;
       setState(() {
-        _canRate = ok;
+        _canRate = st.canRate;
+        _alreadyRated = st.alreadyRated;
+        _myStars = st.myStars;
+        _myComment = st.myComment;
       });
     } catch (_) {
       // En cas d’échec réseau, on garde le bouton actif (l’API refusera si besoin)
@@ -2119,10 +2234,18 @@ class _VictoryPageState extends State<VictoryPage> {
                     icon: const Icon(Icons.star_border),
                     label: Text(_checkingCanRate
                         ? '...'
-                        : (_canRate ? 'Noter cet escape' : 'Déjà noté')),
+                        : (_alreadyRated ? 'Modifier ma note' : 'Noter cet escape')),
                     onPressed: (_checkingCanRate || !_canRate)
                         ? null
-                        : () => _openRatingDialog(context, widget.escape),
+                        : () => showRatingDialog(
+                              context,
+                              escapeId: widget.escape.id,
+                              initialStars: _myStars ?? 5,
+                              initialComment: _myComment ?? '',
+                              onSubmitted: () {
+                                if (context.mounted) Navigator.of(context).pop(true);
+                              },
+                            ),
                   ),
 
                   const SizedBox(height: 12),
@@ -2139,60 +2262,6 @@ class _VictoryPageState extends State<VictoryPage> {
     );
   }
 
-  void _openRatingDialog(BuildContext context, EscapeGame e) {
-    int stars = 5;
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Votre note'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButton<int>(
-              value: stars,
-              onChanged: (v) => stars = v ?? 5,
-              items: List.generate(
-                5,
-                (i) => DropdownMenuItem(value: i + 1, child: Text('${i + 1} ★')),
-              ),
-            ),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(labelText: 'Commentaire (optionnel)'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
-          FilledButton(
-            onPressed: () async {
-              try {
-                await ApiService.instance.submitRating(
-                  escapeId: e.id,
-                  stars: stars,
-                  comment: controller.text.trim(),
-                );
-                if (!context.mounted) return;
-                Navigator.pop(context); // ferme le dialog
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Merci pour votre note !')),
-                );
-                // On revient à la page détails et on déclenche le refresh (result = true)
-                Navigator.of(context).pop(true);
-              } catch (err) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Erreur: $err')),
-                );
-              }
-            },
-            child: const Text('Envoyer'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 
