@@ -54,6 +54,7 @@ class EscapeGameSerializer(serializers.ModelSerializer):
         model = EscapeGame
         fields = (
             "id", "title", "city", "status", "created_at", "image_url", "image_credit",
+            "audio_url",
             "description", "victory_message", "duration_minutes", "difficulty",
             "age_rating", "creator",
             "latitude", "longitude",

@@ -9,19 +9,23 @@ enum ListCardStyle {
 class UserPreferences {
   final ListCardStyle listCardStyle;
   final bool tutorialCompleted;
+  final bool audioMuted; // fond sonore des escapes coupé par le joueur
 
   const UserPreferences({
     this.listCardStyle = ListCardStyle.cardCollection,
     this.tutorialCompleted = false,
+    this.audioMuted = false,
   });
 
   UserPreferences copyWith({
     ListCardStyle? listCardStyle,
     bool? tutorialCompleted,
+    bool? audioMuted,
   }) {
     return UserPreferences(
       listCardStyle: listCardStyle ?? this.listCardStyle,
       tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
+      audioMuted: audioMuted ?? this.audioMuted,
     );
   }
 
@@ -29,6 +33,7 @@ class UserPreferences {
     return {
       'listCardStyle': listCardStyle.index,
       'tutorialCompleted': tutorialCompleted,
+      'audioMuted': audioMuted,
     };
   }
 
@@ -36,6 +41,7 @@ class UserPreferences {
     return UserPreferences(
       listCardStyle: ListCardStyle.values[json['listCardStyle'] ?? 0],
       tutorialCompleted: json['tutorialCompleted'] ?? false,
+      audioMuted: json['audioMuted'] ?? false,
     );
   }
 

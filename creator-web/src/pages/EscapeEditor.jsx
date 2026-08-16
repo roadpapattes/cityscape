@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import StepEditor from '../components/StepEditor';
 import ImageUploader from '../components/ImageUploader';
+import AudioUploader from '../components/AudioUploader';
 import LocationPicker from '../components/LocationPicker';
 
 function EscapeEditor() {
@@ -423,6 +424,14 @@ function InfoTab({ escape, setEscape, canEdit, saving, onSave }) {
         onImageUploaded={(url) => setEscape({ ...escape, image_url: url })}
         currentCredit={escape.image_credit}
         onCreditChange={(credit) => setEscape({ ...escape, image_credit: credit })}
+        disabled={!canEdit || saving}
+      />
+
+      {/* Upload du fond sonore */}
+      <AudioUploader
+        label="Fond sonore (optionnel)"
+        currentAudioUrl={escape.audio_url}
+        onAudioUploaded={(url) => setEscape({ ...escape, audio_url: url })}
         disabled={!canEdit || saving}
       />
 

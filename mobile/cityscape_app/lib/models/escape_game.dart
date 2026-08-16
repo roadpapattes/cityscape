@@ -42,6 +42,7 @@ class EscapeGame {
   final String? rejectReason;  // null si vide
   final String? imageUrl;
   final String imageCredit; // crédit/source de l'image, '' si absent
+  final String? audioUrl;   // fond sonore joué en boucle pendant la partie
   final String description;
   final String victoryMessage;
 
@@ -67,6 +68,7 @@ class EscapeGame {
     this.rejectReason,
     this.imageUrl,
     this.imageCredit = '',
+    this.audioUrl,
     this.description = '',
     this.victoryMessage = '',
     this.penalizeWrongAnswers = false,
@@ -79,6 +81,9 @@ class EscapeGame {
     // Normalise l'URL puis mappe '' -> null (car imageUrl est nullable)
     final normalized = normalizeImageUrl(j['image_url'] as String?, baseUrl);
     final img = (normalized.isEmpty) ? null : normalized;
+
+    final normalizedAudio = normalizeImageUrl(j['audio_url'] as String?, baseUrl);
+    final audio = (normalizedAudio.isEmpty) ? null : normalizedAudio;
 
     return EscapeGame(
       id: asInt(j['id']),
@@ -101,6 +106,7 @@ class EscapeGame {
       ),
       imageUrl: img,
       imageCredit: _asNonEmptyString(j['image_credit']) ?? '',
+      audioUrl: audio,
       description: (j['description'] ?? '') as String,
       victoryMessage: (j['victory_message'] ?? '') as String,
       penalizeWrongAnswers: (j['penalize_wrong_answers'] as bool?) ?? false,
