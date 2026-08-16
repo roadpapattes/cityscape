@@ -161,6 +161,7 @@ class GameStep {
 
     switch (answerType) {
       case 'text':
+      case 'cesar':
         m['answer_text']   = answerText;   // requis
         m['options']       = <String>[];
         m['correct_index'] = null;

@@ -901,7 +901,7 @@ class SessionAnswerView(APIView):
         ok = False
 
         # --- Vérification de la réponse ---
-        if st.answer_type == GameStep.ANSWER_TEXT:
+        if st.answer_type in (GameStep.ANSWER_TEXT, getattr(GameStep, "ANSWER_CAESAR", "cesar")):
             user_answer = (request.data or {}).get("answer", "")
             ok = _normalize(user_answer) == _normalize(st.answer_text)
 
@@ -985,7 +985,7 @@ class SessionAnswerView(APIView):
         answers_map = dict(sess.answers or {})
         entry = {"type": st.answer_type, "ts": timezone.now().isoformat()}
 
-        if st.answer_type == GameStep.ANSWER_TEXT:
+        if st.answer_type in (GameStep.ANSWER_TEXT, getattr(GameStep, "ANSWER_CAESAR", "cesar")):
             entry["value"] = str((request.data or {}).get("answer", ""))
 
         elif st.answer_type == GameStep.ANSWER_MCQ:

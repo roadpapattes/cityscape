@@ -14,32 +14,22 @@ Document de suivi vivant. On coche au fur et à mesure. Légende portée :
 - [x] **Surveys** — correctif option « 1 » de `nb_parcours` *(PR #6)*
 - [x] **Surveys** — impression PDF d'un avis *(PR #7)*
 - [x] Ménage : `escape_db`/`escape_user` supprimés, branches nettoyées, VPS aligné sur `main`
+- [x] **Fix** : `age_rating`/`creator` absents des endpoints publics `/api/escapes` et `/api/escapes/nearby` (bug affectant l'app mobile uniquement, creator-web était correct) *(PR #9)*
 
----
+### Lot « UX + créateur » *(PR #8, #10, #11)*
+- [x] **#3 — Âge conseillé (PEGI +3/+12/+18)** : back (`age_rating` + migration + admin), creator-web (sélecteur), app (badge sur la fiche **+ sélecteur dans l'éditeur in-app**, ajouté après coup — manquait initialement). Filtre au catalogue mobile pas encore fait.
+- [x] **#4 — Icône Historique plus visible** : icône + libellé texte dans l'AppBar de la partie.
+- [x] **#8a — Crédit créateur sur la fiche escape** : back (`creator` lecture seule), creator-web (« Créé par … »), app (`EscapeDetailsPage`).
+- [x] **#7 — Rejouer un escape terminé** : replay écrase la partie existante (pas de migration, note conservée via `Rating`). Bouton « Rejouer » sur la fiche escape.
+- [x] **#8b — Crédit par image** : champ `image_credit` optionnel sur `EscapeGame`/`GameStep`. Exposé back (serializers, admin, endpoints publics), creator-web (`ImageUploader`), app (modèles, affichage, éditeur in-app escape + step).
 
-## 🔨 Lot en cours — « UX + créateur » (un seul AAB à la fin)
+### Noter un escape *(PR #12, hors backlog initial — demande ajoutée en cours de route)*
+- [x] Un joueur peut noter (ou **éditer sa note**) depuis la fiche escape dès que l'escape est terminé, plus seulement depuis l'écran de victoire. Back : `CanRateView` renvoie le statut détaillé (`can_rate`/`already_rated`/`my_rating`), `RatingsListCreateView` fait un upsert. App : dialogue de notation factorisé, réutilisé par l'écran de victoire et la fiche escape.
 
-### #3 — Catégorie d'âge (PEGI +3 / +12 / +18)
-- [x] **back** : champ `age_rating` sur `EscapeGame` (+3/+12/+18) + migration
-- [x] **back** : exposé en lecture/écriture dans `EscapeGameSerializer` + admin (filtre + formulaire)
-- [x] **creator** : sélecteur « Âge conseillé » dans l'éditeur d'escape
-- [x] **app** : badge âge sur la fiche (`escape_bottom_sheet.dart`) — filtre au catalogue pas encore fait
-
-### #4 — Icône « Historique » plus visible
-- [x] **app** : icône + libellé texte dans l'AppBar de la partie (`SessionPlayerPage`)
-
-### #8a — Crédit créateur sur la fiche escape
-- [x] **back** : champ `creator` (lecture seule) exposé dans `EscapeGameSerializer`
-- [x] **creator** : affichage « Créé par … » dans l'éditeur
-- [x] **app** : affiché sur `EscapeDetailsPage` (sous les infos ville/durée)
-
-### #7 — Rejouer un escape terminé
-- [x] **décision** : replay **écrase** la partie existante (une seule `PlaySession`/escape, remise à zéro). Note conservée (modèle `Rating` distinct) → « note initiale fait foi ». Pas de migration.
-- [x] **back** : `StartSessionView` accepte `{"replay": true}` → remet la session à zéro (progression, temps, pénalité, indices) et renvoie un état frais
-- [x] **app** : bouton « Rejouer » sur un escape terminé → `POST …/sessions/start` avec `{"replay": true}`
-
-### Modèle Dart (prépa affichage #3/#8a)
-- [x] **app** : `EscapeGame` (Dart) parse `age_rating` et `creator` depuis l'API
+### #5 — Énigme « Code de César »
+- [x] **back** : nouveau `answer_type='cesar'` (migration), traité comme `text` dans le moteur de réponse (`SessionAnswerView`) et côté écriture créateur (`views_creator.py`) — pas de champs dédiés décalage/sens : le créateur écrit le message chiffré dans l'énoncé et la réponse déchiffrée dans `answer_text`, comme pour « Texte libre » *(scope simplifié, décidé avec Damien — pas de widget roue à décaler, pas de champs `cesar_shift`/`cesar_direction`)*.
+- [x] **creator** : option « Code de César » dans le sélecteur de type + aide contextuelle.
+- [x] **app** : option dans l'éditeur in-app + **clavier alphabétique custom** (A→Z) affiché au tap du champ réponse à la place du clavier système, pour faciliter la saisie du message décodé.
 
 ---
 
@@ -48,11 +38,9 @@ Document de suivi vivant. On coche au fur et à mesure. Légende portée :
 ### Moyens
 - [ ] **#1 — Guidage carte in-app** : tracer l'itinéraire piéton (Directions API) sur la carte déjà intégrée, avec position live. *(≠ navigation vocale, payante.)* Prévoir un **cache d'itinéraire par escape**. Nécessite une clé API + compte de facturation Google.
 - [ ] **#2 — Fond sonore** : champ `audio_url` + lib audio Flutter. Format conseillé **AAC/`.m4a`** ~96–128 kbps.
-- [x] **#8b — Crédit par image** : champ `image_credit` (texte libre, optionnel) sur `EscapeGame` et `GameStep`. Exposé back (serializers, admin, endpoints publics) + creator-web (ImageUploader) + app mobile (modèles, affichage, éditeur in-app).
 
 ### Gros — nouveaux types d'énigmes (`GameStep.answer_type`)
-- [ ] **#5 — Code de César** : nouveau type + champs (message, décalage, sens) + validation moteur + **widget roue à décaler** (app).
-- [ ] **#6 — Mots fléchés / casés / rébus** : rébus simple (réutilise `text`) ; grilles = gros widget de saisie. À faire après #5.
+- [ ] **#6 — Mots fléchés / casés / rébus** : rébus simple (réutilise `text`) ; grilles = gros widget de saisie.
 
 ### À cadrer (session dédiée)
 - [ ] **#9 — Monétisation** : achat à l'unité / abonnement / freemium ; part reversée aux créateurs ; **contrainte commission IAP** (Google Play 15 % < 1 M$/an puis 30 % ; Apple 30 %, 15 % *Small Business*). Surveiller DMA (UE) / Epic-Apple (US).
