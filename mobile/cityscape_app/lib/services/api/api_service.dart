@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../../models/escape_game.dart';
 import '../../models/game_step.dart';
@@ -1032,5 +1033,34 @@ class ApiService {
     final url = j['url'] as String?;
     if (url == null || url.isEmpty) throw Exception('URL manquante');
     return normalizeImageUrl(url, baseUrl) ?? url;
+  }
+
+  Future<String> uploadAudio(PlatformFile file) async {
+    final token = await AuthService.instance.getToken();
+    if (token == null) throw Exception('Non connecté');
+    final uri = Uri.parse('$baseUrl/api/creator/upload_audio');
+
+    final req = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Token $token'
+      ..headers['Accept'] = 'application/json';
+
+    final bytes = await file.readAsBytes();
+    req.files.add(http.MultipartFile.fromBytes('file', bytes, filename: file.name));
+
+    final streamRes = await _client.send(req);
+    final r = await http.Response.fromStream(streamRes);
+
+    if (r.statusCode != 201 && r.statusCode != 200) {
+      String detail = '${r.statusCode}';
+      try {
+        final body = jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
+        if (body['detail'] != null) detail = '${body['detail']}';
+      } catch (_) {}
+      throw Exception(detail);
+    }
+    final j = jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
+    final url = j['url'] as String?;
+    if (url == null || url.isEmpty) throw Exception('URL manquante');
+    return normalizeImageUrl(url, baseUrl);
   }
 }

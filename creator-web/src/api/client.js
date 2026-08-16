@@ -264,6 +264,37 @@ class ApiClient {
 
     return await response.json();
   }
+
+  async uploadAudio(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const url = `${API_BASE_URL}/api/creator/upload_audio`;
+    const headers = {};
+
+    if (this.token) {
+      headers['Authorization'] = `Token ${this.token}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let detail = 'Envoi du fond sonore échoué';
+      try {
+        const body = await response.json();
+        if (body?.detail) detail = body.detail;
+      } catch {
+        // réponse non-JSON, on garde le message générique
+      }
+      throw new Error(detail);
+    }
+
+    return await response.json();
+  }
 }
 
 export default new ApiClient();

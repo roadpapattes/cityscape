@@ -31,13 +31,17 @@ Document de suivi vivant. On coche au fur et à mesure. Légende portée :
 - [x] **creator** : option « Code de César » dans le sélecteur de type + aide contextuelle.
 - [x] **app** : option dans l'éditeur in-app + **clavier alphabétique custom** (A→Z) affiché au tap du champ réponse à la place du clavier système, pour faciliter la saisie du message décodé.
 
+### #2 — Fond sonore
+- [x] **back** : champ `audio_url` sur `EscapeGame` (migration). Endpoint dédié `creator/upload_audio` (`CreatorAudioUploadView`) : valide taille (max 20MB), format (MP3/M4A/AAC via `python-magic` + fallback extension) et **durée minimale 60s** (via classes `mutagen` explicites par format — l'auto-détection générique `mutagen.File()` s'est avérée peu fiable sur fichier en mémoire, testé et corrigé avant livraison). Charge à l'admin/créateur de vérifier les droits d'auteur (pas de vérif automatique).
+- [x] **creator** : `AudioUploader.jsx` (pré-check de durée côté navigateur avant upload, lecteur `<audio>` de prévisualisation), branché sur `EscapeEditor`.
+- [x] **app** : lib `audioplayers` (lecture en boucle) + `file_picker` (sélection de fichier côté créateur in-app). Lecture démarrée à l'ouverture de `SessionPlayerPage`, coupée à la fermeture, mise en pause/reprise avec le cycle de vie de l'app (arrière-plan). Bouton mute/demute dans l'AppBar de la partie, **état persisté** (`PreferencesService`/`UserPreferences.audioMuted`) — mémorisé d'une partie à l'autre. Upload + suppression du fond sonore dans l'éditeur d'escape in-app.
+
 ---
 
 ## 🗓️ Backlog (priorisé)
 
 ### Moyens
 - [ ] **#1 — Guidage carte in-app** : tracer l'itinéraire piéton (Directions API) sur la carte déjà intégrée, avec position live. *(≠ navigation vocale, payante.)* Prévoir un **cache d'itinéraire par escape**. Nécessite une clé API + compte de facturation Google.
-- [ ] **#2 — Fond sonore** : champ `audio_url` + lib audio Flutter. Format conseillé **AAC/`.m4a`** ~96–128 kbps.
 
 ### Gros — nouveaux types d'énigmes (`GameStep.answer_type`)
 - [ ] **#6 — Mots fléchés / casés / rébus** : rébus simple (réutilise `text`) ; grilles = gros widget de saisie.

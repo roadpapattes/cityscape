@@ -26,7 +26,7 @@ class EscapeGameAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Informations principales', {
-            'fields': ('title', 'description', 'city', 'image_url', 'image_credit', 'owner')
+            'fields': ('title', 'description', 'city', 'image_url', 'image_credit', 'audio_url', 'owner')
         }),
         ('Localisation', {
             'fields': ('latitude', 'longitude', 'preview_map'),

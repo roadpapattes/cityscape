@@ -47,4 +47,9 @@ class PreferencesService extends ChangeNotifier {
     final newPrefs = _currentPrefs.copyWith(tutorialCompleted: completed);
     await updatePreferences(newPrefs);
   }
+
+  Future<void> setAudioMuted(bool muted) async {
+    final newPrefs = _currentPrefs.copyWith(audioMuted: muted);
+    await updatePreferences(newPrefs);
+  }
 }

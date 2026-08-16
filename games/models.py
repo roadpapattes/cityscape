@@ -8,6 +8,10 @@ class EscapeGame(models.Model):
     city = models.CharField(max_length=100, blank=True)
     image_url = models.URLField(blank=True, null=True)
     image_credit = models.CharField(max_length=255, blank=True, default="")
+    audio_url = models.URLField(
+        blank=True, null=True,
+        help_text="Fond sonore joué en boucle pendant la partie (≥ 1 min)."
+    )
     latitude = models.FloatField()
     longitude = models.FloatField()
     rating = models.FloatField(default=0)

@@ -13,7 +13,7 @@ from django.conf import settings
 from django.db.models import QuerySet, Q
 
 from .models import EscapeGame
-from .file_upload_secure import validate_uploaded_image
+from .file_upload_secure import validate_uploaded_image, validate_uploaded_audio
 from .serializers import EscapeGameSerializer, CreatorEscapeListSerializer
 
 from engagement.models import Rating
@@ -142,6 +142,30 @@ class CreatorImageUploadView(APIView):
 
         # dossier de destination
         subdir = os.path.join('escapes', request.user.username)
+        name = get_random_string(12) + ext
+        path = default_storage.save(os.path.join(subdir, name), f)
+
+        # URL publique
+        url = request.build_absolute_uri(os.path.join(settings.MEDIA_URL, path).replace('\\\\', '/'))
+        return Response({"url": url}, status=status.HTTP_201_CREATED)
+
+
+class CreatorAudioUploadView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        f = request.FILES.get('file')
+        if not f:
+            return Response({"detail": "Aucun fichier"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validation sécurisée du fichier (taille, format, durée minimale)
+        is_valid, error_msg, mime_type, ext = validate_uploaded_audio(f)
+        if not is_valid:
+            return Response({"detail": error_msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        # dossier de destination
+        subdir = os.path.join('escapes', request.user.username, 'audio')
         name = get_random_string(12) + ext
         path = default_storage.save(os.path.join(subdir, name), f)
 

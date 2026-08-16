@@ -66,6 +66,7 @@ def _to_dict_escape(obj) -> dict:
         "status": _first("status", default="published"),
         "image_url": _first("image_url", default=None),
         "image_credit": _first("image_credit", default="") or "",
+        "audio_url": _first("audio_url", default=None),
         "age_rating": _first("age_rating", default="3"),
         "creator": getattr(obj, "creator_display_name", "") or "",
     }
@@ -150,7 +151,8 @@ def escapes_nearby(request):
         return Response(res)
 
     qs = _visible_qs(request).only(
-        "id", "title", "latitude", "longitude", "city", "image_url", "image_credit", "age_rating", "owner"
+        "id", "title", "latitude", "longitude", "city",
+        "image_url", "image_credit", "audio_url", "age_rating", "owner"
     )
     out: List[dict] = []
     for e in qs:

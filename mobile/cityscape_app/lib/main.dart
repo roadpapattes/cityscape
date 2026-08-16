@@ -15,6 +15,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -35,6 +36,7 @@ import 'core/utils/image_utils.dart';
 
 // Import services
 import 'services/game_timer_service.dart';
+import 'services/audio_service.dart';
 import 'services/auth_service.dart';
 import 'services/api/api_service.dart';
 
@@ -842,7 +844,7 @@ class SessionPlayerPage extends StatefulWidget {
   State<SessionPlayerPage> createState() => _SessionPlayerPageState();
 }
 
-class _SessionPlayerPageState extends State<SessionPlayerPage> {
+class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindingObserver {
   final _api = ApiService.instance;
 
   bool _loading = true;
@@ -907,13 +909,26 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    AudioService.instance.playLoop(widget.escape.audioUrl);
     _loadState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      AudioService.instance.pause();
+    } else if (state == AppLifecycleState.resumed) {
+      AudioService.instance.resume();
+    }
   }
 
   @override
   void dispose() {
     // Synchroniser le temps de jeu avec le serveur quand on quitte la page
     _syncTimeOnExit();
+    WidgetsBinding.instance.removeObserver(this);
+    AudioService.instance.stop();
     _answerCtrl.dispose();
     super.dispose();
   }
@@ -1922,6 +1937,18 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> {
         }
       },
     ),
+    if ((widget.escape.audioUrl ?? '').isNotEmpty)
+      ListenableBuilder(
+        listenable: AudioService.instance,
+        builder: (context, _) => IconButton(
+          tooltip: AudioService.instance.isMuted ? 'Réactiver le son' : 'Couper le son',
+          icon: Icon(
+            AudioService.instance.isMuted ? Icons.volume_off : Icons.volume_up,
+            color: Colors.white,
+          ),
+          onPressed: () => AudioService.instance.toggleMute(),
+        ),
+      ),
     const Center(child: TimerBadge()),
   ],
 ),
@@ -2388,6 +2415,8 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
   late TextEditingController _titleCtrl;
   late TextEditingController _imageCtrl;
   late TextEditingController _imageCreditCtrl;
+  late TextEditingController _audioCtrl;
+  bool _uploadingAudio = false;
   late TextEditingController _descCtrl;
   late TextEditingController _durationCtrl;
   late TextEditingController _victoryCtrl;
@@ -2451,6 +2480,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
     _titleCtrl    = TextEditingController(text: widget.escape.title);
     _imageCtrl    = TextEditingController(text: widget.escape.imageUrl ?? '');
     _imageCreditCtrl = TextEditingController(text: widget.escape.imageCredit);
+    _audioCtrl    = TextEditingController(text: widget.escape.audioUrl ?? '');
     _descCtrl     = TextEditingController(text: widget.escape.description);
     _durationCtrl = TextEditingController(text: widget.escape.durationMinutes.toString());
     _victoryCtrl  = TextEditingController(text: widget.escape.victoryMessage ?? '');
@@ -2509,6 +2539,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
     _titleCtrl.dispose();
     _imageCtrl.dispose();
     _imageCreditCtrl.dispose();
+    _audioCtrl.dispose();
     _descCtrl.dispose();
     _durationCtrl.dispose();
     _victoryCtrl.dispose();
@@ -2534,6 +2565,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
       'title': _titleCtrl.text,
       'image_url': _imageCtrl.text,
       'image_credit': _imageCreditCtrl.text,
+      'audio_url': _audioCtrl.text,
       'description': _descCtrl.text,
       'victory_message': _victoryCtrl.text,
       'age_rating': _ageRating,
@@ -2550,6 +2582,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
     return _initial['title'] != _titleCtrl.text ||
         _initial['image_url'] != _imageCtrl.text ||
         _initial['image_credit'] != _imageCreditCtrl.text ||
+        _initial['audio_url'] != _audioCtrl.text ||
         _initial['description'] != _descCtrl.text ||
         _initial['victory_message'] != _victoryCtrl.text ||
         _initial['age_rating'] != _ageRating ||
@@ -2571,6 +2604,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
         _titleCtrl.text    = fresh.title;
         _imageCtrl.text    = fresh.imageUrl ?? '';
         _imageCreditCtrl.text = fresh.imageCredit;
+        _audioCtrl.text    = fresh.audioUrl ?? '';
         _descCtrl.text     = fresh.description;
         _victoryCtrl.text  = fresh.victoryMessage;
         _ageRating         = fresh.ageRating;
@@ -2706,6 +2740,51 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
     }
   }
 
+  Future<void> _pickAndUploadAudio() async {
+    try {
+      final file = await FilePicker.pickFile(
+        type: FileType.custom,
+        allowedExtensions: ['mp3', 'm4a', 'aac'],
+      );
+      if (file == null) return;
+
+      setState(() => _uploadingAudio = true);
+      final url = await _api.uploadAudio(file);
+      final eg = await _api.updateEscape(widget.escape.id, {'audio_url': url});
+      if (!mounted) return;
+      setState(() {
+        _applyServerEscape(eg);
+        _audioCtrl.text = url;
+        _uploadingAudio = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fond sonore téléversé et enregistré')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _uploadingAudio = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Upload refusé : $e')),
+      );
+    }
+  }
+
+  Future<void> _removeAudio() async {
+    try {
+      final eg = await _api.updateEscape(widget.escape.id, {'audio_url': null});
+      if (!mounted) return;
+      setState(() {
+        _applyServerEscape(eg);
+        _audioCtrl.text = '';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur: $e')),
+      );
+    }
+  }
+
   Future<void> _saveMeta() async {
     // Par sécurité: l’édition est désactivée en 'submitted'
     if (_isSubmitted) {
@@ -2719,6 +2798,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
 
     try {
       final img = _imageCtrl.text.trim();
+      final audio = _audioCtrl.text.trim();
       final dur = int.tryParse(_durationCtrl.text.trim());
       final wrongPenalty = int.tryParse(_wrongPenaltyCtrl.text.trim()) ?? 0;
 
@@ -2726,6 +2806,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
         'title': _titleCtrl.text.trim(),
         'image_url': img.isEmpty ? null : img,
         'image_credit': _imageCreditCtrl.text.trim(),
+        'audio_url': audio.isEmpty ? null : audio,
         'description': _descCtrl.text.trim(),
         'victory_message': _victoryCtrl.text.trim(),
         'age_rating': _ageRating,
@@ -2763,6 +2844,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
     _titleCtrl.text    = eg.title;
     _imageCtrl.text    = eg.imageUrl ?? '';
     _imageCreditCtrl.text = eg.imageCredit;
+    _audioCtrl.text    = eg.audioUrl ?? '';
     _descCtrl.text     = eg.description;
     _victoryCtrl.text  = eg.victoryMessage;
     _ageRating         = eg.ageRating;
@@ -3063,6 +3145,53 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
             decoration: const InputDecoration(
               labelText: 'Crédit / source de l\'image (optionnel)',
             ),
+          ),
+
+          const SizedBox(height: 16),
+          const Text('Fond sonore', style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 6),
+          if (_audioCtrl.text.trim().isNotEmpty) ...[
+            Row(
+              children: [
+                const Icon(Icons.music_note, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _audioCtrl.text.split('/').last,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+          Row(
+            children: [
+              OutlinedButton.icon(
+                icon: _uploadingAudio
+                    ? const SizedBox(
+                        width: 16, height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.audio_file_outlined),
+                label: Text(_audioCtrl.text.trim().isEmpty ? 'Ajouter un fond sonore' : 'Remplacer'),
+                onPressed: (_isSubmitted || _uploadingAudio) ? null : _pickAndUploadAudio,
+              ),
+              if (_audioCtrl.text.trim().isNotEmpty) ...[
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Supprimer'),
+                  onPressed: (_isSubmitted || _uploadingAudio) ? null : _removeAudio,
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'MP3/M4A/AAC, durée minimale 1 min (joué en boucle pendant la partie). '
+            'À toi de vérifier les droits d\'auteur.',
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
           ),
 
           const SizedBox(height: 8),
