@@ -892,8 +892,16 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
   List<int> _rightOrder = [];
   // Ordre initial mélangé de B (pour reset/détacher)
   List<int> _initialRightOrder = [];
+  // Ordre courant de A (ligne -> indexOriginalLeft) — mélangé une fois par
+  // étape puis fixe (seul B bouge quand on apparie), pour éviter que l'ordre
+  // de saisie du créateur (souvent chronologique) ne trahisse la réponse.
+  List<int> _leftOrder = [];
+  List<int> _initialLeftOrder = [];
   // Pour éviter de re-mélanger en plein milieu de la même étape
   int? _lastShuffleStepId;
+  // Lignes explicitement appariées par le joueur (pour la surbrillance) ;
+  // une ligne "libérée" par un swap n'est plus un choix délibéré.
+  Set<int> _confirmedRows = {};
 
   // Sélection en cours
   int? _selA; // index original dans _matchLeft
@@ -957,8 +965,8 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
     return GameTimer.instance.finishAndGetResult();
   }
 
-  // S'assurer que _rightOrder existe, sans écraser un mélange déjà en place
-  void _ensureRightOrder() {
+  // S'assurer que _rightOrder/_leftOrder existent, sans écraser un mélange déjà en place
+  void _ensureMatchOrders() {
     if (_rightOrder.length != _matchRight.length) {
       if (_initialRightOrder.length == _matchRight.length) {
         _rightOrder = List<int>.from(_initialRightOrder);
@@ -968,26 +976,39 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
         _rightOrder = List<int>.from(_initialRightOrder);
       }
     }
+    if (_leftOrder.length != _matchLeft.length) {
+      if (_initialLeftOrder.length == _matchLeft.length) {
+        _leftOrder = List<int>.from(_initialLeftOrder);
+      } else {
+        _initialLeftOrder = List<int>.generate(_matchLeft.length, (i) => i);
+        _initialLeftOrder.shuffle(); // aléatoire non déterministe
+        _leftOrder = List<int>.from(_initialLeftOrder);
+      }
+    }
   }
 
-  // Quand A et B sont sélectionnés, on place B en face de A
+  // Quand A et B sont sélectionnés, on échange leurs positions actuelles.
+  // Échange réel (pas un remove+insert qui décale tout ce qu'il y a entre
+  // les deux positions) : seules les deux lignes concernées changent.
   void _pairSelectedIfReady() {
     if (_selA == null || _selB == null) return;
-    _ensureRightOrder();
+    _ensureMatchOrders();
 
-    int rowA = _selA!;
-    if (rowA < 0) rowA = 0;
-    if (rowA >= _rightOrder.length) rowA = _rightOrder.length - 1;
-
+    final rowA = _leftOrder.indexOf(_selA!);
     final posB = _rightOrder.indexOf(_selB!);
-    if (posB == -1) {
+    if (rowA == -1 || posB == -1) {
       setState(() { _selA = null; _selB = null; });
       return;
     }
 
     setState(() {
-      final moving = _rightOrder.removeAt(posB);
-      _rightOrder.insert(rowA, moving);
+      final tmp = _rightOrder[rowA];
+      _rightOrder[rowA] = _rightOrder[posB];
+      _rightOrder[posB] = tmp;
+      _confirmedRows.add(rowA);
+      if (posB != rowA) {
+        _confirmedRows.remove(posB); // la ligne libérée n'est plus un choix délibéré
+      }
       _selA = null;
       _selB = null;
     });
@@ -1009,9 +1030,10 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
 
   // Détacher la paire sur une ligne donnée → remet B à sa position du mélange initial
   void _unpairRow(int rowIndex) {
-    _ensureRightOrder();
+    _ensureMatchOrders();
     if (rowIndex < 0 || rowIndex >= _rightOrder.length) return;
     final bOriginal = _rightOrder[rowIndex];
+    final aOriginal = rowIndex < _leftOrder.length ? _leftOrder[rowIndex] : null;
     setState(() {
       _rightOrder.removeAt(rowIndex);
       final initialPos = _initialRightOrder.indexOf(bOriginal);
@@ -1019,7 +1041,8 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
           ? initialPos
           : bOriginal.clamp(0, _rightOrder.length);
       _rightOrder.insert(target, bOriginal);
-      if (_selA == rowIndex) _selA = null;
+      _confirmedRows.remove(rowIndex);
+      if (aOriginal != null && _selA == aOriginal) _selA = null;
       if (_selB == bOriginal) _selB = null;
     });
   }
@@ -1028,6 +1051,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
   void _resetPairs() {
     setState(() {
       _rightOrder = List<int>.from(_initialRightOrder);
+      _confirmedRows = {};
       _selA = null;
       _selB = null;
     });
@@ -1080,6 +1104,9 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
       _matchRight = [];
       _rightOrder = [];
       _initialRightOrder = [];
+      _leftOrder = [];
+      _initialLeftOrder = [];
+      _confirmedRows = {};
       _lastShuffleStepId = null;
       _selA = null; _selB = null;
     } else {
@@ -1148,6 +1175,9 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
         _matchRight = [];
         _rightOrder = [];
         _initialRightOrder = [];
+        _leftOrder = [];
+        _initialLeftOrder = [];
+        _confirmedRows = {};
         _lastShuffleStepId = null;
         _selA = null; _selB = null;
 
@@ -1159,6 +1189,9 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
         _matchRight = [];
         _rightOrder = [];
         _initialRightOrder = [];
+        _leftOrder = [];
+        _initialLeftOrder = [];
+        _confirmedRows = {};
         _lastShuffleStepId = null;
         _selA = null; _selB = null;
 
@@ -1170,6 +1203,9 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
         _matchRight = [];
         _rightOrder = [];
         _initialRightOrder = [];
+        _leftOrder = [];
+        _initialLeftOrder = [];
+        _confirmedRows = {};
         _lastShuffleStepId = null;
         _selA = null; _selB = null;
 
@@ -1181,6 +1217,9 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
         _matchRight = [];
         _rightOrder = [];
         _initialRightOrder = [];
+        _leftOrder = [];
+        _initialLeftOrder = [];
+        _confirmedRows = {};
         _lastShuffleStepId = null;
         _selA = null; _selB = null;
 
@@ -1194,16 +1233,28 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
         final bool shouldShuffle =
             stepChanged ||
             _initialRightOrder.length != _matchRight.length ||
+            _initialLeftOrder.length != _matchLeft.length ||
             _lastShuffleStepId != (_currentStepId ?? -1);
 
         if (shouldShuffle) {
           _initialRightOrder = List<int>.generate(_matchRight.length, (i) => i);
           _initialRightOrder.shuffle();
           _rightOrder = List<int>.from(_initialRightOrder);
+
+          // Mélange aussi A : sinon l'ordre de saisie du créateur (souvent
+          // chronologique) trahit la réponse.
+          _initialLeftOrder = List<int>.generate(_matchLeft.length, (i) => i);
+          _initialLeftOrder.shuffle();
+          _leftOrder = List<int>.from(_initialLeftOrder);
+
+          _confirmedRows = {};
           _lastShuffleStepId = _currentStepId ?? -1;
         } else {
           if (_rightOrder.length != _matchRight.length) {
             _rightOrder = List<int>.from(_initialRightOrder);
+          }
+          if (_leftOrder.length != _matchLeft.length) {
+            _leftOrder = List<int>.from(_initialLeftOrder);
           }
         }
         _selA = null;
@@ -1217,6 +1268,9 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
         _matchRight = [];
         _rightOrder = [];
         _initialRightOrder = [];
+        _leftOrder = [];
+        _initialLeftOrder = [];
+        _confirmedRows = {};
         _lastShuffleStepId = null;
         _selA = null; _selB = null;
 
@@ -1228,6 +1282,9 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
         _matchRight = [];
         _rightOrder = [];
         _initialRightOrder = [];
+        _leftOrder = [];
+        _initialLeftOrder = [];
+        _confirmedRows = {};
         _lastShuffleStepId = null;
         _selA = null; _selB = null;
       }
@@ -1540,9 +1597,10 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
         return;
       }
 
-      // Matching — clic-clic : A fixe, B réordonnée
+      // Matching — clic-clic : positions mélangées une fois par étape,
+      // le joueur réordonne B (et parfois A) pour aligner les paires
       if (_answerType == 'matching') {
-        _ensureRightOrder();
+        _ensureMatchOrders();
 
         final rowCount = (_matchLeft.length <= _matchRight.length)
             ? _matchLeft.length
@@ -1551,7 +1609,7 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
         // pairs: [indexOriginalDeA, indexOriginalDeB] pour chaque ligne
         final pairs = <List<int>>[];
         for (int row = 0; row < rowCount; row++) {
-          final leftOriginal  = row;              // A est fixe: index = ligne
+          final leftOriginal  = _leftOrder[row];  // A mélangée
           final rightOriginal = _rightOrder[row]; // B réordonnée
           pairs.add([leftOriginal, rightOriginal]);
         }
@@ -1786,9 +1844,48 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
     );
   }
 
+  // Mesure le texte le plus grand (A et B confondus) pour caler toutes les
+  // cellules sur une taille commune, au lieu d'une taille par contenu.
+  Size _uniformMatchCellSize(BuildContext context, double maxCellWidth) {
+    final textStyle = DefaultTextStyle.of(context).style;
+    final boldStyle = textStyle.copyWith(fontWeight: FontWeight.w600);
+
+    const iconAndGap = 10.0 + 8.0;   // icône + espace avant le texte
+    const closeAndGap = 4.0 + 18.0;  // espace + icône "fermer" (cellule B)
+    const horizontalPadding = 12.0 * 2;
+    const verticalPadding = 10.0 * 2;
+
+    double maxContentWidth = 0;
+    double maxContentHeight = 0;
+
+    void measure(String text, TextStyle style, double chrome) {
+      final availableForText =
+          (maxCellWidth - horizontalPadding - chrome).clamp(40.0, double.infinity);
+      final tp = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: ui.TextDirection.ltr,
+        maxLines: 3,
+      )..layout(maxWidth: availableForText);
+      final w = tp.width + chrome + horizontalPadding;
+      if (w > maxContentWidth) maxContentWidth = w;
+      if (tp.height > maxContentHeight) maxContentHeight = tp.height;
+    }
+
+    for (final t in _matchLeft) {
+      measure(t, textStyle, iconAndGap);
+    }
+    for (final t in _matchRight) {
+      measure(t, boldStyle, iconAndGap + closeAndGap);
+    }
+
+    final width = maxContentWidth.clamp(0.0, maxCellWidth);
+    final height = maxContentHeight + verticalPadding;
+    return Size(width, height);
+  }
+
   // ---------- UI Matching (clic-clic) ----------
   Widget _buildMatchingClickPair() {
-    _ensureRightOrder();
+    _ensureMatchOrders();
 
     final rowCount = (_matchLeft.length <= _matchRight.length)
         ? _matchLeft.length
@@ -1796,27 +1893,36 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
 
     final cs = Theme.of(context).colorScheme;
 
-    // Cellule A (fixe) - taille flexible selon contenu
-    Widget _aCell(int aIndexOriginal, {bool flexible = false}) {
+    // Cellule A - taille uniforme (celle de la plus grande cellule)
+    Widget _aCell(int aIndexOriginal, Size size) {
       final selected = (_selA == aIndexOriginal);
+      final row = _leftOrder.indexOf(aIndexOriginal);
+      final matched = !selected && _confirmedRows.contains(row);
 
-      final cell = InkWell(
+      return InkWell(
         onTap: () => _onTapA(aIndexOriginal),
         borderRadius: BorderRadius.circular(10),
         child: Container(
+          width: size.width,
+          height: size.height,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: selected ? cs.secondaryContainer : cs.surface,
+            color: selected
+                ? cs.secondaryContainer
+                : (matched ? cs.tertiaryContainer : cs.surface),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: selected ? cs.secondary : cs.outlineVariant),
+            border: Border.all(
+              color: selected
+                  ? cs.secondary
+                  : (matched ? cs.tertiary : cs.outlineVariant),
+            ),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Icon(Icons.circle, size: 10),
               const SizedBox(width: 8),
-              Flexible(
+              Expanded(
                 child: Text(
                   _matchLeft[aIndexOriginal],
                   softWrap: true,
@@ -1826,32 +1932,38 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
           ),
         ),
       );
-
-      return flexible ? Flexible(child: cell) : cell;
     }
 
-    // Cellule B (ordre courant) - taille flexible selon contenu
-    Widget _bCell(int rowIndex, {bool flexible = false}) {
+    // Cellule B (ordre courant) - taille uniforme (celle de la plus grande cellule)
+    Widget _bCell(int rowIndex, Size size) {
       final bOriginal = _rightOrder[rowIndex];
       final selected  = (_selB == bOriginal);
+      final matched = !selected && _confirmedRows.contains(rowIndex);
 
-      final cell = InkWell(
+      return InkWell(
         onTap: () => _onTapB(bOriginal),
         borderRadius: BorderRadius.circular(10),
         child: Container(
+          width: size.width,
+          height: size.height,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: selected ? cs.primaryContainer : cs.surface,
+            color: selected
+                ? cs.primaryContainer
+                : (matched ? cs.tertiaryContainer : cs.surface),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: selected ? cs.primary : cs.outlineVariant),
+            border: Border.all(
+              color: selected
+                  ? cs.primary
+                  : (matched ? cs.tertiary : cs.outlineVariant),
+            ),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Icon(Icons.square, size: 10),
               const SizedBox(width: 8),
-              Flexible(
+              Expanded(
                 child: Text(
                   _matchRight[bOriginal],
                   style: const TextStyle(fontWeight: FontWeight.w600),
@@ -1867,52 +1979,58 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
           ),
         ),
       );
-
-      return flexible ? Flexible(child: cell) : cell;
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Clique un item de A puis un item de B (ou l'inverse). B se place en face de A.",
-        ),
-        const SizedBox(height: 12),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+        final cellWidth = (constraints.maxWidth - spacing) / 2;
+        final cellSize = _uniformMatchCellSize(context, cellWidth);
 
-        // Lignes A | B avec tailles dynamiques adaptées au contenu
-        for (int row = 0; row < rowCount; row++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Clique un item de A puis un item de B (ou l'inverse) pour les échanger.",
+            ),
+            const SizedBox(height: 12),
+
+            // Lignes A | B, toutes les cellules à la taille de la plus grande
+            for (int row = 0; row < rowCount; row++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _aCell(_leftOrder[row], cellSize),
+                    const SizedBox(width: spacing),
+                    _bCell(row, cellSize),
+                  ],
+                ),
+              ),
+
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                _aCell(row, flexible: true),
-                const SizedBox(width: 12),
-                _bCell(row, flexible: true),
+                Text(
+                  'Ordre B: ' + _rightOrder.map((e) => (e + 1).toString()).join(' → '),
+                  style: TextStyle(color: Colors.grey.shade700),
+                ),
+                TextButton.icon(
+                  onPressed: _resetPairs,
+                  icon: const Icon(Icons.restart_alt),
+                  label: const Text('Réinitialiser'),
+                ),
               ],
             ),
-          ),
-
-        const SizedBox(height: 8),
-        Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            Text(
-              'Ordre B: ' + _rightOrder.map((e) => (e + 1).toString()).join(' → '),
-              style: TextStyle(color: Colors.grey.shade700),
-            ),
-            TextButton.icon(
-              onPressed: _resetPairs,
-              icon: const Icon(Icons.restart_alt),
-              label: const Text('Réinitialiser'),
-            ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
