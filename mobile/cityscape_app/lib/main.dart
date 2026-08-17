@@ -1844,6 +1844,45 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
     );
   }
 
+  // Mesure le texte le plus grand (A et B confondus) pour caler toutes les
+  // cellules sur une taille commune, au lieu d'une taille par contenu.
+  Size _uniformMatchCellSize(BuildContext context, double maxCellWidth) {
+    final textStyle = DefaultTextStyle.of(context).style;
+    final boldStyle = textStyle.copyWith(fontWeight: FontWeight.w600);
+
+    const iconAndGap = 10.0 + 8.0;   // icône + espace avant le texte
+    const closeAndGap = 4.0 + 18.0;  // espace + icône "fermer" (cellule B)
+    const horizontalPadding = 12.0 * 2;
+    const verticalPadding = 10.0 * 2;
+
+    double maxContentWidth = 0;
+    double maxContentHeight = 0;
+
+    void measure(String text, TextStyle style, double chrome) {
+      final availableForText =
+          (maxCellWidth - horizontalPadding - chrome).clamp(40.0, double.infinity);
+      final tp = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: ui.TextDirection.ltr,
+        maxLines: 3,
+      )..layout(maxWidth: availableForText);
+      final w = tp.width + chrome + horizontalPadding;
+      if (w > maxContentWidth) maxContentWidth = w;
+      if (tp.height > maxContentHeight) maxContentHeight = tp.height;
+    }
+
+    for (final t in _matchLeft) {
+      measure(t, textStyle, iconAndGap);
+    }
+    for (final t in _matchRight) {
+      measure(t, boldStyle, iconAndGap + closeAndGap);
+    }
+
+    final width = maxContentWidth.clamp(0.0, maxCellWidth);
+    final height = maxContentHeight + verticalPadding;
+    return Size(width, height);
+  }
+
   // ---------- UI Matching (clic-clic) ----------
   Widget _buildMatchingClickPair() {
     _ensureMatchOrders();
@@ -1854,16 +1893,18 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
 
     final cs = Theme.of(context).colorScheme;
 
-    // Cellule A - taille flexible selon contenu
-    Widget _aCell(int aIndexOriginal, {bool flexible = false}) {
+    // Cellule A - taille uniforme (celle de la plus grande cellule)
+    Widget _aCell(int aIndexOriginal, Size size) {
       final selected = (_selA == aIndexOriginal);
       final row = _leftOrder.indexOf(aIndexOriginal);
       final matched = !selected && _confirmedRows.contains(row);
 
-      final cell = InkWell(
+      return InkWell(
         onTap: () => _onTapA(aIndexOriginal),
         borderRadius: BorderRadius.circular(10),
         child: Container(
+          width: size.width,
+          height: size.height,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: selected
@@ -1877,12 +1918,11 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
             ),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Icon(Icons.circle, size: 10),
               const SizedBox(width: 8),
-              Flexible(
+              Expanded(
                 child: Text(
                   _matchLeft[aIndexOriginal],
                   softWrap: true,
@@ -1892,20 +1932,20 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
           ),
         ),
       );
-
-      return flexible ? Flexible(child: cell) : cell;
     }
 
-    // Cellule B (ordre courant) - taille flexible selon contenu
-    Widget _bCell(int rowIndex, {bool flexible = false}) {
+    // Cellule B (ordre courant) - taille uniforme (celle de la plus grande cellule)
+    Widget _bCell(int rowIndex, Size size) {
       final bOriginal = _rightOrder[rowIndex];
       final selected  = (_selB == bOriginal);
       final matched = !selected && _confirmedRows.contains(rowIndex);
 
-      final cell = InkWell(
+      return InkWell(
         onTap: () => _onTapB(bOriginal),
         borderRadius: BorderRadius.circular(10),
         child: Container(
+          width: size.width,
+          height: size.height,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: selected
@@ -1919,12 +1959,11 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
             ),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Icon(Icons.square, size: 10),
               const SizedBox(width: 8),
-              Flexible(
+              Expanded(
                 child: Text(
                   _matchRight[bOriginal],
                   style: const TextStyle(fontWeight: FontWeight.w600),
@@ -1940,52 +1979,58 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
           ),
         ),
       );
-
-      return flexible ? Flexible(child: cell) : cell;
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Clique un item de A puis un item de B (ou l'inverse) pour les échanger.",
-        ),
-        const SizedBox(height: 12),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+        final cellWidth = (constraints.maxWidth - spacing) / 2;
+        final cellSize = _uniformMatchCellSize(context, cellWidth);
 
-        // Lignes A | B avec tailles dynamiques adaptées au contenu
-        for (int row = 0; row < rowCount; row++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Clique un item de A puis un item de B (ou l'inverse) pour les échanger.",
+            ),
+            const SizedBox(height: 12),
+
+            // Lignes A | B, toutes les cellules à la taille de la plus grande
+            for (int row = 0; row < rowCount; row++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _aCell(_leftOrder[row], cellSize),
+                    const SizedBox(width: spacing),
+                    _bCell(row, cellSize),
+                  ],
+                ),
+              ),
+
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                _aCell(_leftOrder[row], flexible: true),
-                const SizedBox(width: 12),
-                _bCell(row, flexible: true),
+                Text(
+                  'Ordre B: ' + _rightOrder.map((e) => (e + 1).toString()).join(' → '),
+                  style: TextStyle(color: Colors.grey.shade700),
+                ),
+                TextButton.icon(
+                  onPressed: _resetPairs,
+                  icon: const Icon(Icons.restart_alt),
+                  label: const Text('Réinitialiser'),
+                ),
               ],
             ),
-          ),
-
-        const SizedBox(height: 8),
-        Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            Text(
-              'Ordre B: ' + _rightOrder.map((e) => (e + 1).toString()).join(' → '),
-              style: TextStyle(color: Colors.grey.shade700),
-            ),
-            TextButton.icon(
-              onPressed: _resetPairs,
-              icon: const Icon(Icons.restart_alt),
-              label: const Text('Réinitialiser'),
-            ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
