@@ -14,10 +14,17 @@ def app_config(_):
     """
     Endpoint pour la configuration de l'app mobile.
     Utilisé pour forcer les mises à jour.
+
+    Politique : l'utilisateur n'a pas le droit d'avoir plus d'une version
+    de retard. min_version doit donc toujours être mis à jour à l'avant-
+    dernière version publiée (celle juste avant current_version) à chaque
+    nouvelle release mobile - sinon cette politique cesse d'être appliquée
+    silencieusement (c'est ce qui s'est produit de la 0.3.16 à la 0.3.21 :
+    min_version n'avait jamais été rebumpé).
     """
     return JsonResponse({
-        "min_version": "0.3.16",
-        "current_version": "0.3.16",
+        "min_version": "0.3.21",
+        "current_version": "0.3.22",
         "force_update": True,
         "update_message": "Une nouvelle version est disponible! Mettez à jour pour profiter des dernières fonctionnalités."
     })
