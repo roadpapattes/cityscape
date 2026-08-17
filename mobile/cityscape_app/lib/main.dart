@@ -2075,32 +2075,55 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
                                   ),
                                 ),
                               ] else ...[
-                                // text | numeric | cesar : un seul champ
-                                TextField(
-                                  controller: _answerCtrl,
-                                  readOnly: _answerType == 'cesar',
-                                  showCursor: true,
-                                  keyboardType: _answerType == 'numeric'
-                                      ? const TextInputType.numberWithOptions(decimal: true, signed: false)
-                                      : (_answerType == 'cesar' ? TextInputType.none : TextInputType.text),
-                                  decoration: InputDecoration(
-                                    labelText: _answerType == 'numeric'
-                                        ? 'Réponse attendue (nombre)'
-                                        : 'Réponse attendue',
-                                    suffixIcon: IconButton(
-                                      icon: const Icon(Icons.send),
-                                      onPressed: _submitting ? null : _submit,
+                                // cesar : pas de vrai champ texte (aucun moyen fiable
+                                // de bloquer le clavier système sur tous les appareils/
+                                // claviers OEM via readOnly+TextInputType.none) -> on
+                                // simule le champ avec un simple Text dans un
+                                // InputDecorator, saisie uniquement via le clavier custom.
+                                if (_answerType == 'cesar') ...[
+                                  GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () => setState(() => _showCaesarKeyboard = true),
+                                    child: InputDecorator(
+                                      decoration: InputDecoration(
+                                        labelText: 'Réponse attendue',
+                                        suffixIcon: IconButton(
+                                          icon: const Icon(Icons.send),
+                                          onPressed: _submitting ? null : _submit,
+                                        ),
+                                      ),
+                                      child: ValueListenableBuilder<TextEditingValue>(
+                                        valueListenable: _answerCtrl,
+                                        builder: (context, value, _) => Text(
+                                          value.text,
+                                          style: Theme.of(context).textTheme.bodyLarge,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                  enabled: !_submitting,
-                                  onTap: _answerType == 'cesar'
-                                      ? () => setState(() => _showCaesarKeyboard = true)
-                                      : null,
-                                  onSubmitted: (_) => _submitting ? null : _submit(),
-                                ),
-                                if (_answerType == 'cesar' && _showCaesarKeyboard) ...[
-                                  const SizedBox(height: 8),
-                                  _buildCaesarKeyboard(),
+                                  if (_showCaesarKeyboard) ...[
+                                    const SizedBox(height: 8),
+                                    _buildCaesarKeyboard(),
+                                  ],
+                                ] else ...[
+                                  // text | numeric : un seul champ
+                                  TextField(
+                                    controller: _answerCtrl,
+                                    keyboardType: _answerType == 'numeric'
+                                        ? const TextInputType.numberWithOptions(decimal: true, signed: false)
+                                        : TextInputType.text,
+                                    decoration: InputDecoration(
+                                      labelText: _answerType == 'numeric'
+                                          ? 'Réponse attendue (nombre)'
+                                          : 'Réponse attendue',
+                                      suffixIcon: IconButton(
+                                        icon: const Icon(Icons.send),
+                                        onPressed: _submitting ? null : _submit,
+                                      ),
+                                    ),
+                                    enabled: !_submitting,
+                                    onSubmitted: (_) => _submitting ? null : _submit(),
+                                  ),
                                 ],
                               ],
                             ],
