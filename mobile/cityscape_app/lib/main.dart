@@ -1173,6 +1173,17 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
         _lastShuffleStepId = null;
         _selA = null; _selB = null;
 
+      } else if (atRaw == 'cesar') {
+        _answerType = 'cesar';
+        _mcqOptions = const [];
+        _selectedOption = null;
+        _matchLeft = [];
+        _matchRight = [];
+        _rightOrder = [];
+        _initialRightOrder = [];
+        _lastShuffleStepId = null;
+        _selA = null; _selB = null;
+
       } else if (atRaw == 'matching' && leftRaw != null && rightRaw != null) {
         _answerType = 'matching';
         _mcqOptions = const [];
