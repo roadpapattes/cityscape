@@ -52,7 +52,7 @@ class _SplashBootstrapState extends State<SplashBootstrap> {
       setState(() => _status = 'Vérification de la version…');
       try {
         final config = await VersionCheckService.instance.checkVersion();
-        if (VersionCheckService.instance.shouldForceUpdate(config)) {
+        if (await VersionCheckService.instance.shouldForceUpdate(config)) {
           // Afficher la dialog bloquante
           if (!mounted) return;
           showDialog(

@@ -24,12 +24,16 @@ class _ProfilePageState extends State<ProfilePage> {
 
   bool _loading = true;
   String? _username;
+  String _appVersion = '';
 
   @override
   void initState() {
     super.initState();
     _auth.meNotifier.addListener(_onUserChanged);
     _loadUserInfo();
+    VersionCheckService.instance.getCurrentVersion().then((v) {
+      if (mounted) setState(() => _appVersion = v);
+    });
   }
 
   @override
@@ -231,7 +235,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ListTile(
                 leading: const Icon(Icons.info),
                 title: const Text('Version de l\'application'),
-                subtitle: Text(VersionCheckService.currentVersion),
+                subtitle: Text(_appVersion.isEmpty ? '…' : _appVersion),
               ),
               ListTile(
                 leading: const Icon(Icons.school),

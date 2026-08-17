@@ -3,14 +3,26 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:package_info_plus/package_info_plus.dart';
 import '../core/constants.dart';
 
 class VersionCheckService {
   VersionCheckService._();
   static final instance = VersionCheckService._();
 
-  // Version actuelle de l'app (doit correspondre à versionName dans build.gradle.kts)
-  static const String currentVersion = '0.3.16';
+  String? _cachedCurrentVersion;
+
+  /// Version réellement installée (lue via PackageInfo, jamais codée en dur :
+  /// un ancien bug comparait toujours à une constante figée à '0.3.16',
+  /// ce qui empêchait la mise à jour forcée de se déclencher).
+  Future<String> getCurrentVersion() async {
+    final cached = _cachedCurrentVersion;
+    if (cached != null) return cached;
+    final info = await PackageInfo.fromPlatform();
+    final v = info.version; // correspond à versionName / pubspec "version:"
+    _cachedCurrentVersion = v;
+    return v;
+  }
 
   Future<AppConfigResponse> checkVersion() async {
     try {
@@ -34,11 +46,12 @@ class VersionCheckService {
     }
   }
 
-  bool shouldForceUpdate(AppConfigResponse config) {
+  Future<bool> shouldForceUpdate(AppConfigResponse config) async {
     if (!config.forceUpdate) return false;
 
     // Compare les versions: si currentVersion < minVersion, on force la mise à jour
-    return _isVersionOlder(currentVersion, config.minVersion);
+    final current = await getCurrentVersion();
+    return _isVersionOlder(current, config.minVersion);
   }
 
   // Compare deux versions au format "X.Y.Z"
