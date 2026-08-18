@@ -1846,6 +1846,14 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
 
   // Mesure le texte le plus grand (A et B confondus) pour caler toutes les
   // cellules sur une taille commune, au lieu d'une taille par contenu.
+  //
+  // Deux passes nécessaires : la largeur finale retenue (cellWidth) peut être
+  // plus étroite que maxCellWidth (si aucun texte n'a besoin de toute la
+  // largeur disponible) ; mesurer la hauteur par rapport à maxCellWidth
+  // donnerait donc une hauteur sous-estimée pour les textes qui, une fois
+  // resserrés à cellWidth, ont besoin de plus de lignes que prévu — d'où le
+  // texte tronqué observé. On mesure donc la hauteur à la largeur RÉELLEMENT
+  // retenue. Pas de maxLines : le Text réel n'en a pas non plus (WYSIWYG).
   Size _uniformMatchCellSize(BuildContext context, double maxCellWidth) {
     final textStyle = DefaultTextStyle.of(context).style;
     final boldStyle = textStyle.copyWith(fontWeight: FontWeight.w600);
@@ -1855,32 +1863,48 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
     const horizontalPadding = 12.0 * 2;
     const verticalPadding = 10.0 * 2;
 
-    double maxContentWidth = 0;
-    double maxContentHeight = 0;
-
-    void measure(String text, TextStyle style, double chrome) {
-      final availableForText =
-          (maxCellWidth - horizontalPadding - chrome).clamp(40.0, double.infinity);
+    // Passe 1 : largeur naturelle (non contrainte) de chaque texte.
+    double naturalWidth(String text, TextStyle style, double chrome) {
       final tp = TextPainter(
         text: TextSpan(text: text, style: style),
         textDirection: ui.TextDirection.ltr,
-        maxLines: 3,
-      )..layout(maxWidth: availableForText);
-      final w = tp.width + chrome + horizontalPadding;
-      if (w > maxContentWidth) maxContentWidth = w;
-      if (tp.height > maxContentHeight) maxContentHeight = tp.height;
+      )..layout();
+      return tp.width + chrome + horizontalPadding;
     }
 
+    double cellWidth = 0;
     for (final t in _matchLeft) {
-      measure(t, textStyle, iconAndGap);
+      final w = naturalWidth(t, textStyle, iconAndGap);
+      if (w > cellWidth) cellWidth = w;
     }
     for (final t in _matchRight) {
-      measure(t, boldStyle, iconAndGap + closeAndGap);
+      final w = naturalWidth(t, boldStyle, iconAndGap + closeAndGap);
+      if (w > cellWidth) cellWidth = w;
+    }
+    cellWidth = cellWidth.clamp(0.0, maxCellWidth);
+
+    // Passe 2 : hauteur nécessaire à la largeur réellement retenue.
+    double neededHeight(String text, TextStyle style, double chrome) {
+      final availableForText =
+          (cellWidth - horizontalPadding - chrome).clamp(20.0, double.infinity);
+      final tp = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: ui.TextDirection.ltr,
+      )..layout(maxWidth: availableForText);
+      return tp.height;
     }
 
-    final width = maxContentWidth.clamp(0.0, maxCellWidth);
-    final height = maxContentHeight + verticalPadding;
-    return Size(width, height);
+    double cellHeight = 0;
+    for (final t in _matchLeft) {
+      final h = neededHeight(t, textStyle, iconAndGap);
+      if (h > cellHeight) cellHeight = h;
+    }
+    for (final t in _matchRight) {
+      final h = neededHeight(t, boldStyle, iconAndGap + closeAndGap);
+      if (h > cellHeight) cellHeight = h;
+    }
+
+    return Size(cellWidth, cellHeight + verticalPadding);
   }
 
   // ---------- UI Matching (clic-clic) ----------
@@ -1893,28 +1917,35 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
 
     final cs = Theme.of(context).colorScheme;
 
+    // Palette pour distinguer visuellement les paires appariées entre elles
+    // (sinon toutes la même couleur -> difficile de voir qui va avec qui).
+    // Cycle si plus de lignes que de couleurs.
+    final matchPalette = <List<Color>>[
+      [Colors.green.withValues(alpha: 0.22), Colors.green.shade700],
+      [Colors.orange.withValues(alpha: 0.22), Colors.orange.shade800],
+      [Colors.blue.withValues(alpha: 0.22), Colors.blue.shade700],
+    ];
+    List<Color> paletteFor(int row) => matchPalette[row % matchPalette.length];
+
     // Cellule A - taille uniforme (celle de la plus grande cellule)
     Widget _aCell(int aIndexOriginal, Size size) {
       final selected = (_selA == aIndexOriginal);
       final row = _leftOrder.indexOf(aIndexOriginal);
       final matched = !selected && _confirmedRows.contains(row);
+      final pair = matched ? paletteFor(row) : null;
 
       return InkWell(
         onTap: () => _onTapA(aIndexOriginal),
         borderRadius: BorderRadius.circular(10),
         child: Container(
           width: size.width,
-          height: size.height,
+          constraints: BoxConstraints(minHeight: size.height),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: selected
-                ? cs.secondaryContainer
-                : (matched ? cs.tertiaryContainer : cs.surface),
+            color: selected ? cs.secondaryContainer : (pair?[0] ?? cs.surface),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: selected
-                  ? cs.secondary
-                  : (matched ? cs.tertiary : cs.outlineVariant),
+              color: selected ? cs.secondary : (pair?[1] ?? cs.outlineVariant),
             ),
           ),
           child: Row(
@@ -1939,23 +1970,20 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
       final bOriginal = _rightOrder[rowIndex];
       final selected  = (_selB == bOriginal);
       final matched = !selected && _confirmedRows.contains(rowIndex);
+      final pair = matched ? paletteFor(rowIndex) : null;
 
       return InkWell(
         onTap: () => _onTapB(bOriginal),
         borderRadius: BorderRadius.circular(10),
         child: Container(
           width: size.width,
-          height: size.height,
+          constraints: BoxConstraints(minHeight: size.height),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: selected
-                ? cs.primaryContainer
-                : (matched ? cs.tertiaryContainer : cs.surface),
+            color: selected ? cs.primaryContainer : (pair?[0] ?? cs.surface),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: selected
-                  ? cs.primary
-                  : (matched ? cs.tertiary : cs.outlineVariant),
+              color: selected ? cs.primary : (pair?[1] ?? cs.outlineVariant),
             ),
           ),
           child: Row(
