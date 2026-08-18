@@ -1924,6 +1924,10 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
       [Colors.green.withValues(alpha: 0.22), Colors.green.shade700],
       [Colors.orange.withValues(alpha: 0.22), Colors.orange.shade800],
       [Colors.blue.withValues(alpha: 0.22), Colors.blue.shade700],
+      [Colors.purple.withValues(alpha: 0.22), Colors.purple.shade700],
+      [Colors.pink.withValues(alpha: 0.22), Colors.pink.shade700],
+      [Colors.teal.withValues(alpha: 0.22), Colors.teal.shade700],
+      [Colors.brown.withValues(alpha: 0.22), Colors.brown.shade700],
     ];
     List<Color> paletteFor(int row) => matchPalette[row % matchPalette.length];
 
