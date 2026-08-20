@@ -618,3 +618,69 @@ class CreatorEscapeViewSet(viewsets.ModelViewSet):
         self._revert_to_draft_if_needed(escape)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # ---------- Step : déplacer d'un cran (haut/bas) ----------
+    @action(detail=True, methods=["post"], url_path=r"steps/(?P<step_id>\d+)/move")
+    def move_step(self, request, pk=None, step_id=None):
+        """
+        Échange l'ordre de cette étape avec sa voisine immédiate (haut/bas).
+
+        Fait exprès de ne PAS passer par GameStepSerializer.save() : un swap
+        classique en 2 PATCH successifs (chacun passant par validate() +
+        _normalize_orders()) entre en collision avec la contrainte d'unicité
+        (escape, order) — la voisine détient encore l'ordre cible au moment
+        du 1er appel, et _normalize_orders() annule toute valeur temporaire
+        "hors plage" dès qu'elle tourne après une écriture individuelle.
+        Ici, les 3 écritures se font dans la MÊME transaction, sans repasser
+        par la vue/le serializer entre chacune, donc _normalize_orders() ne
+        s'exécute qu'une fois à la toute fin, une fois le swap réellement
+        posé en base.
+        """
+        escape = self.get_object()
+
+        if request.user.is_staff or request.user.is_superuser:
+            return Response(
+                {"detail": "Les administrateurs ne peuvent pas modifier des étapes."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        owner = getattr(escape, "owner", None)
+        if owner and owner != request.user:
+            return Response(
+                {"detail": "Vous n'êtes pas propriétaire de cet escape."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        cur = getattr(escape, "status", "draft")
+        if cur == "submitted":
+            return Response(
+                {"detail": "Escape soumis : modification interdite tant que la modération n'a pas répondu."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        step = get_object_or_404(GameStep, pk=step_id, escape=escape)
+        direction = (request.data or {}).get("direction")
+        if direction not in ("up", "down"):
+            return Response({"detail": "direction doit être 'up' ou 'down'."}, status=400)
+
+        steps = list(GameStep.objects.filter(escape=escape).order_by("order", "id"))
+        idx = next((i for i, s in enumerate(steps) if s.pk == step.pk), None)
+        if idx is None:
+            return Response({"detail": "Étape introuvable."}, status=404)
+
+        new_idx = idx - 1 if direction == "up" else idx + 1
+        if new_idx < 0 or new_idx >= len(steps):
+            return Response({"detail": "Déplacement impossible (déjà en bout de liste)."}, status=400)
+
+        other = steps[new_idx]
+        step_order, other_order = step.order, other.order
+
+        with transaction.atomic():
+            TEMP_ORDER = 2_000_000_000  # hors de toute plage d'order réelle
+            GameStep.objects.filter(pk=step.pk).update(order=TEMP_ORDER)
+            GameStep.objects.filter(pk=other.pk).update(order=step_order)
+            GameStep.objects.filter(pk=step.pk).update(order=other_order)
+            _normalize_orders(escape)
+
+        self._revert_to_draft_if_needed(escape)
+
+        fresh = GameStep.objects.filter(escape=escape).order_by("order", "id")
+        return Response(GameStepSerializer(fresh, many=True).data)

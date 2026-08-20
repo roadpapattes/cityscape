@@ -234,6 +234,13 @@ class ApiClient {
     });
   }
 
+  async moveStep(escapeId, stepId, direction) {
+    return await this.request(`/api/creator/escapes/${escapeId}/steps/${stepId}/move`, {
+      method: 'POST',
+      body: JSON.stringify({ direction }),
+    });
+  }
+
   async deleteStep(escapeId, stepId) {
     return await this.request(`/api/creator/escapes/${escapeId}/steps/${stepId}`, {
       method: 'DELETE',
