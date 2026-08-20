@@ -462,9 +462,17 @@ function StepsTab({ escapeId, steps, canEdit, onStepsChanged }) {
     const step = steps[stepIndex];
     const otherStep = steps[newIndex];
 
+    // Échange en 3 temps : le back refuse qu'une étape prenne un "order" déjà
+    // utilisé par une autre étape du même escape. Un swap direct en 2 PATCH
+    // entre donc en collision (otherStep a encore son ordre actuel au moment
+    // du 1er appel) : on passe par une valeur temporaire sûre (hors de la
+    // plage utilisée) le temps de libérer la place.
+    const tempOrder = Math.max(...steps.map(s => s.order)) + 1000;
+
     try {
-      await apiClient.updateStep(escapeId, step.id, { order: otherStep.order });
+      await apiClient.updateStep(escapeId, step.id, { order: tempOrder });
       await apiClient.updateStep(escapeId, otherStep.id, { order: step.order });
+      await apiClient.updateStep(escapeId, step.id, { order: otherStep.order });
       await onStepsChanged();
     } catch (err) {
       alert('Erreur lors du réordonnancement');
