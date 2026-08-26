@@ -32,6 +32,11 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
     // Hints
     hints: step?.hints || [],
     hint_penalty: step?.hint_penalty || 0,
+
+    // Location ("Point à atteindre")
+    radius_m: step?.radius_m ?? 30,
+    reveal_mode: step?.reveal_mode || 'guided',
+    auto_validate: step?.auto_validate !== false, // true par défaut
   });
 
   const [loading, setLoading] = useState(false);
@@ -64,6 +69,10 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
         }
       }
 
+      if (formData.answer_type === 'location' && (!formData.latitude || !formData.longitude)) {
+        throw new Error('Placez le point à atteindre sur la carte pour une énigme de déplacement');
+      }
+
       // Clean data before sending
       const payload = {
         order: formData.order,
@@ -93,6 +102,12 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
         payload.match_left = formData.match_left;
         payload.match_right = formData.match_right;
         payload.match_pairs = formData.match_pairs;
+      }
+
+      if (formData.answer_type === 'location') {
+        payload.radius_m = parseInt(formData.radius_m, 10) || 30;
+        payload.reveal_mode = formData.reveal_mode;
+        payload.auto_validate = formData.auto_validate;
       }
 
       if (isEditing) {
@@ -183,6 +198,7 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
               <option value="matching">Association</option>
               <option value="cesar">Code de César</option>
               <option value="narration">Narration (pas d'énigme)</option>
+              <option value="location">Point à atteindre (déplacement)</option>
             </select>
           </div>
 
@@ -327,9 +343,61 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
             </div>
           )}
 
+          {formData.answer_type === 'location' && (
+            <div className="form-group" style={{ border: '1px solid var(--border, #ddd)', borderRadius: '8px', padding: '12px' }}>
+              <div className="alert alert-info" style={{ marginBottom: '12px' }}>
+                Le joueur valide cette étape en se rendant <strong>physiquement</strong> sur le point défini ci-dessous (carte).
+                Aucune réponse à saisir : c'est la position GPS qui valide.
+              </div>
+
+              <label className="form-label">Rayon de validation : {formData.radius_m} m</label>
+              <input
+                type="range"
+                min="20"
+                max="200"
+                step="5"
+                value={formData.radius_m}
+                onChange={(e) => updateField('radius_m', parseInt(e.target.value, 10))}
+                disabled={loading}
+                style={{ width: '100%' }}
+              />
+              <p className="form-help">
+                Plancher à 20 m pour absorber l'imprécision du GPS en ville. 30–50 m est un bon compromis.
+              </p>
+
+              <label className="form-label" style={{ marginTop: '12px' }}>Aide au joueur</label>
+              <select
+                className="form-select"
+                value={formData.reveal_mode}
+                onChange={(e) => updateField('reveal_mode', e.target.value)}
+                disabled={loading}
+              >
+                <option value="guided">Guidé — le point est affiché sur la carte</option>
+                <option value="hotcold">Chaud / froid — jauge de proximité, sans montrer le point</option>
+                <option value="blind">Aveugle — aucune aide, le lieu se déduit de l'énoncé</option>
+              </select>
+              <p className="form-help">
+                En "Chaud / froid" et "Aveugle", la position cible n'est jamais envoyée au téléphone du joueur.
+              </p>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '12px' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.auto_validate}
+                  onChange={(e) => updateField('auto_validate', e.target.checked)}
+                  disabled={loading}
+                />
+                <span>Validation automatique à l'entrée dans le rayon</span>
+              </label>
+              <p className="form-help">
+                Si décoché, un bouton "Valider ma position" est proposé au joueur au bas de l'étape.
+              </p>
+            </div>
+          )}
+
           {/* Location avec carte interactive */}
           <LocationPicker
-            label="Position de l'étape (optionnel)"
+            label={formData.answer_type === 'location' ? 'Point à atteindre * (cliquez sur la carte)' : "Position de l'étape (optionnel)"}
             latitude={formData.latitude ? parseFloat(formData.latitude) : null}
             longitude={formData.longitude ? parseFloat(formData.longitude) : null}
             onLocationChange={(lat, lng) => {

@@ -196,6 +196,36 @@ class GameStepSerializer(serializers.ModelSerializer):
             attrs["hint"] = ""
             attrs["hint_penalty"] = 0
 
+        elif at == getattr(GameStep, "ANSWER_LOCATION", "location"):
+            # Point à atteindre : la cible est latitude/longitude, tolérance = radius_m.
+            lat = attrs.get("latitude",  getattr(self.instance, "latitude",  None))
+            lon = attrs.get("longitude", getattr(self.instance, "longitude", None))
+            if lat is None or lon is None:
+                raise serializers.ValidationError(
+                    {"latitude": "Coordonnées de la cible requises pour « Point à atteindre »."}
+                )
+
+            radius = attrs.get("radius_m", getattr(self.instance, "radius_m", 30))
+            try:
+                radius = int(radius)
+            except (TypeError, ValueError):
+                radius = 30
+            # Plancher robuste face à l'imprécision GPS urbaine.
+            attrs["radius_m"] = max(20, min(radius, 2000))
+
+            reveal = attrs.get("reveal_mode", getattr(self.instance, "reveal_mode", "guided"))
+            if reveal not in {"guided", "hotcold", "blind"}:
+                reveal = "guided"
+            attrs["reveal_mode"] = reveal
+
+            # Neutralise les champs des autres types.
+            attrs["answer_text"]   = ""
+            attrs["options"]       = []
+            attrs["correct_index"] = None
+            attrs["match_left"]    = []
+            attrs["match_right"]   = []
+            attrs["match_pairs"]   = []
+
         else:
             raise serializers.ValidationError({"answer_type": "Valeur invalide."})
 

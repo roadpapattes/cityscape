@@ -872,6 +872,22 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
   double? _stepLongitude;
   bool _showStepLocation = true;  // true par défaut, contrôlé par le créateur
 
+  // --- Point à atteindre (answer_type == 'location') ---
+  int _locRadiusM = 30;
+  String _locRevealMode = 'guided'; // 'guided' | 'hotcold' | 'blind'
+  bool _locAutoValidate = true;
+  // Runtime GPS / proximité
+  StreamSubscription<Position>? _posSub;
+  Position? _lastPos;
+  int? _proxLevel;          // 1..5 (null tant qu'inconnu ou mode 'blind')
+  bool _proxWithin = false; // dans le rayon ?
+  double? _proxDistanceM;   // distance affichée (mode 'guided' uniquement)
+  int _proxDwell = 0;       // relevés consécutifs "dans le rayon" (anti-faux-positif)
+  bool _locSubmitting = false;
+  bool _proxPinging = false;
+  String? _locError;
+  int _lastPingMs = 0; // throttle des requêtes de proximité
+
   // Réponse (texte/numérique)
   final _answerCtrl = TextEditingController();
   bool _showCaesarKeyboard = false; // clavier alphabétique custom (type 'cesar')
@@ -937,6 +953,8 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
     _syncTimeOnExit();
     WidgetsBinding.instance.removeObserver(this);
     AudioService.instance.stop();
+    _posSub?.cancel();
+    _posSub = null;
     _answerCtrl.dispose();
     super.dispose();
   }
@@ -1260,6 +1278,35 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
         _selA = null;
         _selB = null;
 
+      } else if (atRaw == 'location') {
+        _answerType = 'location';
+        _mcqOptions = const [];
+        _selectedOption = null;
+        _matchLeft = [];
+        _matchRight = [];
+        _rightOrder = [];
+        _initialRightOrder = [];
+        _leftOrder = [];
+        _initialLeftOrder = [];
+        _confirmedRows = {};
+        _lastShuffleStepId = null;
+        _selA = null; _selB = null;
+
+        _locRadiusM = _asInt(st['radius_m']) ?? 30;
+        _locRevealMode = '${st['reveal_mode'] ?? 'guided'}'.trim().toLowerCase();
+        _locAutoValidate = st['auto_validate'] != false;
+
+        if (stepChanged) {
+          // Reset de l'état de proximité au changement d'étape.
+          _proxLevel = null;
+          _proxWithin = false;
+          _proxDistanceM = null;
+          _proxDwell = 0;
+          _locError = null;
+        }
+        // (Re)démarre le suivi GPS pour cette étape.
+        _startLocationTracking();
+
       } else if (opts.isNotEmpty) {
         _answerType = 'mcq';
         _mcqOptions = opts;
@@ -1287,6 +1334,11 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
         _confirmedRows = {};
         _lastShuffleStepId = null;
         _selA = null; _selB = null;
+      }
+
+      // Coupe le suivi GPS dès qu'on n'est plus sur une étape "Point à atteindre".
+      if (_answerType != 'location') {
+        _stopLocationTracking();
       }
 
       _answerCtrl.clear();
@@ -1757,6 +1809,346 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
     if (mounted) setState(() => _submitting = false);
   }
 }
+
+  // ==================== Point à atteindre (location) ====================
+
+  /// Démarre le suivi GPS pour l'étape "Point à atteindre" courante.
+  Future<void> _startLocationTracking() async {
+    if (_posSub != null) return; // déjà actif
+
+    // Permission de localisation
+    LocationPermission perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      perm = await Geolocator.requestPermission();
+    }
+    if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
+      if (mounted) setState(() => _locError = "Localisation refusée. Autorisez le GPS pour cette énigme.");
+      return;
+    }
+
+    if (mounted) setState(() => _locError = null);
+
+    _posSub = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 5, // n'émet que tous les ~5 m
+      ),
+    ).listen(
+      _onPositionUpdate,
+      onError: (e) {
+        if (mounted) setState(() => _locError = "Signal GPS indisponible.");
+      },
+    );
+  }
+
+  void _stopLocationTracking() {
+    _posSub?.cancel();
+    _posSub = null;
+    _proxDwell = 0;
+  }
+
+  void _onPositionUpdate(Position pos) {
+    _lastPos = pos;
+    // Throttle : au plus une mesure de proximité toutes les ~3 s.
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - _lastPingMs < 3000) return;
+    _lastPingMs = now;
+    _pingProximity(pos);
+  }
+
+  Future<void> _pingProximity(Position pos) async {
+    if (_proxPinging || _answerType != 'location') return;
+    _proxPinging = true;
+    try {
+      final j = await _api.proximityPing(
+        widget.escape.id,
+        latitude: pos.latitude,
+        longitude: pos.longitude,
+      );
+      if (!mounted || _answerType != 'location') return;
+
+      final applicable = j['applicable'] != false;
+      if (!applicable) return;
+
+      final within = (j['within'] ?? false) as bool;
+      final lvl = _asInt(j['level']);
+      final dist = (j['distance_m'] as num?)?.toDouble();
+
+      setState(() {
+        _proxWithin = within;
+        _proxLevel = lvl;                 // null en mode 'blind'
+        _proxDistanceM = dist;            // non-null seulement en 'guided'
+        if (within) {
+          _proxDwell += 1;
+        } else {
+          _proxDwell = 0;
+        }
+      });
+
+      // Auto-validation : dans le rayon sur 2 relevés consécutifs.
+      if (_locAutoValidate && _proxDwell >= 2 && !_locSubmitting) {
+        await _submitLocation(manual: false);
+      }
+    } catch (_) {
+      // silencieux : la jauge se mettra à jour au prochain relevé
+    } finally {
+      _proxPinging = false;
+    }
+  }
+
+  Future<void> _submitLocation({required bool manual}) async {
+    if (_locSubmitting) return;
+    setState(() => _locSubmitting = true);
+
+    final sessionSeconds = GameTimer.instance.syncAndContinue();
+    try {
+      // Position la plus fraîche possible.
+      Position? pos = _lastPos;
+      if (manual || pos == null) {
+        try {
+          pos = await Geolocator.getCurrentPosition();
+          _lastPos = pos;
+        } catch (_) {
+          pos ??= _lastPos;
+        }
+      }
+      if (pos == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Position GPS indisponible pour le moment.')),
+        );
+        return;
+      }
+
+      final j = await _api.submitAnswer(
+        widget.escape.id,
+        latitude: pos.latitude,
+        longitude: pos.longitude,
+        sessionSeconds: sessionSeconds,
+      );
+
+      final correct = (j['correct'] ?? false) as bool;
+
+      if (!correct) {
+        // Trop loin : on rafraîchit la jauge, et on informe si c'était un geste manuel.
+        final lvl = _asInt(j['level']);
+        final dist = (j['distance_m'] as num?)?.toDouble();
+        if (mounted) {
+          setState(() {
+            _proxWithin = false;
+            _proxDwell = 0;
+            if (lvl != null) _proxLevel = lvl;
+            if (dist != null) _proxDistanceM = dist;
+          });
+          if (manual) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Vous n'êtes pas encore au bon endroit.")),
+            );
+          }
+        }
+        return;
+      }
+
+      // Validé !
+      final finished = (j['finished'] ?? false) as bool;
+      final finalMsg = (j['final_message'] ?? j['victory_message'] ?? '') as String;
+      _stopLocationTracking();
+
+      if (!mounted) return;
+      if (finished) {
+        final finalTimeText = _syncAndFinish();
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => VictoryPage(
+              escape: widget.escape,
+              finalMessage: finalMsg,
+              timeOverride: finalTimeText,
+            ),
+          ),
+        );
+      } else {
+        await _loadState();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Étape validée ! 📍')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _locSubmitting = false);
+    }
+  }
+
+  // Nuances de la jauge chaud/froid : du bleu (froid, 1) au rouge foncé (brûlant, 5).
+  static const List<Color> _locShades = [
+    Color(0xFF2563EB), // 1 - froid (bleu)
+    Color(0xFF7C3AED), // 2 - frais (violet)
+    Color(0xFFC026D3), // 3 - tiède (magenta)
+    Color(0xFFE11D48), // 4 - chaud (rouge)
+    Color(0xFF7F1D1D), // 5 - brûlant (rouge foncé)
+  ];
+
+  String _locLabel(int level) {
+    switch (level) {
+      case 5: return 'Brûlant';
+      case 4: return 'Chaud';
+      case 3: return 'Tiède';
+      case 2: return 'Frais';
+      default: return 'Froid';
+    }
+  }
+
+  Widget _buildLocationPuzzle() {
+    final theme = Theme.of(context);
+
+    // Erreur GPS / permission
+    if (_locError != null) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.red.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.location_off, color: Colors.red),
+            const SizedBox(width: 10),
+            Expanded(child: Text(_locError!)),
+            TextButton(
+              onPressed: _startLocationTracking,
+              child: const Text('Réessayer'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final bool showGauge = _locRevealMode != 'blind' && _proxLevel != null;
+    final int level = _proxLevel ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_locRevealMode == 'blind') ...[
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.explore_outlined),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _proxWithin
+                        ? 'Vous y êtes presque…'
+                        : 'Rendez-vous au bon endroit. Aucune aide : fiez-vous à l’énoncé.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] else if (showGauge) ...[
+          // Jauge chaud/froid : 5 segments, du bleu au rouge foncé.
+          Row(
+            children: [
+              for (int i = 1; i <= 5; i++)
+                Expanded(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 350),
+                    height: 14,
+                    margin: EdgeInsets.only(right: i < 5 ? 4.0 : 0.0),
+                    decoration: BoxDecoration(
+                      color: (i <= level)
+                          ? _locShades[i - 1]
+                          : theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                level >= 4 ? Icons.local_fire_department : Icons.ac_unit,
+                color: level > 0 ? _locShades[level - 1] : Colors.grey,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _locLabel(level),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: level > 0 ? _locShades[level - 1] : null,
+                ),
+              ),
+              if (_proxDistanceM != null) ...[
+                const SizedBox(width: 10),
+                Text(
+                  '≈ ${_proxDistanceM!.round()} m',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
+            ],
+          ),
+        ] else ...[
+          Row(
+            children: const [
+              SizedBox(
+                width: 18, height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 10),
+              Expanded(child: Text('Recherche du signal GPS…')),
+            ],
+          ),
+        ],
+
+        const SizedBox(height: 14),
+
+        // Validation manuelle si l'auto-validation est désactivée par le créateur.
+        if (!_locAutoValidate)
+          FilledButton.icon(
+            onPressed: _locSubmitting ? null : () => _submitLocation(manual: true),
+            icon: _locSubmitting
+                ? const SizedBox(
+                    width: 16, height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Icon(Icons.my_location),
+            label: Text(_locSubmitting ? 'Validation…' : 'Valider ma position'),
+            style: FilledButton.styleFrom(minimumSize: const Size(double.infinity, 46)),
+          )
+        else if (_locSubmitting)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              SizedBox(
+                width: 16, height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 10),
+              Text('Validation en cours…'),
+            ],
+          )
+        else
+          Text(
+            'La validation est automatique dès que vous atteignez le point.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+          ),
+      ],
+    );
+  }
 
   // ---------- Clavier alphabétique custom (type 'cesar') ----------
   // Remplace le clavier système : lettres dans l'ordre alphabétique, plus
@@ -2235,6 +2627,9 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
                                     label: const Text('Valider'),
                                   ),
                                 ),
+                              ] else if (_answerType == 'location') ...[
+                                const SizedBox(height: 8),
+                                _buildLocationPuzzle(),
                               ] else ...[
                                 // cesar : pas de vrai champ texte (aucun moyen fiable
                                 // de bloquer le clavier système sur tous les appareils/
@@ -3742,6 +4137,11 @@ class _StepEditorPageState extends State<StepEditorPage> {
   // --- Type de réponse & dépendances
   String _answerType = 'text';
 
+  // Point à atteindre (location)
+  int _locRadiusM = 30;
+  String _locRevealMode = 'guided';
+  bool _locAutoValidate = true;
+
   // QCM
   List<TextEditingController> _options = [];
   int? _correctIndex;
@@ -3868,6 +4268,9 @@ class _StepEditorPageState extends State<StepEditorPage> {
     _correctIndex = s?.correctIndex;
     _orderCtrl    = TextEditingController(text: s?.order.toString() ?? '');
     _showLocation = s?.showLocation ?? true;
+    _locRadiusM     = s?.radiusM ?? 30;
+    _locRevealMode  = s?.revealMode ?? 'guided';
+    _locAutoValidate = s?.autoValidate ?? true;
 
     // --- Multi-indices : préférer s.hints, fallback sur s.hint (legacy)
     final existingHints = (s?.hints ?? const <String>[]);
@@ -4144,6 +4547,11 @@ class _StepEditorPageState extends State<StepEditorPage> {
       hint: '', // legacy neutralisé
       hintPenalty: hintPenalty,
       showLocation: _showLocation,
+
+      // Point à atteindre
+      radiusM: _locRadiusM,
+      revealMode: _locRevealMode,
+      autoValidate: _locAutoValidate,
     );
 
     // on construit un patch pour fiabiliser l'UPDATE (et pour forcer narration)
@@ -4199,6 +4607,22 @@ class _StepEditorPageState extends State<StepEditorPage> {
 
     if (_answerType == 'numeric' && _answerText.text.trim().isEmpty) {
       throw Exception("Renseigne la réponse numérique attendue.");
+    }
+
+    if (_answerType == 'location') {
+      if (lat == null || lon == null) {
+        throw Exception("Place le point à atteindre sur la carte.");
+      }
+      patch['answer_type']   = 'location';
+      patch['answer_text']   = '';
+      patch['options']       = [];
+      patch['correct_index'] = null;
+      patch['match_left']    = [];
+      patch['match_right']   = [];
+      patch['match_pairs']   = [];
+      patch['radius_m']      = _locRadiusM;
+      patch['reveal_mode']   = _locRevealMode;
+      patch['auto_validate'] = _locAutoValidate;
     }
 
     if (_isEdit) {
@@ -4575,6 +4999,7 @@ class _StepEditorPageState extends State<StepEditorPage> {
                   DropdownMenuItem(value: 'matching', child: Text('Association')),
                   DropdownMenuItem(value: 'cesar',    child: Text('Code de César')),
                   DropdownMenuItem(value: 'narration', child: Text('Narration')),
+                  DropdownMenuItem(value: 'location', child: Text('Point à atteindre')),
                 ],
                 onChanged: widget.readOnly ? null : (v) => setState(() => _answerType = v ?? 'text'),
               ),
@@ -4644,6 +5069,50 @@ class _StepEditorPageState extends State<StepEditorPage> {
             _matchingEditor(),
           ] else if (_answerType == 'narration') ...[
             // Rien : narration = contenu non interactif (on laisse Titre / Description / Image)
+          ] else if (_answerType == 'location') ...[
+            const Text(
+              'Le joueur valide en se rendant physiquement sur le point défini plus bas (carte).',
+              style: TextStyle(fontStyle: FontStyle.italic),
+            ),
+            const SizedBox(height: 12),
+            Text('Rayon de validation : $_locRadiusM m'),
+            Slider(
+              value: _locRadiusM.toDouble().clamp(20.0, 200.0),
+              min: 20,
+              max: 200,
+              divisions: 36,
+              label: '$_locRadiusM m',
+              onChanged: widget.readOnly
+                  ? null
+                  : (v) => setState(() => _locRadiusM = v.round()),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Text('Aide :'),
+                const SizedBox(width: 12),
+                DropdownButton<String>(
+                  value: _locRevealMode,
+                  items: const [
+                    DropdownMenuItem(value: 'guided',  child: Text('Guidé (carte)')),
+                    DropdownMenuItem(value: 'hotcold', child: Text('Chaud / froid')),
+                    DropdownMenuItem(value: 'blind',   child: Text('Aveugle')),
+                  ],
+                  onChanged: widget.readOnly
+                      ? null
+                      : (v) => setState(() => _locRevealMode = v ?? 'guided'),
+                ),
+              ],
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Validation automatique à l’entrée dans le rayon'),
+              subtitle: const Text('Si désactivé, un bouton "Valider ma position" est proposé au joueur.'),
+              value: _locAutoValidate,
+              onChanged: widget.readOnly
+                  ? null
+                  : (v) => setState(() => _locAutoValidate = v),
+            ),
           ],
 
           const SizedBox(height: 12),

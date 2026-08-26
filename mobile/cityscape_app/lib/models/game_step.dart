@@ -14,8 +14,13 @@ class GameStep {
   String? imageUrl;
   String imageCredit; // crédit/source de l'image, '' si absent
 
-  /// 'text' | 'mcq' | 'numeric' | 'matching' | 'narration'
+  /// 'text' | 'mcq' | 'numeric' | 'matching' | 'narration' | 'location'
   final String answerType;
+
+  // Point à atteindre (answerType == 'location')
+  final int radiusM;            // rayon de validation en mètres
+  final String revealMode;      // 'guided' | 'hotcold' | 'blind'
+  final bool autoValidate;      // valide seul à l'entrée du rayon
 
   // Texte libre / numérique (stock côté back dans answer_text)
   String answerText;
@@ -62,6 +67,9 @@ class GameStep {
     List<String>? hints,
     this.hintPenalty = 0,
     this.showLocation = true,
+    this.radiusM = 30,
+    this.revealMode = 'guided',
+    this.autoValidate = true,
   })  : options = options ?? const [],
         hints = hints ?? const [];
 
@@ -132,6 +140,11 @@ class GameStep {
 
       // Affichage carte
       showLocation: j['show_location'] != false,  // true par défaut
+
+      // Point à atteindre
+      radiusM: (j['radius_m'] as num?)?.toInt() ?? 30,
+      revealMode: (j['reveal_mode'] ?? 'guided') as String,
+      autoValidate: j['auto_validate'] != false, // true par défaut
     );
   }
 
@@ -208,6 +221,19 @@ class GameStep {
         m['hints']         = <String>[];   // vide
         m['hint']          = '';           // JAMAIS null
         m['hint_penalty']  = 0;
+        break;
+
+      case 'location':
+        // Point à atteindre : la cible = latitude/longitude ci-dessus.
+        m['answer_text']   = '';
+        m['options']       = <String>[];
+        m['correct_index'] = null;
+        m['match_left']    = <String>[];
+        m['match_right']   = <String>[];
+        m['match_pairs']   = <dynamic>[];
+        m['radius_m']      = radiusM;
+        m['reveal_mode']   = revealMode;
+        m['auto_validate'] = autoValidate;
         break;
 
       default:

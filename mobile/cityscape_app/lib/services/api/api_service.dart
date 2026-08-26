@@ -924,6 +924,8 @@ class ApiService {
   int? optionIndex,
   List<List<int>>? pairs, // matching
   bool narration = false,
+  double? latitude,   // location : position du joueur
+  double? longitude,  // location : position du joueur
   int? sessionSeconds, // temps de jeu depuis le dernier sync
 }) async {
   final token = await AuthService.instance.getToken();
@@ -935,6 +937,9 @@ class ApiService {
   if (narration) {
     // Narration: body vide accepté par l'API
     payload = {};
+  } else if (latitude != null && longitude != null) {
+    // Point à atteindre : on envoie la position du joueur, le serveur tranche.
+    payload = {'latitude': latitude, 'longitude': longitude};
   } else if (pairs != null) {
     // Association: on n'envoie QUE les paires [[li,ri], ...]
     payload = {'pairs': pairs};
@@ -979,6 +984,33 @@ class ApiService {
   return jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
 }
 
+  // ---------- PROXIMITY (jauge chaud/froid pour "Point à atteindre") ----------
+  // Renvoie {applicable, within, level?, distance_m?, radius_m, reveal_mode, auto_validate}
+  // La cible n'est jamais divulguée : le serveur calcule la proximité.
+  Future<Map<String, dynamic>> proximityPing(
+    int escapeId, {
+    required double latitude,
+    required double longitude,
+  }) async {
+    final token = await AuthService.instance.getToken();
+    if (token == null) throw Exception('Non connecté');
+
+    final uri = Uri.parse(
+      '$baseUrl/api$kEngagementPrefix/escapes/$escapeId/sessions/proximity',
+    );
+    final r = await _post(
+      uri,
+      headers: {
+        'Authorization': 'Token $token',
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: jsonEncode({'latitude': latitude, 'longitude': longitude}),
+    );
+    if (r.statusCode != 200) {
+      throw Exception('Proximity: ${r.statusCode} ${r.body}');
+    }
+    return jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
+  }
 
 
   // ---------- SYNC TIME ----------

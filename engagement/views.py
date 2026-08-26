@@ -33,6 +33,44 @@ from games.models import EscapeGame, GameStep
 def _normalize(s: str) -> str:
     return (s or "").strip().lower()
 
+
+def _haversine_m(lat1, lon1, lat2, lon2):
+    """Distance en mètres entre deux points GPS."""
+    import math
+    R = 6371000.0  # rayon terrestre en mètres
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def _proximity_level(distance_m, radius_m):
+    """
+    Traduit une distance en 5 paliers (jauge chaud/froid), du plus froid (1) au
+    plus chaud (5). Le niveau 5 = à l'intérieur du rayon de validation.
+    """
+    r = max(1.0, float(radius_m or 30))
+    if distance_m <= r:
+        return 5
+    if distance_m <= 2 * r:
+        return 4
+    if distance_m <= 4 * r:
+        return 3
+    if distance_m <= 8 * r:
+        return 2
+    return 1
+
+
+def _parse_latlon(data):
+    """Extrait (lat, lon) d'un payload client ; renvoie (None, None) si invalide."""
+    try:
+        return float(data.get("latitude")), float(data.get("longitude"))
+    except (TypeError, ValueError, AttributeError):
+        return None, None
+
+
 User = get_user_model()
 
 
@@ -499,6 +537,18 @@ def _step_payload(step: GameStep, hints_used_map: Dict[str, Any]) -> Dict[str, A
         base["matching_left"]  = list(getattr(step, "match_left",  []) or [])
         base["matching_right"] = list(getattr(step, "match_right", []) or [])
         # (on NE renvoie PAS match_pairs)
+    elif step.answer_type == getattr(GameStep, "ANSWER_LOCATION", "location"):
+        reveal = getattr(step, "reveal_mode", "guided") or "guided"
+        base["reveal_mode"]   = reveal
+        base["radius_m"]      = int(getattr(step, "radius_m", 30) or 30)
+        base["auto_validate"] = bool(getattr(step, "auto_validate", True))
+        # Anti-triche : on ne révèle la cible que si le joueur est explicitement
+        # guidé sur la carte. En chaud/froid ou aveugle, la position reste secrète
+        # (la proximité est calculée côté serveur via l'endpoint dédié).
+        if reveal != "guided":
+            base["latitude"] = None
+            base["longitude"] = None
+            base["show_location"] = False
 
     return base
 
@@ -765,6 +815,11 @@ class SessionHistoryView(APIView):
             elif step.answer_type == GameStep.ANSWER_MATCH:
                 base["matching_left"]  = list(getattr(step, "match_left",  []) or [])
                 base["matching_right"] = list(getattr(step, "match_right", []) or [])
+            elif step.answer_type == getattr(GameStep, "ANSWER_LOCATION", "location"):
+                # Étape déjà résolue : on peut exposer la config (historique).
+                base["reveal_mode"]   = getattr(step, "reveal_mode", "guided") or "guided"
+                base["radius_m"]      = int(getattr(step, "radius_m", 30) or 30)
+                base["auto_validate"] = bool(getattr(step, "auto_validate", True))
             return base
 
         data = [snapshot(s) for s in past]
@@ -958,6 +1013,40 @@ class SessionAnswerView(APIView):
             # Narration : pas de réponse → toujours "ok"
             ok = True
 
+        elif st.answer_type == getattr(GameStep, "ANSWER_LOCATION", "location"):
+            # Point à atteindre : la « réponse » est la position du joueur.
+            u_lat, u_lon = _parse_latlon(request.data or {})
+            if u_lat is None or u_lon is None:
+                return Response(
+                    {"detail": "Position du joueur requise (latitude/longitude)."},
+                    status=400,
+                )
+            if st.latitude is None or st.longitude is None:
+                return Response(
+                    {"detail": "Étape « Point à atteindre » mal configurée (cible absente)."},
+                    status=400,
+                )
+
+            radius = int(getattr(st, "radius_m", 30) or 30)
+            dist_m = _haversine_m(u_lat, u_lon, st.latitude, st.longitude)
+            ok = dist_m <= radius
+
+            if not ok:
+                # Une simple approche n'entraîne pas de pénalité de temps : on
+                # renvoie la proximité pour alimenter la jauge chaud/froid.
+                return Response(
+                    {
+                        "ok": True,
+                        "correct": False,
+                        "too_far": True,
+                        "distance_m": round(dist_m, 1),
+                        "level": _proximity_level(dist_m, radius),
+                        "penalty": int(getattr(sess, "penalty", 0)),
+                        "applied_penalty": 0,
+                    },
+                    status=200,
+                )
+
         else:
             return Response({"detail": "Type de réponse inconnu."}, status=400)
 
@@ -1029,6 +1118,13 @@ class SessionAnswerView(APIView):
         elif st.answer_type == getattr(GameStep, "ANSWER_NARR", "narration"):
             entry["value"] = "narration"
 
+        elif st.answer_type == getattr(GameStep, "ANSWER_LOCATION", "location"):
+            u_lat, u_lon = _parse_latlon(request.data or {})
+            entry["value"] = "location"
+            if u_lat is not None and u_lon is not None:
+                entry["latitude"] = u_lat
+                entry["longitude"] = u_lon
+
         answers_map[str(st.id)] = entry
         sess.answers = answers_map
         # ----------------------------------------------------------------
@@ -1065,6 +1161,73 @@ class SessionAnswerView(APIView):
         return Response(resp, status=200)
 
 
+
+
+class SessionProximityView(APIView):
+    """
+    Jauge chaud/froid pour l'étape courante de type « Point à atteindre ».
+
+    Le client envoie sa position ({latitude, longitude}) à intervalle régulier ;
+    le serveur renvoie un palier de proximité (1..5) SANS jamais divulguer la
+    cible. La validation réelle passe toujours par SessionAnswerView.
+
+    Politique de divulgation selon reveal_mode de l'étape :
+      - guided  : level (1..5) + distance_m (la cible est déjà connue du client)
+      - hotcold : level (1..5) uniquement
+      - blind   : ni level ni distance (le joueur n'a que 'within' pour l'auto-validation)
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, escape_id: int):
+        escape = get_object_or_404(EscapeGame, pk=escape_id)
+        sess = (PlaySession.objects
+                .filter(user=request.user, escape=escape, completed_at__isnull=True)
+                .order_by("-id")
+                .first())
+        if not sess:
+            return Response({"detail": "Session inactive. Démarrez d'abord."}, status=400)
+
+        steps = list(GameStep.objects.filter(escape=escape).order_by("order", "id"))
+        total = len(steps)
+        idx = int(getattr(sess, "current_step_index", 0) or 0)
+        if idx >= total:
+            return Response({"detail": "Partie déjà terminée."}, status=400)
+
+        st = steps[idx]
+        if st.answer_type != getattr(GameStep, "ANSWER_LOCATION", "location"):
+            # Pas une étape de position : rien à mesurer.
+            return Response({"applicable": False}, status=200)
+
+        if st.latitude is None or st.longitude is None:
+            return Response(
+                {"detail": "Étape « Point à atteindre » mal configurée (cible absente)."},
+                status=400,
+            )
+
+        u_lat, u_lon = _parse_latlon(request.data or {})
+        if u_lat is None or u_lon is None:
+            return Response(
+                {"detail": "Position du joueur requise (latitude/longitude)."},
+                status=400,
+            )
+
+        radius = int(getattr(st, "radius_m", 30) or 30)
+        reveal = getattr(st, "reveal_mode", "guided") or "guided"
+        dist_m = _haversine_m(u_lat, u_lon, st.latitude, st.longitude)
+
+        resp = {
+            "applicable": True,
+            "within": bool(dist_m <= radius),
+            "radius_m": radius,
+            "reveal_mode": reveal,
+            "auto_validate": bool(getattr(st, "auto_validate", True)),
+        }
+        if reveal in ("guided", "hotcold"):
+            resp["level"] = _proximity_level(dist_m, radius)
+        if reveal == "guided":
+            resp["distance_m"] = round(dist_m, 1)
+
+        return Response(resp, status=200)
 
 
 # -------------- Ratings --------------
