@@ -87,20 +87,22 @@ class EscapeGame(models.Model):
 
 
 class GameStep(models.Model):
-    ANSWER_TEXT   = "text"
-    ANSWER_MCQ    = "mcq"
-    ANSWER_NUM    = "numeric"
-    ANSWER_MATCH  = "matching"
-    ANSWER_CAESAR = "cesar"
-    ANSWER_NARR   = "narration"
+    ANSWER_TEXT     = "text"
+    ANSWER_MCQ      = "mcq"
+    ANSWER_NUM      = "numeric"
+    ANSWER_MATCH    = "matching"
+    ANSWER_CAESAR   = "cesar"
+    ANSWER_NARR     = "narration"
+    ANSWER_LOCATION = "location"
 
     ANSWER_CHOICES = (
-        (ANSWER_TEXT,   "Texte libre"),
-        (ANSWER_MCQ,    "Choix multiple"),
-        (ANSWER_NUM,    "Numeric"),
-        (ANSWER_MATCH,  "Association"),
-        (ANSWER_CAESAR, "Code de César"),
-        (ANSWER_NARR,   "Narration"),
+        (ANSWER_TEXT,     "Texte libre"),
+        (ANSWER_MCQ,      "Choix multiple"),
+        (ANSWER_NUM,      "Numeric"),
+        (ANSWER_MATCH,    "Association"),
+        (ANSWER_CAESAR,   "Code de César"),
+        (ANSWER_NARR,     "Narration"),
+        (ANSWER_LOCATION, "Point à atteindre"),
     )
 
     escape = models.ForeignKey(
@@ -116,6 +118,29 @@ class GameStep(models.Model):
     latitude = models.FloatField(blank=True, null=True)
     longitude = models.FloatField(blank=True, null=True)
     show_location = models.BooleanField(default=True, help_text="Afficher le point sur la carte au joueur")
+
+    # --- Point à atteindre (answer_type = "location") ---
+    # La cible réutilise latitude / longitude ci-dessus.
+    radius_m = models.PositiveIntegerField(
+        default=30,
+        help_text="Rayon de validation en mètres (type « Point à atteindre »). Plancher conseillé : 20 m."
+    )
+    LOCATION_GUIDED  = "guided"
+    LOCATION_HOTCOLD = "hotcold"
+    LOCATION_BLIND   = "blind"
+    REVEAL_CHOICES = (
+        (LOCATION_GUIDED,  "Guidé (point affiché sur la carte)"),
+        (LOCATION_HOTCOLD, "Chaud / froid (jauge de proximité)"),
+        (LOCATION_BLIND,   "Aveugle (aucune aide)"),
+    )
+    reveal_mode = models.CharField(
+        max_length=10, choices=REVEAL_CHOICES, default=LOCATION_GUIDED,
+        help_text="Comment le joueur est guidé vers le point (type « Point à atteindre »)."
+    )
+    auto_validate = models.BooleanField(
+        default=True,
+        help_text="Valide automatiquement l'étape à l'entrée dans le rayon. Si désactivé, un bouton de validation est proposé au joueur."
+    )
 
     image_url = models.URLField(blank=True, null=True)
     image_credit = models.CharField(max_length=255, blank=True, default="")
