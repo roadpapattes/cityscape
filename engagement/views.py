@@ -29,21 +29,15 @@ from .serializers import (
     RatingSerializer,
 )
 from games.models import EscapeGame, GameStep
+from games.api import _haversine_km
 
 def _normalize(s: str) -> str:
     return (s or "").strip().lower()
 
 
 def _haversine_m(lat1, lon1, lat2, lon2):
-    """Distance en mètres entre deux points GPS."""
-    import math
-    R = 6371000.0  # rayon terrestre en mètres
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lon2 - lon1)
-    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    """Distance en mètres entre deux points GPS (réutilise le calcul de games.api)."""
+    return _haversine_km(lat1, lon1, lat2, lon2) * 1000.0
 
 
 def _proximity_level(distance_m, radius_m):
@@ -549,6 +543,13 @@ def _step_payload(step: GameStep, hints_used_map: Dict[str, Any]) -> Dict[str, A
             base["latitude"] = None
             base["longitude"] = None
             base["show_location"] = False
+        else:
+            # Le mode "guidé" promet explicitement d'afficher le point sur la
+            # carte : ne pas dépendre du toggle show_location générique
+            # (indépendant, pensé pour l'affichage optionnel d'un point sur
+            # les autres types d'étape), sinon un step guided avec
+            # show_location resté à False n'affiche jamais sa cible.
+            base["show_location"] = True
 
     return base
 
@@ -1034,18 +1035,23 @@ class SessionAnswerView(APIView):
             if not ok:
                 # Une simple approche n'entraîne pas de pénalité de temps : on
                 # renvoie la proximité pour alimenter la jauge chaud/froid.
-                return Response(
-                    {
-                        "ok": True,
-                        "correct": False,
-                        "too_far": True,
-                        "distance_m": round(dist_m, 1),
-                        "level": _proximity_level(dist_m, radius),
-                        "penalty": int(getattr(sess, "penalty", 0)),
-                        "applied_penalty": 0,
-                    },
-                    status=200,
-                )
+                # Même politique de divulgation que SessionProximityView : ne
+                # jamais renvoyer distance_m/level en dehors de ce que le mode
+                # de l'étape autorise, sinon guided/hotcold/blind se
+                # contournent en lisant simplement la réponse de /answer.
+                reveal = getattr(st, "reveal_mode", "guided") or "guided"
+                resp = {
+                    "ok": True,
+                    "correct": False,
+                    "too_far": True,
+                    "penalty": int(getattr(sess, "penalty", 0)),
+                    "applied_penalty": 0,
+                }
+                if reveal in ("guided", "hotcold"):
+                    resp["level"] = _proximity_level(dist_m, radius)
+                if reveal == "guided":
+                    resp["distance_m"] = round(dist_m, 1)
+                return Response(resp, status=200)
 
         else:
             return Response({"detail": "Type de réponse inconnu."}, status=400)

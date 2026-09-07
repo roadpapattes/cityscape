@@ -11,8 +11,8 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
     title: step?.title || '',
     text: step?.text || '',
     answer_type: step?.answer_type || 'text',
-    latitude: step?.latitude || '',
-    longitude: step?.longitude || '',
+    latitude: step?.latitude ?? '',
+    longitude: step?.longitude ?? '',
     show_location: step?.show_location !== false, // true par défaut
     image_url: step?.image_url || '',
     image_credit: step?.image_credit || '',
@@ -69,7 +69,11 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
         }
       }
 
-      if (formData.answer_type === 'location' && (!formData.latitude || !formData.longitude)) {
+      if (
+        formData.answer_type === 'location' &&
+        (formData.latitude === '' || formData.latitude == null ||
+         formData.longitude === '' || formData.longitude == null)
+      ) {
         throw new Error('Placez le point à atteindre sur la carte pour une énigme de déplacement');
       }
 
@@ -79,8 +83,8 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
         title: formData.title,
         text: formData.text,
         answer_type: formData.answer_type,
-        latitude: formData.latitude || null,
-        longitude: formData.longitude || null,
+        latitude: formData.latitude === '' ? null : formData.latitude,
+        longitude: formData.longitude === '' ? null : formData.longitude,
         show_location: formData.show_location,
         image_url: formData.image_url || null,
         image_credit: formData.image_credit || '',

@@ -36,6 +36,7 @@ ENDSSH
 echo ""
 echo "🗄️  Application des migrations..."
 ssh "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
+set -e
 cd /srv/cityscape
 source env/bin/activate 2>/dev/null || true
 cd app

@@ -1816,6 +1816,19 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
   Future<void> _startLocationTracking() async {
     if (_posSub != null) return; // déjà actif
 
+    // Service de localisation désactivé au niveau de l'appareil (distinct
+    // d'une permission refusée) : sans ce contrôle explicite, le joueur
+    // pouvait rester bloqué indéfiniment sur "Recherche du signal GPS…"
+    // sans message ni bouton pour réessayer.
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (mounted) {
+        setState(() => _locError =
+            "Service de localisation désactivé sur l'appareil. Activez le GPS puis réessayez.");
+      }
+      return;
+    }
+
     // Permission de localisation
     LocationPermission perm = await Geolocator.checkPermission();
     if (perm == LocationPermission.denied) {
