@@ -1303,9 +1303,18 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
           _proxDistanceM = null;
           _proxDwell = 0;
           _locError = null;
+          _lastPingMs = 0; // ne pas hériter du throttle de l'étape précédente
         }
         // (Re)démarre le suivi GPS pour cette étape.
         _startLocationTracking();
+        if (stepChanged && _lastPos != null) {
+          // Calcule tout de suite la proximité avec la position déjà connue,
+          // sans attendre un nouveau relevé GPS : sinon, si le joueur n'a
+          // pas bougé d'au moins 5 m depuis l'étape précédente (distanceFilter),
+          // le flux de position n'émet rien et la jauge reste bloquée sur
+          // "Recherche du signal GPS…" alors que le signal est déjà disponible.
+          _pingProximity(_lastPos!);
+        }
 
       } else if (opts.isNotEmpty) {
         _answerType = 'mcq';
@@ -1861,6 +1870,15 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
   }
 
   void _onPositionUpdate(Position pos) {
+    // Filtre les relevés trop imprécis ou trop vieux : le fournisseur de
+    // localisation renvoie parfois, avant d'obtenir un vrai fix courant,
+    // une position mise en cache (potentiellement ancienne et/ou peu
+    // précise) ; sans ce garde-fou, un rayon de validation serré (20-50 m)
+    // peut être satisfait par erreur alors que le joueur est ailleurs.
+    final ageMs = DateTime.now().millisecondsSinceEpoch -
+        pos.timestamp.millisecondsSinceEpoch;
+    if (ageMs > 20000 || pos.accuracy > 30) return;
+
     _lastPos = pos;
     // Throttle : au plus une mesure de proximité toutes les ~3 s.
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -1928,7 +1946,10 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
       if (pos == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Position GPS indisponible pour le moment.')),
+          const SnackBar(
+            content: Text('Position GPS indisponible pour le moment.'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
         return;
       }
@@ -1955,7 +1976,10 @@ class _SessionPlayerPageState extends State<SessionPlayerPage> with WidgetsBindi
           });
           if (manual) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Vous n'êtes pas encore au bon endroit.")),
+              const SnackBar(
+                content: Text("Vous n'êtes pas encore au bon endroit."),
+                behavior: SnackBarBehavior.floating,
+              ),
             );
           }
         }

@@ -358,7 +358,7 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
               <input
                 type="range"
                 min="20"
-                max="200"
+                max="50"
                 step="5"
                 value={formData.radius_m}
                 onChange={(e) => updateField('radius_m', parseInt(e.target.value, 10))}
