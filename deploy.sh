@@ -32,7 +32,18 @@ git pull origin $(git branch --show-current)
 echo "✓ Pull terminé"
 ENDSSH
 
-# 3. Collecter les fichiers statiques
+# 3. Appliquer les migrations de base de données
+echo ""
+echo "🗄️  Application des migrations..."
+ssh "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
+cd /srv/cityscape
+source env/bin/activate 2>/dev/null || true
+cd app
+python manage.py migrate --noinput
+echo "✓ Migrations appliquées"
+ENDSSH
+
+# 4. Collecter les fichiers statiques
 echo ""
 echo "📦 Collecte des fichiers statiques..."
 ssh "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
@@ -43,7 +54,7 @@ python manage.py collectstatic --noinput || echo "⚠️ collectstatic échoué 
 echo "✓ Fichiers statiques collectés"
 ENDSSH
 
-# 4. Redémarrer le service Django
+# 5. Redémarrer le service Django
 echo ""
 echo "🔄 Redémarrage du service Django..."
 ssh "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
@@ -55,7 +66,7 @@ sudo systemctl status cityscape-gunicorn --no-pager -l | head -20
 echo "✓ Service redémarré"
 ENDSSH
 
-# 5. Nettoyer les anciens APK
+# 6. Nettoyer les anciens APK
 echo ""
 echo "🧹 Nettoyage des anciens APK..."
 ssh "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
@@ -71,7 +82,7 @@ echo "Fichiers restants dans downloads/ :"
 ls -lh 2>/dev/null || echo "Répertoire vide"
 ENDSSH
 
-# 6. Vérification finale
+# 7. Vérification finale
 echo ""
 echo "✅ Vérification du déploiement..."
 echo "Page d'accueil :"
