@@ -30,6 +30,7 @@ from .serializers import (
 )
 from games.models import EscapeGame, GameStep
 from games.api import _haversine_km
+from monetization.services import has_access
 
 def _normalize(s: str) -> str:
     return (s or "").strip().lower()
@@ -561,6 +562,12 @@ class StartSessionView(APIView):
 
     def post(self, request, escape_id: int):
         escape = get_object_or_404(EscapeGame, pk=escape_id)
+        if not has_access(request.user, escape):
+            return Response(
+                {"detail": "Escape payante non débloquée.", "price_cents": escape.price_cents,
+                 "currency": escape.currency},
+                status=status.HTTP_402_PAYMENT_REQUIRED,
+            )
         replay = bool(request.data.get("replay"))
         try:
             sess, created = PlaySession.objects.get_or_create(
@@ -636,6 +643,12 @@ class SessionStateView(APIView):
 
     def get(self, request, escape_id: int):
         escape = get_object_or_404(EscapeGame, pk=escape_id)
+        if not has_access(request.user, escape):
+            return Response(
+                {"detail": "Escape payante non débloquée.", "price_cents": escape.price_cents,
+                 "currency": escape.currency},
+                status=status.HTTP_402_PAYMENT_REQUIRED,
+            )
 
         # 1) Récupérer la session existante (ne PAS créer)
         try:

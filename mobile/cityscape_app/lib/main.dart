@@ -507,12 +507,59 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
       setState(() {
         _futureComments = _api.fetchComments(e.id, limit: 3);
       });
+    } on PaymentRequiredException {
+      if (!context.mounted) return;
+      await _showUnlockDialog(context, replay: replay);
     } catch (err) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Impossible de démarrer : $err')),
       );
     }
+  }
+
+  // Lancement gratuit instrumenté : l'escape est payante mais aucun euro
+  // réel ne transite tant que le backend n'a pas activé les paiements
+  // réels — le déblocage crée juste un achat simulé à 0€.
+  Future<void> _showUnlockDialog(BuildContext context, {required bool replay}) async {
+    final e = widget.escape;
+    final priceLabel = e.isPaid
+        ? '${(e.priceCents! / 100).toStringAsFixed(2)} ${e.currency}'
+        : '';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Escape payante'),
+        content: Text(
+          'Prix normal : $priceLabel.\n\n'
+          'Gratuit pendant le lancement de CityScape — débloquez-la dès maintenant, sans paiement.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Débloquer gratuitement'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await _api.unlockEscape(e.id);
+    } catch (err) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Déblocage impossible : $err')),
+      );
+      return;
+    }
+
+    if (!context.mounted) return;
+    await _startOrReplay(context, replay: replay);
   }
 
   Future<void> _openDirections() async {
@@ -671,6 +718,26 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
                   const SizedBox(width: 4),
                   Text(
                     'Créé par ${e.creator}',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          if (e.isPaid)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Row(
+                children: [
+                  Icon(
+                    e.unlocked ? Icons.lock_open : Icons.lock_outline,
+                    size: 16,
+                    color: Colors.grey.shade600,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    e.unlocked
+                        ? 'Débloquée'
+                        : '${(e.priceCents! / 100).toStringAsFixed(2)} ${e.currency} · gratuit pendant le lancement',
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                   ),
                 ],

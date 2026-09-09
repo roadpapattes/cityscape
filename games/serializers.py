@@ -62,6 +62,8 @@ class EscapeGameSerializer(serializers.ModelSerializer):
             "reject_reason",
             # privacy
             "is_private", "allowed_usernames",
+            # monétisation (lancement gratuit instrumenté)
+            "price_cents", "currency",
         )
         read_only_fields = ("id", "created_at", "owner", "creator")
 

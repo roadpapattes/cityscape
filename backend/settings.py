@@ -50,7 +50,15 @@ INSTALLED_APPS = [
     'games',
     'corsheaders',
     'surveys',
+    'monetization',
 ]
+
+# Lancement gratuit instrumenté (voir note de cadrage monétisation) : tant
+# que False, tout déblocage d'escape payante passe par un Purchase simulé
+# à 0 centime (aucun argent réel, aucune intégration Google Play Billing
+# active). Ne pas activer sans avoir terminé la Phase 3 de la feuille de
+# route (structure juridique créée, intégration Play Billing réelle).
+MONETIZATION_ENABLED = False
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
