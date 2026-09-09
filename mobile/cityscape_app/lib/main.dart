@@ -523,6 +523,7 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
   // réels — le déblocage crée juste un achat simulé à 0€.
   Future<void> _showUnlockDialog(BuildContext context, {required bool replay}) async {
     final e = widget.escape;
+    unawaited(_api.recordPaywallImpression(e.id));
     final priceLabel = e.isPaid
         ? '${(e.priceCents! / 100).toStringAsFixed(2)} ${e.currency}'
         : '';

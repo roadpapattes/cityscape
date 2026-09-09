@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CreatorLedgerEntry, Purchase
+from .models import CreatorLedgerEntry, PaywallImpression, Purchase
 
 
 @admin.register(Purchase)
@@ -15,3 +15,9 @@ class CreatorLedgerEntryAdmin(admin.ModelAdmin):
     list_display = ("id", "creator", "purchase", "share_cents", "status", "created_at")
     list_filter = ("status",)
     search_fields = ("creator__username",)
+
+
+@admin.register(PaywallImpression)
+class PaywallImpressionAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "escape", "created_at")
+    search_fields = ("user__username", "escape__title")

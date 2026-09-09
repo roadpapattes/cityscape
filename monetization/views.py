@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 
 from games.models import EscapeGame
 
-from .services import MonetizationNotReady, has_access, unlock_escape
+from .services import MonetizationNotReady, has_access, record_paywall_impression, unlock_escape
 
 
 def _purchase_payload(purchase):
@@ -60,3 +60,22 @@ class EscapeUnlockView(APIView):
             "monetization_enabled": bool(getattr(settings, "MONETIZATION_ENABLED", False)),
             "unlocked": has_access(request.user, escape),
         })
+
+
+class PaywallImpressionView(APIView):
+    """Enregistre que le joueur a vu l'écran de déblocage d'une escape
+    payante — signal de conversion (voir monetization.funnel). Appelé par
+    l'app au moment où le dialogue de déblocage s'affiche, indépendamment
+    de la suite (déblocage ou abandon)."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, escape_id: int):
+        escape = get_object_or_404(EscapeGame, pk=escape_id)
+        if not escape.is_paid:
+            return Response(
+                {"detail": "Cette escape est gratuite, pas de paywall à mesurer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        record_paywall_impression(request.user, escape)
+        return Response({"ok": True}, status=status.HTTP_201_CREATED)

@@ -76,3 +76,29 @@ class CreatorLedgerEntry(models.Model):
 
     def __str__(self):
         return f"{self.creator_id} <- {self.purchase_id} ({self.share_cents}c, {self.status})"
+
+
+class PaywallImpression(models.Model):
+    """Le joueur a vu l'écran de déblocage d'une escape payante.
+
+    Sert à calculer le taux de conversion (utilisateurs distincts avec un
+    Purchase valide / utilisateurs distincts avec au moins une impression)
+    — c'est le signal de bascule décrit dans la note de cadrage
+    monétisation, à préférer à un simple comptage de joueurs.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="paywall_impressions",
+    )
+    escape = models.ForeignKey(
+        EscapeGame, on_delete=models.CASCADE, related_name="paywall_impressions",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["escape"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} saw paywall for {self.escape_id}"
