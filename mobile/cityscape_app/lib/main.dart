@@ -3104,6 +3104,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
   late TextEditingController _durationCtrl;
   late TextEditingController _victoryCtrl;
   String _ageRating = '3'; // "3" | "12" | "18" (âge conseillé, type PEGI)
+  late TextEditingController _priceCtrl; // prix en euros, vide = gratuite
 
   // Pénalités “mauvaise réponse”
   bool _penalizeWrong = false;
@@ -3168,6 +3169,11 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
     _durationCtrl = TextEditingController(text: widget.escape.durationMinutes.toString());
     _victoryCtrl  = TextEditingController(text: widget.escape.victoryMessage ?? '');
     _ageRating    = widget.escape.ageRating;
+    _priceCtrl    = TextEditingController(
+      text: widget.escape.priceCents != null
+          ? (widget.escape.priceCents! / 100).toStringAsFixed(2)
+          : '',
+    );
     _wrongPenaltyCtrl = TextEditingController(text: '0');
 
     // Pré-remplissage pénalités si présents sur le modèle
@@ -3181,6 +3187,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
     // Écouteurs “dirty”
     for (final c in [
       _titleCtrl, _imageCtrl, _descCtrl, _durationCtrl, _victoryCtrl, _wrongPenaltyCtrl,
+      _priceCtrl,
     ]) {
       c.addListener(() {
         final changed = _hasChangedSinceSnapshot();
@@ -3227,6 +3234,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
     _durationCtrl.dispose();
     _victoryCtrl.dispose();
     _wrongPenaltyCtrl.dispose();
+    _priceCtrl.dispose();
 	_addUserCtrl.dispose();
     super.dispose();
   }
@@ -3257,6 +3265,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
       'longitude': _startLon?.toString() ?? '',
       'penalize_wrong_answers': _penalizeWrong ? '1' : '0',
       'wrong_answer_penalty': _wrongPenaltyCtrl.text,
+      'price': _priceCtrl.text,
     };
     _dirtySinceReject = false;
   }
@@ -3273,7 +3282,8 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
         _initial['latitude'] != (_startLat?.toString() ?? '') ||
         _initial['longitude'] != (_startLon?.toString() ?? '') ||
         _initial['penalize_wrong_answers'] != (_penalizeWrong ? '1' : '0') ||
-        _initial['wrong_answer_penalty']   != _wrongPenaltyCtrl.text;
+        _initial['wrong_answer_penalty']   != _wrongPenaltyCtrl.text ||
+        _initial['price']                  != _priceCtrl.text;
   }
 
   // --- Recharge le détail complet (serveur) et réhydrate l’UI ---
@@ -3291,6 +3301,9 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
         _descCtrl.text     = fresh.description;
         _victoryCtrl.text  = fresh.victoryMessage;
         _ageRating         = fresh.ageRating;
+        _priceCtrl.text    = fresh.priceCents != null
+            ? (fresh.priceCents! / 100).toStringAsFixed(2)
+            : '';
         _durationCtrl.text = '${fresh.durationMinutes}';
         _startLat          = fresh.latitude;
         _startLon          = fresh.longitude;
@@ -3484,6 +3497,8 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
       final audio = _audioCtrl.text.trim();
       final dur = int.tryParse(_durationCtrl.text.trim());
       final wrongPenalty = int.tryParse(_wrongPenaltyCtrl.text.trim()) ?? 0;
+      final priceRaw = _priceCtrl.text.trim().replaceAll(',', '.');
+      final priceCents = priceRaw.isEmpty ? null : (double.tryParse(priceRaw) ?? 0) * 100;
 
       final patch = <String, dynamic>{
         'title': _titleCtrl.text.trim(),
@@ -3499,6 +3514,7 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
         // Pénalités
         'penalize_wrong_answers': _penalizeWrong,
         'wrong_answer_penalty': wrongPenalty < 0 ? 0 : wrongPenalty,
+        if (priceCents != null) 'price_cents': priceCents.round(),
 		'is_private': _isPrivate,
 		'allowed_usernames': _allowedUsers,
       }..removeWhere((_, v) => v == null);
@@ -3531,6 +3547,9 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
     _descCtrl.text     = eg.description;
     _victoryCtrl.text  = eg.victoryMessage;
     _ageRating         = eg.ageRating;
+    _priceCtrl.text    = eg.priceCents != null
+        ? (eg.priceCents! / 100).toStringAsFixed(2)
+        : '';
     _durationCtrl.text = '${eg.durationMinutes}';
     _startLat          = eg.latitude;
     _startLon          = eg.longitude;
@@ -3916,6 +3935,25 @@ class _EscapeEditorPageState extends State<EscapeEditorPage> {
             enabled: !_isSubmitted,
             decoration: const InputDecoration(labelText: 'Durée estimée (min)'),
             keyboardType: TextInputType.number,
+          ),
+
+          const SizedBox(height: 8),
+          TextField(
+            controller: _priceCtrl,
+            enabled: !_isSubmitted,
+            decoration: const InputDecoration(
+              labelText: 'Prix (€)',
+              hintText: 'Laissez vide pour une escape gratuite',
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Text(
+              'Pendant le lancement, le déblocage reste gratuit pour tous les joueurs '
+              'quel que soit le prix affiché ici.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
           ),
 
           const SizedBox(height: 12),
