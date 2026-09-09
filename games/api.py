@@ -41,7 +41,12 @@ FALLBACK_ESCAPES = [
 ]
 
 
-def _to_dict_escape(obj) -> dict:
+def _has_access(user, escape) -> bool:
+    from monetization.services import has_access
+    return has_access(user, escape)
+
+
+def _to_dict_escape(obj, user=None) -> dict:
     if obj is None:
         return {}
     g = getattr
@@ -51,6 +56,11 @@ def _to_dict_escape(obj) -> dict:
             if hasattr(obj, n):
                 return g(obj, n)
         return default
+
+    price_cents = _first("price_cents", default=None)
+    unlocked = True
+    if price_cents:
+        unlocked = _has_access(user, obj)
 
     return {
         "id": _first("id"),
@@ -69,6 +79,9 @@ def _to_dict_escape(obj) -> dict:
         "audio_url": _first("audio_url", default=None),
         "age_rating": _first("age_rating", default="3"),
         "creator": getattr(obj, "creator_display_name", "") or "",
+        "price_cents": price_cents,
+        "currency": _first("currency", default="EUR"),
+        "unlocked": unlocked,
     }
 
 
@@ -132,7 +145,8 @@ def escapes_list(request):
     if EscapeModel is None:
         return Response(FALLBACK_ESCAPES)
     qs = _visible_qs(request)
-    data = [_to_dict_escape(e) for e in qs]
+    user = getattr(request, "user", None)
+    data = [_to_dict_escape(e, user=user) for e in qs]
     return Response(data)
 
 
@@ -152,11 +166,13 @@ def escapes_nearby(request):
 
     qs = _visible_qs(request).only(
         "id", "title", "latitude", "longitude", "city",
-        "image_url", "image_credit", "audio_url", "age_rating", "owner"
+        "image_url", "image_credit", "audio_url", "age_rating", "owner",
+        "price_cents", "currency",
     )
+    user = getattr(request, "user", None)
     out: List[dict] = []
     for e in qs:
-        d = _to_dict_escape(e)
+        d = _to_dict_escape(e, user=user)
         if d["latitude"] and d["longitude"]:
             if _haversine_km(lat, lon, d["latitude"], d["longitude"]) <= radius:
                 out.append(d)

@@ -52,6 +52,13 @@ class EscapeGame {
   final bool penalizeWrongAnswers;
   final int wrongAnswerPenalty;
 
+  // Monétisation (lancement gratuit instrumenté) : priceCents == null
+  // signifie escape gratuite. unlocked reflète l'accès du joueur courant
+  // (toujours true pour une escape gratuite).
+  final int? priceCents;
+  final String currency;
+  final bool unlocked;
+
   EscapeGame({
     required this.id,
     required this.title,
@@ -75,6 +82,9 @@ class EscapeGame {
     this.wrongAnswerPenalty = 0,
     this.isPrivate = false,
     List<String>? allowedUsers,
+    this.priceCents,
+    this.currency = 'EUR',
+    this.unlocked = true,
   }) : allowedUsers = allowedUsers ?? const [];
 
   factory EscapeGame.fromJson(Map<String, dynamic> j, String baseUrl) {
@@ -117,6 +127,11 @@ class EscapeGame {
                const <dynamic>[])
               .map((e) => '$e')
               .toList(),
+      priceCents: (j['price_cents'] as num?)?.toInt(),
+      currency: _asNonEmptyString(j['currency']) ?? 'EUR',
+      unlocked: j['unlocked'] != false,
     );
   }
+
+  bool get isPaid => priceCents != null && priceCents! > 0;
 }

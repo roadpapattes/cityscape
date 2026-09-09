@@ -63,6 +63,7 @@ urlpatterns = [
     path('api/', include('games.urls')),       # puis games (catalogue)
     path('api/', include('engagement.urls')),  # engagement D'ABORD
     path('api/', include('surveys.urls')),     # collecte + schéma questionnaires
+    path('api/', include('monetization.urls')),
     path('api/creator/feedback/', CreatorFeedbackView.as_view(), name='creator-feedback'),
 
 ]

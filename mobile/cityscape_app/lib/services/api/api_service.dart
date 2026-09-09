@@ -22,6 +22,10 @@ import '../../core/constants.dart';
 import '../../core/utils/image_utils.dart';
 import '../auth_service.dart';
 
+/// Levée par startSession quand l'escape est payante et pas encore
+/// débloquée par le joueur (réponse HTTP 402 du backend).
+class PaymentRequiredException implements Exception {}
+
 class ApiService {
   ApiService._() {
     final io = HttpClient()
@@ -874,8 +878,32 @@ class ApiService {
       },
       body: replay ? jsonEncode({'replay': true}) : null,
     );
+    if (r.statusCode == 402) {
+      throw PaymentRequiredException();
+    }
     if (r.statusCode != 200 && r.statusCode != 201) {
       throw Exception('Start: ${r.statusCode} ${r.body}');
+    }
+    return jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
+  }
+
+  // ---------- MONÉTISATION (lancement gratuit instrumenté) ----------
+  // Débloque une escape payante pour le joueur connecté. Tant que le
+  // backend a MONETIZATION_ENABLED=False, ceci crée un achat simulé à 0€ —
+  // aucun paiement réel n'a lieu.
+  Future<Map<String, dynamic>> unlockEscape(int escapeId) async {
+    final token = await AuthService.instance.getToken();
+    if (token == null) throw Exception('Non connecté');
+    final url = '$baseUrl/api/escapes/$escapeId/unlock';
+    final r = await _post(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Token $token',
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+    );
+    if (r.statusCode != 200) {
+      throw Exception('Unlock: ${r.statusCode} ${r.body}');
     }
     return jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
   }

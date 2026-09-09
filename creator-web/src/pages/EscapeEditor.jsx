@@ -331,6 +331,28 @@ function InfoTab({ escape, setEscape, canEdit, saving, onSave }) {
         </select>
       </div>
 
+      <div className="form-group">
+        <label className="form-label">Prix (€)</label>
+        <input
+          type="number"
+          className="form-input"
+          value={escape.price_cents != null ? (escape.price_cents / 100).toFixed(2) : ''}
+          onChange={(e) => {
+            const raw = e.target.value;
+            const cents = raw === '' ? null : Math.round(parseFloat(raw) * 100);
+            setEscape({ ...escape, price_cents: (cents == null || Number.isNaN(cents)) ? null : cents });
+          }}
+          min="0"
+          step="0.5"
+          placeholder="Gratuit"
+          disabled={!canEdit || saving}
+        />
+        <p className="form-help">
+          Laissez vide pour une escape gratuite. Pendant le lancement, le déblocage reste gratuit pour tous
+          les joueurs quel que soit le prix affiché ici — voir la note de cadrage monétisation.
+        </p>
+      </div>
+
       {/* Section Pénalités */}
       <div style={{ marginTop: '24px', marginBottom: '24px', padding: '16px', background: 'var(--bg-light)', borderRadius: '8px' }}>
         <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '18px' }}>⏱️ Pénalités</h3>

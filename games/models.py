@@ -73,6 +73,16 @@ class EscapeGame(models.Model):
     # (legacy, optionnel)
     end_code = models.CharField(max_length=32, blank=True, null=True, default=None)
 
+    # Monétisation (lancement gratuit instrumenté : prix affiché mais jamais
+    # facturé tant que settings.MONETIZATION_ENABLED est False — voir l'app
+    # "monetization"). null/0 = escape gratuite.
+    price_cents = models.PositiveIntegerField(null=True, blank=True, default=None)
+    currency = models.CharField(max_length=3, default="EUR")
+
+    @property
+    def is_paid(self):
+        return bool(self.price_cents)
+
     def __str__(self):
         return f"{self.title} ({self.city})"
 
