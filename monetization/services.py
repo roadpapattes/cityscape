@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import transaction
 
-from .models import CreatorLedgerEntry, Purchase
+from .models import CreatorLedgerEntry, PaywallImpression, Purchase
 
 # Barème provisoire (Phase 4 de la note de cadrage) — non appliqué tant que
 # les Purchase restent en payment_provider="free_launch".
@@ -62,6 +62,13 @@ def unlock_escape(user, escape) -> Purchase:
     # Garde-fou : un déblocage simulé ne doit jamais générer de dette envers
     # le créateur, puisqu'aucun argent réel n'a été perçu.
     return purchase
+
+
+def record_paywall_impression(user, escape) -> PaywallImpression:
+    """Enregistre que le joueur a vu l'écran de déblocage pour cette
+    escape — signal utilisé pour le taux de conversion (voir
+    monetization.funnel.conversion_report)."""
+    return PaywallImpression.objects.create(user=user, escape=escape)
 
 
 def record_creator_share(purchase: Purchase) -> CreatorLedgerEntry | None:

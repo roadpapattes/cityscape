@@ -4,8 +4,9 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
 from games.models import EscapeGame
-from .models import CreatorLedgerEntry, Purchase
-from .services import get_valid_purchase, has_access, unlock_escape
+from .funnel import conversion_report
+from .models import CreatorLedgerEntry, PaywallImpression, Purchase
+from .services import get_valid_purchase, has_access, record_paywall_impression, unlock_escape
 
 User = get_user_model()
 
@@ -105,3 +106,51 @@ class SessionGateTests(TestCase):
         unlock_escape(self.user, escape)
         r = self.client.post(f"/api/escapes/{escape.id}/sessions/start")
         self.assertIn(r.status_code, (200, 201))
+
+
+class PaywallImpressionTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="dave", password="pw")
+        self.token = Token.objects.create(user=self.user)
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+
+    def test_impression_endpoint_records_event(self):
+        escape = _make_escape(price_cents=399)
+        r = self.client.post(f"/api/escapes/{escape.id}/paywall_impression")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(PaywallImpression.objects.filter(user=self.user, escape=escape).count(), 1)
+
+    def test_impression_rejected_on_free_escape(self):
+        escape = _make_escape(price_cents=None)
+        r = self.client.post(f"/api/escapes/{escape.id}/paywall_impression")
+        self.assertEqual(r.status_code, 400)
+
+
+class ConversionReportTests(TestCase):
+    def setUp(self):
+        self.alice = User.objects.create_user(username="alice2", password="pw")
+        self.bob = User.objects.create_user(username="bob2", password="pw")
+        self.carol = User.objects.create_user(username="carol2", password="pw")
+
+    def test_conversion_rate_computed_from_distinct_users(self):
+        escape = _make_escape(price_cents=500)
+        for u in (self.alice, self.bob, self.carol):
+            record_paywall_impression(u, escape)
+        # Repeated impression for alice must not inflate the denominator.
+        record_paywall_impression(self.alice, escape)
+        unlock_escape(self.alice, escape)
+
+        rows = conversion_report()
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        self.assertEqual(row.impressions, 3)
+        self.assertEqual(row.unlocks, 1)
+        self.assertAlmostEqual(row.conversion_rate, 1 / 3)
+
+    def test_no_impressions_means_zero_rate_not_error(self):
+        escape = _make_escape(price_cents=500)
+        unlock_escape(self.alice, escape)
+        rows = conversion_report()
+        self.assertEqual(rows[0].impressions, 0)
+        self.assertEqual(rows[0].conversion_rate, 0.0)

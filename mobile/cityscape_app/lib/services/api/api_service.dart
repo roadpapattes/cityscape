@@ -908,6 +908,25 @@ class ApiService {
     return jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
   }
 
+  // Signal de conversion (taux de bascule) : appelé quand le dialogue de
+  // déblocage s'affiche, indépendamment de la suite. Best-effort — une
+  // erreur ne doit jamais bloquer l'affichage du dialogue.
+  Future<void> recordPaywallImpression(int escapeId) async {
+    try {
+      final token = await AuthService.instance.getToken();
+      if (token == null) return;
+      await _post(
+        Uri.parse('$baseUrl/api/escapes/$escapeId/paywall_impression'),
+        headers: {
+          'Authorization': 'Token $token',
+          'Content-Type': 'application/json; charset=utf-8',
+        },
+      );
+    } catch (_) {
+      // silencieux : la mesure ne doit jamais gêner l'expérience du joueur
+    }
+  }
+
   Future<Map<String, dynamic>> getSessionState(int escapeId) async {
     final token = await AuthService.instance.getToken();
     if (token == null) throw Exception('Non connecté');
