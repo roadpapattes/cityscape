@@ -157,6 +157,11 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'engagement.exceptions.custom_exception_handler',
 }
 
+# django-ratelimit : sans ceci, la clé 'ip' retombe sur REMOTE_ADDR, qui vaut
+# l'adresse de nginx (127.0.0.1) pour toutes les requêtes — toutes les limites
+# par IP partageaient donc un seul compteur global. Voir engagement/ratelimit_ip.py
+RATELIMIT_IP_META_KEY = 'engagement.ratelimit_ip.client_ip'
+
 # Cache partagé entre tous les workers Gunicorn (utilisé par django-ratelimit).
 # Fichier sur disque plutôt que LocMemCache (non partagé entre workers) ou
 # DatabaseCache (contention d'écriture sur le même fichier que db.sqlite3).
