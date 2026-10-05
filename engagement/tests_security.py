@@ -74,6 +74,70 @@ class AccountDeletionHardeningTests(TestCase):
         self.assertEqual(last.status_code, 429)
 
 
+class ClientIpResolutionTests(TestCase):
+    """Derrière nginx, REMOTE_ADDR vaut 127.0.0.1 pour tout le monde : sans
+    résolveur, toutes les limites par IP partagent un compteur global."""
+
+    def _request(self, **meta):
+        from django.test import RequestFactory
+        request = RequestFactory().post("/")
+        request.META.update(meta)
+        return request
+
+    def test_prefers_the_header_nginx_overwrites(self):
+        from .ratelimit_ip import client_ip
+        request = self._request(HTTP_X_REAL_IP="203.0.113.7", REMOTE_ADDR="127.0.0.1")
+        self.assertEqual(client_ip(request), "203.0.113.7")
+
+    def test_falls_back_to_remote_addr_without_proxy(self):
+        from .ratelimit_ip import client_ip
+        request = self._request(REMOTE_ADDR="198.51.100.4")
+        self.assertEqual(client_ip(request), "198.51.100.4")
+
+    def test_spoofable_forwarded_for_is_ignored(self):
+        from .ratelimit_ip import client_ip
+        request = self._request(
+            HTTP_X_FORWARDED_FOR="1.2.3.4", HTTP_X_REAL_IP="203.0.113.7",
+            REMOTE_ADDR="127.0.0.1",
+        )
+        self.assertEqual(client_ip(request), "203.0.113.7")
+
+    def test_garbage_never_raises(self):
+        """django_ratelimit._get_ip lève sur une valeur illisible, ce qui
+        transformerait la page de connexion en erreur 500."""
+        from .ratelimit_ip import client_ip
+        for junk in ("", "pas-une-ip", "999.999.999.999", "<script>"):
+            request = self._request(HTTP_X_REAL_IP=junk, REMOTE_ADDR="")
+            self.assertEqual(client_ip(request), "0.0.0.0")
+
+
+@override_settings(CACHES=LOCMEM_CACHE)
+class PerClientRateLimitTests(TestCase):
+    """Le test qui compte : deux clients distincts doivent avoir des
+    compteurs indépendants."""
+
+    URL = "/api/auth/delete-account-request"
+
+    def setUp(self):
+        cache.clear()
+        mail.outbox = []
+
+    def _post(self, ip):
+        return self.client.post(
+            self.URL, {"email": "inconnu@example.com"},
+            content_type="application/json", HTTP_X_REAL_IP=ip,
+        )
+
+    def test_one_client_exhausting_its_quota_does_not_block_another(self):
+        for _ in range(4):
+            self._post("203.0.113.7")
+        self.assertEqual(self._post("203.0.113.7").status_code, 429)
+
+        # Un second client, parfaitement légitime, ne doit pas payer pour le
+        # premier — c'était le cas avant ce correctif.
+        self.assertEqual(self._post("198.51.100.4").status_code, 200)
+
+
 @override_settings(CACHES=LOCMEM_CACHE)
 class AnswerSubmissionRateLimitTests(TestCase):
     """Faiblesse 04 : sans borne sur les tentatives, la cible d'une étape
