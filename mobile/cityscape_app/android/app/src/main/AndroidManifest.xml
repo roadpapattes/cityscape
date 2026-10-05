@@ -10,11 +10,15 @@
         android:name="${applicationName}"
 		android:label="CityScape"
         android:icon="@mipmap/ic_launcher"
-        android:hardwareAccelerated="true">
-        <!-- ⚠️ Clé Google Maps (le placeholder sera remplacé via Gradle) -->
+        android:hardwareAccelerated="true"
+        android:allowBackup="false"
+        android:fullBackupContent="false">
+        <!-- Clé Google Maps injectée par Gradle depuis local.properties (ou la
+             variable d'environnement MAPS_API_KEY) : ne jamais écrire la valeur
+             en dur ici, ce fichier est versionné dans un dépôt public. -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAsIgjoXbHF3TUhY2rOHtkYvqRxhqW7VIM" />
+            android:value="${MAPS_API_KEY}" />
 
         <activity
             android:name=".MainActivity"

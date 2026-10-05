@@ -1,5 +1,9 @@
 # engagement/views.py
-from .ratelimit_decorators import auth_rate_limit, password_reset_rate_limit, google_signin_rate_limit, email_verify_rate_limit
+from .ratelimit_decorators import (
+    auth_rate_limit, password_reset_rate_limit, google_signin_rate_limit,
+    email_verify_rate_limit, account_deletion_rate_limit,
+    answer_submit_rate_limit, proximity_ping_rate_limit,
+)
 import re
 import unicodedata
 import logging
@@ -927,6 +931,7 @@ class SessionHintView(APIView):
 
 
 
+@answer_submit_rate_limit
 class SessionAnswerView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -1182,6 +1187,7 @@ class SessionAnswerView(APIView):
 
 
 
+@proximity_ping_rate_limit
 class SessionProximityView(APIView):
     """
     Jauge chaud/froid pour l'étape courante de type « Point à atteindre ».
@@ -1520,13 +1526,30 @@ class GoogleSignInView(APIView):
 
 
 # ---------------- Account Deletion ----------------
+@account_deletion_rate_limit
 class AccountDeletionRequestView(APIView):
-    """Handle account deletion requests from users"""
+    """Handle account deletion requests from users.
+
+    Endpoint volontairement non authentifié : la page publique de
+    suppression de compte doit rester accessible sans installer l'app
+    (exigence Play Store). Trois protections en conséquence :
+    - limite de débit par IP (relais d'email sinon ouvert à tous) ;
+    - réponse strictement identique que le compte existe ou non, sinon
+      l'endpoint devient un oracle d'énumération d'adresses ;
+    - le motif saisi n'est JAMAIS renvoyé dans l'email au titulaire du
+      compte, sans quoi n'importe qui pourrait lui faire livrer du texte
+      arbitraire depuis l'adresse officielle CityScape (hameçonnage).
+    """
     permission_classes = [permissions.AllowAny]
+
+    # Réponse unique, pour ne rien révéler sur l'existence du compte.
+    GENERIC_RESPONSE = {
+        "detail": "Si un compte existe avec cette adresse, un email de confirmation a été envoyé."
+    }
 
     def post(self, request):
         email = request.data.get('email', '').strip().lower()
-        reason = request.data.get('reason', '').strip()
+        reason = request.data.get('reason', '').strip()[:500]
 
         if not email:
             return Response(
@@ -1538,12 +1561,7 @@ class AccountDeletionRequestView(APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            # Don't reveal if user exists or not (security)
-            # Always return success to prevent email enumeration
-            return Response(
-                {"detail": "Si un compte existe avec cette adresse, un email de confirmation a été envoyé."},
-                status=status.HTTP_200_OK
-            )
+            return Response(self.GENERIC_RESPONSE, status=status.HTTP_200_OK)
 
         # Send confirmation email
         try:
@@ -1555,8 +1573,6 @@ Nous avons reçu une demande de suppression de votre compte CityScape.
 Votre compte et toutes vos données associées seront supprimés dans un délai de 30 jours.
 
 Si vous n'avez pas demandé cette suppression, veuillez nous contacter immédiatement à feedback.enigmapolis@gmail.com
-
-Raison de la suppression : {reason if reason else "Non spécifiée"}
 
 ---
 Informations du compte :
@@ -1604,7 +1620,4 @@ Action requise : Supprimer le compte dans les 30 jours.
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        return Response(
-            {"detail": "Demande de suppression enregistrée. Un email de confirmation vous a été envoyé."},
-            status=status.HTTP_200_OK
-        )
+        return Response(self.GENERIC_RESPONSE, status=status.HTTP_200_OK)
