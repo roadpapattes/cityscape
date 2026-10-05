@@ -28,13 +28,12 @@ CSRF_TRUSTED_ORIGINS = _split_env_list("CSRF_TRUSTED_ORIGINS", "")
 # Django reçoit HTTP depuis le NAS, mais le client est en HTTPS :
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# (Recommandé) CORS si tu testes depuis une app/WEB :
-# pip install django-cors-headers
-CORS_ALLOWED_ORIGINS = [
-    "https://api.cityscape.ovh",
-    "http://localhost:3000",   # si tu fais des tests front local
-    "http://10.0.2.2:8000",    # si tu testes via émulateur Android
-]
+# CORS : piloté par l'environnement comme ALLOWED_HOSTS, pour ne pas laisser
+# d'origines de développement actives en production. Ajouter localhost dans le
+# .env local (CORS_ALLOWED_ORIGINS=https://api.cityscape.ovh,http://localhost:3000)
+CORS_ALLOWED_ORIGINS = _split_env_list(
+    "CORS_ALLOWED_ORIGINS", "https://api.cityscape.ovh"
+)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
