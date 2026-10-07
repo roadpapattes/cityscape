@@ -34,7 +34,22 @@ from .serializers import (
 )
 from games.models import EscapeGame, GameStep
 from games.api import _haversine_km
+from games.visibility import can_play
 from monetization.services import has_access
+from rest_framework.exceptions import PermissionDenied
+
+
+def _playable_escape(user, escape_id):
+    """Escape demandée, après contrôle de visibilité.
+
+    Tous les endpoints de session passent par ici : sans ce garde-fou, un
+    identifiant deviné suffisait à jouer une escape privée, un brouillon ou
+    un contenu rejeté par la modération (cf. engagement/tests_idor.py).
+    """
+    escape = get_object_or_404(EscapeGame, pk=escape_id)
+    if not can_play(user, escape):
+        raise PermissionDenied("Cette escape n'est pas accessible.")
+    return escape
 
 def _normalize(s: str) -> str:
     return (s or "").strip().lower()
@@ -565,7 +580,7 @@ class StartSessionView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, escape_id: int):
-        escape = get_object_or_404(EscapeGame, pk=escape_id)
+        escape = _playable_escape(request.user, escape_id)
         if not has_access(request.user, escape):
             return Response(
                 {"detail": "Escape payante non débloquée.", "price_cents": escape.price_cents,
@@ -646,7 +661,7 @@ class SessionStateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, escape_id: int):
-        escape = get_object_or_404(EscapeGame, pk=escape_id)
+        escape = _playable_escape(request.user, escape_id)
         if not has_access(request.user, escape):
             return Response(
                 {"detail": "Escape payante non débloquée.", "price_cents": escape.price_cents,
@@ -716,7 +731,7 @@ class SessionSyncTimeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, escape_id: int):
-        escape = get_object_or_404(EscapeGame, pk=escape_id)
+        escape = _playable_escape(request.user, escape_id)
 
         try:
             sess = PlaySession.objects.get(user=request.user, escape=escape)
@@ -750,7 +765,7 @@ class SessionHistoryView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, escape_id: int):
-        escape = get_object_or_404(EscapeGame, pk=escape_id)
+        escape = _playable_escape(request.user, escape_id)
 
         # Récupère la session existante (ne PAS créer)
         try:
@@ -859,7 +874,7 @@ class SessionHintView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, escape_id: int):
-        escape = get_object_or_404(EscapeGame, pk=escape_id)
+        escape = _playable_escape(request.user, escape_id)
         sess = (PlaySession.objects
                 .filter(user=request.user, escape=escape, completed_at__isnull=True)
                 .order_by("-id")
@@ -945,7 +960,7 @@ class SessionAnswerView(APIView):
         - 'narration': {}  (aucune réponse, accepté tel quel)
         Optionnel: session_seconds (int) - temps de jeu depuis le dernier sync
         """
-        escape = get_object_or_404(EscapeGame, pk=escape_id)
+        escape = _playable_escape(request.user, escape_id)
         sess = (PlaySession.objects
                 .filter(user=request.user, escape=escape, completed_at__isnull=True)
                 .order_by("-id")
@@ -1204,7 +1219,7 @@ class SessionProximityView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, escape_id: int):
-        escape = get_object_or_404(EscapeGame, pk=escape_id)
+        escape = _playable_escape(request.user, escape_id)
         sess = (PlaySession.objects
                 .filter(user=request.user, escape=escape, completed_at__isnull=True)
                 .order_by("-id")
@@ -1318,6 +1333,19 @@ class RatingsListCreateView(APIView):
             return Response({"detail": "Authentification requise."}, status=status.HTTP_401_UNAUTHORIZED)
 
         escape = get_object_or_404(EscapeGame, pk=escape_id)
+
+        # Même règle que CanRateView, mais appliquée côté serveur : elle n'y
+        # était qu'indicative, et l'app se contentait de masquer le bouton.
+        # Sans ce contrôle, n'importe qui peut noter une escape sans y avoir
+        # joué — et donc couler celle d'un autre créateur.
+        has_completed = PlaySession.objects.filter(
+            user=request.user, escape=escape, completed_at__isnull=False
+        ).exists()
+        if not has_completed:
+            return Response(
+                {"detail": "Vous devez avoir terminé cette escape pour la noter."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         # On injecte l'escape depuis l'URL pour satisfaire le serializer
         payload = {
