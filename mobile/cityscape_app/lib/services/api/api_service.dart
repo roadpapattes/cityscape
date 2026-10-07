@@ -26,12 +26,33 @@ import '../auth_service.dart';
 /// débloquée par le joueur (réponse HTTP 402 du backend).
 class PaymentRequiredException implements Exception {}
 
+/// Proxy d'audit, renseigne uniquement au build :
+///   flutter run --dart-define=DEBUG_PROXY=127.0.0.1:8080
+/// Vide par defaut, donc inactif.
+const String _kDebugProxy = String.fromEnvironment('DEBUG_PROXY');
+
 class ApiService {
   ApiService._() {
     final io = HttpClient()
       ..connectionTimeout = const Duration(seconds: 10)
       ..idleTimeout = const Duration(seconds: 15)
       ..maxConnectionsPerHost = 6;
+
+    // Audit du trafic au proxy (mitmproxy) — DEBUG UNIQUEMENT.
+    //
+    // Le client HTTP de Dart ignore le proxy systeme d'Android : sans ce
+    // bloc, l'app reste invisible a une capture, meme proxy configure.
+    //
+    // Double verrou : kDebugMode exclut tout build release, et la constante
+    // doit etre passee explicitement au build. badCertificateCallback
+    // accepte n'importe quel certificat, ce qui annulerait toute protection
+    // TLS s'il etait actif en production — d'ou les deux garde-fous.
+    if (kDebugMode && _kDebugProxy.isNotEmpty) {
+      io.findProxy = (uri) => 'PROXY $_kDebugProxy';
+      io.badCertificateCallback = (cert, host, port) => true;
+      debugPrint('[AUDIT] Trafic redirige vers le proxy $_kDebugProxy');
+    }
+
     _client = IOClient(io);
   }
 

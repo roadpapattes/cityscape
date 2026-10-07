@@ -5,4 +5,25 @@
     <domain includeSubdomains="true">127.0.0.1</domain>
     <domain includeSubdomains="true">localhost</domain>
   </domain-config>
+
+  <!-- DEBUG UNIQUEMENT — audit du trafic au proxy (mitmproxy).
+
+       Depuis Android 7, une application ne fait plus confiance aux autorités
+       de certification installées par l'utilisateur : sans ce bloc, l'app
+       refuse le certificat du proxy et l'interception échoue.
+
+       Ce fichier appartient au jeu de sources `debug` : il n'est JAMAIS
+       inclus dans un build release. Ne pas le déplacer vers `main`, sous
+       peine de rendre le trafic des joueurs interceptable sur un appareil
+       préparé par un attaquant.
+
+       `system` est conservé pour que l'app fonctionne normalement quand
+       aucun proxy n'est en place. -->
+  <domain-config>
+    <domain includeSubdomains="true">api.cityscape.ovh</domain>
+    <trust-anchors>
+      <certificates src="system" />
+      <certificates src="user" />
+    </trust-anchors>
+  </domain-config>
 </network-security-config>
