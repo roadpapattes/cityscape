@@ -3,7 +3,7 @@ from django.urls import path
 from django.http import JsonResponse
 from rest_framework.routers import DefaultRouter
 from .views import (
-    RegisterView, LoginView, LogoutView, MeView,
+    RegisterView, LoginView, LogoutView, MeView, ChangePasswordView,
     PasswordResetRequestView, PasswordResetConfirmView,
     EmailVerifyConfirmView, EmailVerifyResendView,
     GoogleSignInView,
@@ -23,6 +23,7 @@ urlpatterns = [
     path('auth/register', RegisterView.as_view()),
     path('auth/login',    LoginView.as_view()),
     path('auth/logout',   LogoutView.as_view()),
+    path('auth/change-password', ChangePasswordView.as_view()),
     path('auth/me',       MeView.as_view()),
     path('auth/password-reset/request', PasswordResetRequestView.as_view()),
     path('auth/password-reset/confirm', PasswordResetConfirmView.as_view()),

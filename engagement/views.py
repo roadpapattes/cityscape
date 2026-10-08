@@ -1,7 +1,7 @@
 # engagement/views.py
 from .ratelimit_decorators import (
     auth_rate_limit, password_reset_rate_limit, google_signin_rate_limit,
-    email_verify_rate_limit, account_deletion_rate_limit,
+    email_verify_rate_limit, account_deletion_rate_limit, password_change_rate_limit,
     answer_submit_rate_limit, proximity_ping_rate_limit,
 )
 import re
@@ -11,6 +11,8 @@ log = logging.getLogger(__name__)
 from typing import Dict, Any
 
 from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction, IntegrityError
 from django.db.models import Avg, Count
 from django.shortcuts import get_object_or_404
@@ -37,6 +39,22 @@ from games.api import _haversine_km
 from games.visibility import can_play
 from monetization.services import has_access
 from rest_framework.exceptions import PermissionDenied
+
+
+def _delivrer_jeton(user):
+    """Emet (ou reconduit) le jeton d'API et repart sur une fenetre neuve.
+
+    Sans la remise a zero, un joueur revenant apres plus de 90 jours se
+    connecterait avec succes — la connexion ne passe pas par
+    l'authentification par jeton — puis serait ejecte des sa premiere
+    requete par l'expiration glissante. Soit une boucle de connexion
+    incomprehensible de son point de vue.
+    """
+    token, _ = Token.objects.get_or_create(user=user)
+    profil, _ = UserProfile.objects.get_or_create(user=user)
+    profil.token_last_used = timezone.now()
+    profil.save(update_fields=["token_last_used"])
+    return token
 
 
 def _playable_escape(user, escape_id):
@@ -133,7 +151,7 @@ L'équipe CityScape
             log.error(f"Failed to send verification email: {e}")
             email_sent = False
 
-        token, _ = Token.objects.get_or_create(user=user)
+        token = _delivrer_jeton(user)
         return Response({
             "token": token.key,
             "user": UserSerializer(user).data,
@@ -153,7 +171,7 @@ class LoginView(APIView):
         )
         if not user:
             return Response({"detail": "Invalid credentials."}, status=400)
-        token, _ = Token.objects.get_or_create(user=user)
+        token = _delivrer_jeton(user)
         return Response({
             "token": token.key,
             "user": UserSerializer(user).data,
@@ -167,6 +185,59 @@ class LogoutView(APIView):
     def post(self, request):
         Token.objects.filter(user=request.user).delete()
         return Response({"detail": "Logged out."}, status=200)
+
+
+@password_change_rate_limit
+class ChangePasswordView(APIView):
+    """Changement de mot de passe par un utilisateur connecte.
+
+    L'application appelait cet endpoint depuis le depart alors qu'il
+    n'existait pas : Django repondait sa page 404 en HTML, que l'app
+    tentait de lire comme du JSON. La fonctionnalite n'avait donc jamais
+    fonctionne.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        ancien = (request.data.get("old_password") or "").strip()
+        nouveau = (request.data.get("new_password") or "").strip()
+
+        if not ancien or not nouveau:
+            return Response(
+                {"detail": "Mot de passe actuel et nouveau mot de passe requis."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = request.user
+        if not user.check_password(ancien):
+            return Response(
+                {"detail": "Mot de passe actuel incorrect."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Memes exigences qu'a l'inscription : longueur, robustesse,
+        # similarite avec les donnees du compte.
+        try:
+            validate_password(nouveau, user=user)
+        except DjangoValidationError as exc:
+            return Response({"detail": " ".join(exc.messages)},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(nouveau)
+        user.save()
+
+        # L'ancien jeton est revoque : un attaquant qui l'aurait derobe
+        # partage exactement le meme que la victime, donc le conserver
+        # viderait l'operation de son sens. Un jeton neuf est emis et
+        # renvoye, pour que l'appareil legitime reste connecte.
+        Token.objects.filter(user=user).delete()
+        token = _delivrer_jeton(user)
+
+        return Response(
+            {"detail": "Mot de passe modifié.", "token": token.key},
+            status=status.HTTP_200_OK,
+        )
 
 
 class MeView(APIView):
@@ -1515,7 +1586,7 @@ class GoogleSignInView(APIView):
                 UserProfile.objects.update_or_create(
                     user=existing_user, defaults={"email_verified": True}
                 )
-                token, _ = Token.objects.get_or_create(user=existing_user)
+                token = _delivrer_jeton(existing_user)
                 return Response({
                     "token": token.key,
                     "user": UserSerializer(existing_user).data,
@@ -1545,7 +1616,7 @@ class GoogleSignInView(APIView):
                 UserProfile.objects.create(user=user, email_verified=True)
 
                 # Create token
-                token = Token.objects.create(user=user)
+                token = _delivrer_jeton(user)
 
                 return Response({
                     "token": token.key,

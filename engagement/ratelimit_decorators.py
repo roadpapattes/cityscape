@@ -15,6 +15,11 @@ email_verify_rate_limit = method_decorator(ratelimit(key='ip', rate='5/h', metho
 # brûler le quota SMTP, ce qui couperait les réinitialisations de mot de passe.
 account_deletion_rate_limit = method_decorator(ratelimit(key='ip', rate='3/h', method='POST', block=True), name='post')
 
+# Le changement de mot de passe exige l'ancien : sans limite, l'endpoint
+# devient un oracle permettant de le deviner par essais successifs. Limite
+# par utilisateur plutot que par IP, l'appelant etant authentifie.
+password_change_rate_limit = method_decorator(ratelimit(key='user', rate='5/h', method='POST', block=True), name='post')
+
 # Rate limits for game actions
 # Borne les tentatives : protège le brute-force de réponses, et surtout la
 # triangulation de la cible d'une étape "Point à atteindre" par recherche
