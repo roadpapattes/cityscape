@@ -74,6 +74,56 @@ class AccountDeletionHardeningTests(TestCase):
         self.assertEqual(last.status_code, 429)
 
 
+@override_settings(CACHES=LOCMEM_CACHE)
+class PasswordResetRevokesTokensTests(TestCase):
+    """Un jeton DRF n'expire jamais : si la reinitialisation du mot de passe
+    ne le revoque pas, la victime d'un vol de jeton ne peut pas evincer
+    l'attaquant — alors que c'est exactement le geste qu'elle fera."""
+
+    def setUp(self):
+        cache.clear()
+        mail.outbox = []
+        self.user = User.objects.create_user(
+            username="victime", email="victime@example.com", password="ancien-mdp",
+        )
+        self.token = Token.objects.create(user=self.user)
+
+    def _reset(self):
+        """Parcours complet : demande du code, puis confirmation."""
+        from engagement.models import PasswordResetToken
+        self.client.post(
+            "/api/auth/password-reset/request", {"email": "victime@example.com"},
+            content_type="application/json",
+        )
+        code = PasswordResetToken.objects.filter(user=self.user, used=False).latest("created_at").code
+        return self.client.post(
+            "/api/auth/password-reset/confirm",
+            {"email": "victime@example.com", "code": code, "new_password": "nouveau-mdp-solide-42"},
+            content_type="application/json",
+        )
+
+    def test_stolen_token_stops_working_after_reset(self):
+        pirate = APIClient()
+        pirate.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+        self.assertEqual(pirate.get("/api/auth/me").status_code, 200)
+
+        r = self._reset()
+        self.assertEqual(r.status_code, 200, r.content)
+
+        # L'attaquant doit etre evince, sans avoir rien fait entre-temps.
+        self.assertEqual(pirate.get("/api/auth/me").status_code, 401)
+        self.assertFalse(Token.objects.filter(user=self.user).exists())
+
+    def test_other_users_tokens_are_untouched(self):
+        """Controle inverse : on ne deconnecte que le compte concerne."""
+        autre = User.objects.create_user(username="autre", email="autre@example.com", password="pw")
+        jeton_autre = Token.objects.create(user=autre)
+
+        self._reset()
+
+        self.assertTrue(Token.objects.filter(key=jeton_autre.key).exists())
+
+
 class ClientIpResolutionTests(TestCase):
     """Derrière nginx, REMOTE_ADDR vaut 127.0.0.1 pour tout le monde : sans
     résolveur, toutes les limites par IP partagent un compteur global."""

@@ -242,6 +242,18 @@ class ApiService {
 
   int _previewLen(String s, [int max = 300]) => s.length < max ? s.length : max;
 
+  /// Jeton refuse par le serveur : on deconnecte localement.
+  ///
+  /// Un jeton peut devenir invalide sans que l'app le sache — revoque par
+  /// une reinitialisation de mot de passe, ou supprime depuis un autre
+  /// appareil. Sans ce traitement, le joueur reste bloque sur un mur
+  /// d'erreurs au lieu d'etre ramene a l'ecran de connexion.
+  Future<void> _onUnauthorized() async {
+    if (await AuthService.instance.getToken() == null) return; // deja deconnecte
+    debugPrint('[AUTH] Jeton refuse par le serveur, deconnexion locale');
+    await AuthService.instance.logout();
+  }
+
   Future<http.Response> _sendWithRetryReq(
     http.Request template, {
     int maxAttempts = 3,
@@ -274,6 +286,7 @@ class ApiService {
           backoff *= 2;
           continue;
         }
+        if (r.statusCode == 401) await _onUnauthorized();
         return r;
       } on TimeoutException {
         if (i == maxAttempts) rethrow;

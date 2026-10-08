@@ -361,8 +361,16 @@ class PasswordResetConfirmView(APIView):
         reset_token.used = True
         reset_token.save()
 
-        # Invalidate all other tokens for this user
+        # Invalidate all other reset codes for this user
         PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
+
+        # Revoque les jetons d'API : c'est le coeur de la reinitialisation.
+        # Un jeton DRF n'expire jamais ; sans cette ligne, quelqu'un qui en a
+        # derobe un garde un acces complet meme apres que la victime a change
+        # son mot de passe — or c'est precisement le geste qu'on fait quand on
+        # soupconne une compromission. Effet de bord assume : les appareils
+        # legitimes du joueur sont deconnectes et devront se reconnecter.
+        Token.objects.filter(user=user).delete()
 
         return Response(
             {"message": "Mot de passe réinitialisé avec succès"},
