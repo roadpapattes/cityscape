@@ -3,7 +3,7 @@
 name: cityscape
 description: Client Flutter pour Escape City (liste, carte, favoris, auth, notes, commentaires, mode créateur)
 publish_to: "none"
-version: 0.3.29+43
+version: 0.3.30+44
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
