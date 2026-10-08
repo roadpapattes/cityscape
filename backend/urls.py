@@ -25,8 +25,8 @@ def app_config(_):
     été rebumpé).
     """
     return JsonResponse({
-        "min_version": "0.3.28",
-        "current_version": "0.3.28",
+        "min_version": "0.3.29",
+        "current_version": "0.3.29",
         "force_update": True,
         "update_message": "Une nouvelle version est disponible! Mettez à jour pour profiter des dernières fonctionnalités."
     })
