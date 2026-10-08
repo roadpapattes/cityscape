@@ -1167,11 +1167,16 @@ class SessionAnswerView(APIView):
             entry["value"] = "narration"
 
         elif st.answer_type == getattr(GameStep, "ANSWER_LOCATION", "location"):
-            u_lat, u_lon = _parse_latlon(request.data or {})
+            # On n'enregistre QUE le fait que l'etape a ete validee.
+            #
+            # La position exacte du joueur etait auparavant conservee ici,
+            # horodatee et indefiniment : une trace de l'endroit ou une
+            # personne — parfois mineure — se trouvait physiquement. Elle
+            # n'etait lue par rien (l'historique de l'app n'affiche que le
+            # type et la valeur), donc c'etait une donnee sensible gardee
+            # sans usage. La validation, elle, a deja eu lieu plus haut et
+            # n'a pas besoin d'etre rejouee.
             entry["value"] = "location"
-            if u_lat is not None and u_lon is not None:
-                entry["latitude"] = u_lat
-                entry["longitude"] = u_lon
 
         answers_map[str(st.id)] = entry
         sess.answers = answers_map
@@ -1648,7 +1653,13 @@ Action requise : Supprimer le compte dans les 30 jours.
                 fail_silently=True,
             )
 
-            log.info(f"Account deletion request for user {user.username} ({user.email})")
+            # Identifiant technique seulement : journaliser le pseudo et
+            # l'email ferait persister dans les logs, sans duree de
+            # conservation definie, les donnees personnelles de quelqu'un
+            # qui demande precisement leur effacement. L'id suffit pour
+            # retrouver le compte, et la notification admin reste le canal
+            # de suivi.
+            log.info("Account deletion request for user id=%s", user.id)
 
         except Exception as e:
             log.error(f"Error sending deletion email: {e}")
