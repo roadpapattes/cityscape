@@ -59,11 +59,22 @@ ENDSSH
 echo ""
 echo "🔄 Redémarrage du service Django..."
 ssh "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
+# set -e : sans lui, un redémarrage réellement échoué affichait quand même
+# "✓ Service redémarré" et le déploiement se poursuivait (même défaut que
+# celui corrigé sur migrate).
+set -e
 echo "Redémarrage de cityscape-gunicorn..."
 sudo systemctl restart cityscape-gunicorn
 echo ""
 echo "Status du service:"
-sudo systemctl status cityscape-gunicorn --no-pager -l | head -20
+# Pas de sudo ici : la règle sudoers ne couvre que `systemctl status
+# cityscape-gunicorn` sans argument, donc l'ajout de `--no-pager -l` ne
+# correspondait plus et réclamait un mot de passe — l'affichage échouait
+# donc systématiquement. Ces deux requêtes ne demandent aucun privilège,
+# et is-active renvoie un code non nul si le service n'a pas redémarré,
+# ce qui fait maintenant échouer le déploiement.
+systemctl is-active cityscape-gunicorn
+systemctl show cityscape-gunicorn -p ActiveState -p SubState -p ActiveEnterTimestamp
 echo "✓ Service redémarré"
 ENDSSH
 
