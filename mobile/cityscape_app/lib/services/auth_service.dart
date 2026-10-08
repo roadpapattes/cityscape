@@ -341,5 +341,15 @@ Future<bool> login(String username, String password) async {
       final error = jsonDecode(utf8.decode(response.bodyBytes));
       throw Exception(error['detail'] ?? 'Erreur lors du changement de mot de passe');
     }
+
+    // Le serveur revoque l'ancien jeton et en emet un neuf : un attaquant
+    // qui aurait derobe le precedent partage exactement le meme que la
+    // victime. Sans enregistrer le remplacant, l'app serait deconnectee
+    // juste apres avoir change son mot de passe.
+    final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+    final nouveauJeton = data['token'] as String?;
+    if (nouveauJeton != null && nouveauJeton.isNotEmpty) {
+      await saveToken(nouveauJeton);
+    }
   }
 }

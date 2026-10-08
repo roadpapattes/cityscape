@@ -204,6 +204,113 @@ class SlidingTokenExpiryTests(TestCase):
                          "pas de reecriture a l'interieur du palier")
 
 
+@override_settings(CACHES=LOCMEM_CACHE)
+class ChangePasswordTests(TestCase):
+    """L'app appelait cet endpoint depuis le depart alors qu'il n'existait
+    pas : Django repondait une page 404 en HTML, que l'app tentait de lire
+    comme du JSON."""
+
+    URL = "/api/auth/change-password"
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username="bob_mdp", password="ancien-mdp-solide")
+        self.token = Token.objects.create(user=self.user)
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+
+    def test_la_reponse_est_du_json_pas_une_page_html(self):
+        r = self.client.post(
+            self.URL,
+            {"old_password": "ancien-mdp-solide", "new_password": "nouveau-mdp-solide-42"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("application/json", r["Content-Type"])
+
+    def test_le_mot_de_passe_est_effectivement_change(self):
+        self.client.post(
+            self.URL,
+            {"old_password": "ancien-mdp-solide", "new_password": "nouveau-mdp-solide-42"},
+            format="json",
+        )
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("nouveau-mdp-solide-42"))
+
+    def test_l_ancien_mot_de_passe_est_exige(self):
+        r = self.client.post(
+            self.URL,
+            {"old_password": "pas-le-bon", "new_password": "nouveau-mdp-solide-42"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 400)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("ancien-mdp-solide"))
+
+    def test_un_mot_de_passe_faible_est_refuse(self):
+        r = self.client.post(
+            self.URL,
+            {"old_password": "ancien-mdp-solide", "new_password": "1234"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 400)
+
+    def test_l_ancien_jeton_est_revoque_et_un_neuf_est_renvoye(self):
+        """Un attaquant partage exactement le meme jeton que la victime :
+        le conserver viderait l'operation de son sens."""
+        ancien_jeton = self.token.key
+        r = self.client.post(
+            self.URL,
+            {"old_password": "ancien-mdp-solide", "new_password": "nouveau-mdp-solide-42"},
+            format="json",
+        )
+        nouveau_jeton = r.json().get("token")
+
+        self.assertIsNotNone(nouveau_jeton, "l'app doit recevoir un jeton de remplacement")
+        self.assertNotEqual(nouveau_jeton, ancien_jeton)
+
+        pirate = APIClient()
+        pirate.credentials(HTTP_AUTHORIZATION=f"Token {ancien_jeton}")
+        self.assertEqual(pirate.get("/api/auth/me").status_code, 401)
+
+        legitime = APIClient()
+        legitime.credentials(HTTP_AUTHORIZATION=f"Token {nouveau_jeton}")
+        self.assertEqual(legitime.get("/api/auth/me").status_code, 200)
+
+
+@override_settings(CACHES=LOCMEM_CACHE)
+class ConnexionApresLongueAbsenceTests(TestCase):
+    """Cas limite introduit par l'expiration glissante : la connexion ne
+    passe pas par l'authentification par jeton, donc sans remise a zero de
+    la fenetre, le joueur se connecte puis est ejecte a sa requete
+    suivante."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username="revenant", password="mdp-de-test-42")
+        Token.objects.create(user=self.user)
+
+    def test_un_joueur_absent_depuis_plus_de_90_jours_peut_revenir(self):
+        from engagement.models import UserProfile
+        profil, _ = UserProfile.objects.get_or_create(user=self.user)
+        UserProfile.objects.filter(pk=profil.pk).update(
+            token_last_used=timezone.now() - timedelta(days=200)
+        )
+
+        r = self.client.post(
+            "/api/auth/login",
+            {"username": "revenant", "password": "mdp-de-test-42"},
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 200)
+        jeton = r.json()["token"]
+
+        # Le jeton remis doit fonctionner immediatement, sans boucle.
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f"Token {jeton}")
+        self.assertEqual(client.get("/api/auth/me").status_code, 200)
+
+
 class ClientIpResolutionTests(TestCase):
     """Derrière nginx, REMOTE_ADDR vaut 127.0.0.1 pour tout le monde : sans
     résolveur, toutes les limites par IP partagent un compteur global."""
