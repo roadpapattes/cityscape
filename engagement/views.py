@@ -170,7 +170,8 @@ class LogoutView(APIView):
 
 
 class MeView(APIView):
-    authentication_classes = [TokenAuthentication]
+    # Pas de authentication_classes ici : on herite du reglage global, sinon
+    # cette vue echapperait a l'expiration glissante des jetons.
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
