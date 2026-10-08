@@ -19,6 +19,8 @@ dependencies:
   # Réseau & stockage
   http: ^1.2.2
   shared_preferences: ^2.2.3
+  # Jeton d'authentification : Keystore Android plutôt que XML en clair.
+  flutter_secure_storage: ^11.2.0
   url_launcher: ^6.3.0
   image_picker: ^1.0.7
   hive: ^2.2.3

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../models/user_me.dart';
@@ -22,31 +23,80 @@ class AuthService extends ChangeNotifier {
   bool _lastLoginWasNewUser = false;
   bool get lastLoginWasNewUser => _lastLoginWasNewUser;
 
+  // Le jeton vit desormais dans le Keystore Android via le stockage
+  // securise. Il etait auparavant ecrit en clair dans SharedPreferences
+  // (XML lisible sur un appareil roote), d'ou la migration ci-dessous.
+  static const _cleJeton = 'auth_token';
+  // Reglages par defaut de la v11 : chiffrement AES-GCM, cle protegee par
+  // RSA dans le Keystore Android, sans biometrie. C'est ce qu'on veut ici.
+  static const _stockageSecurise = FlutterSecureStorage();
+
   Future<void> loadFromPrefs() async {
+    tokenNotifier.value = await _lireJeton();
+  }
+
+  /// Lit le jeton, en migrant au passage l'ancien emplacement en clair.
+  ///
+  /// La migration doit etre invisible : un joueur deja connecte ne doit pas
+  /// se retrouver deconnecte par la mise a jour. On ne supprime donc la
+  /// copie en clair qu'une fois la copie chiffree ecrite avec succes.
+  Future<String?> _lireJeton() async {
+    try {
+      final securise = await _stockageSecurise.read(key: _cleJeton);
+      if (securise != null) return securise;
+    } catch (e) {
+      // Le Keystore peut refuser une lecture (cle invalidee, restauration
+      // d'appareil). On ne bloque pas le demarrage : au pire le joueur se
+      // reconnecte.
+      debugPrint('[AUTH] Lecture du stockage securise impossible : $e');
+    }
+
     final sp = await SharedPreferences.getInstance();
-    tokenNotifier.value = sp.getString('auth_token');
-    // Note: If you have ApiService.instance.loadLocalModeration(),
-    // you may need to import and call it here or handle it differently
-    // await ApiService.instance.loadLocalModeration();
-    // Pas de notifyListeners(); on utilise les Notifiers dédiés.
+    final ancien = sp.getString(_cleJeton);
+    if (ancien == null) return null;
+
+    try {
+      await _stockageSecurise.write(key: _cleJeton, value: ancien);
+      await sp.remove(_cleJeton); // ne plus laisser trainer la version en clair
+      debugPrint('[AUTH] Jeton migre vers le stockage securise');
+    } catch (e) {
+      // Ecriture impossible : on conserve l'ancien emplacement plutot que de
+      // perdre la session du joueur. La migration sera retentee au prochain
+      // demarrage.
+      debugPrint('[AUTH] Migration impossible, jeton conserve en l\'etat : $e');
+    }
+    return ancien;
   }
 
   Future<String?> getToken() async => tokenNotifier.value;
 
   Future<void> saveToken(String token) async {
-    final sp = await SharedPreferences.getInstance();
-    await sp.setString('auth_token', token);
+    try {
+      await _stockageSecurise.write(key: _cleJeton, value: token);
+    } catch (e) {
+      // Repli sur l'ancien emplacement : mieux vaut une session qui
+      // fonctionne qu'un joueur incapable de se connecter.
+      debugPrint('[AUTH] Ecriture securisee impossible, repli : $e');
+      final sp = await SharedPreferences.getInstance();
+      await sp.setString(_cleJeton, token);
+    }
     tokenNotifier.value = token;
     meNotifier.value = null;   // profil à recharger
-    // Pas de notifyListeners();
   }
 
   Future<void> logout() async {
+    // On efface les deux emplacements : un jeton oublie dans l'ancien
+    // ressusciterait la session a la prochaine lecture.
+    try {
+      await _stockageSecurise.delete(key: _cleJeton);
+    } catch (e) {
+      debugPrint('[AUTH] Suppression securisee impossible : $e');
+    }
     final sp = await SharedPreferences.getInstance();
-    await sp.remove('auth_token');
+    await sp.remove(_cleJeton);
+
     tokenNotifier.value = null;
     meNotifier.value = null;
-    // Pas de notifyListeners();
   }
 
   bool get isAdmin => meNotifier.value?.isAdmin == true;

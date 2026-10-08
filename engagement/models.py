@@ -108,6 +108,13 @@ class UserProfile(models.Model):
     )
     email_verified = models.BooleanField(default=False)
 
+    # Derniere utilisation du jeton d'API, pour l'expiration glissante
+    # (cf. engagement/authentication.py). Porte ici plutot que sur un modele
+    # dedie parce qu'un Token DRF est en relation un-a-un avec l'utilisateur :
+    # par jeton et par compte reviennent au meme. A revoir si l'on autorise
+    # un jour plusieurs jetons simultanes par compte (multi-appareils).
+    token_last_used = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
         return f"UserProfile({self.user.username}, verified={self.email_verified})"
 

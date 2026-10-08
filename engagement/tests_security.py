@@ -5,10 +5,13 @@ dépend bascule sur un cache local isolé et le vide au démarrage : sinon
 l'ordre d'exécution des tests suffirait à les faire échouer.
 """
 
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.cache import cache
 from django.test import TestCase, override_settings
+from django.utils import timezone
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
@@ -72,6 +75,133 @@ class AccountDeletionHardeningTests(TestCase):
                 self.URL, {"email": "victime@example.com"}, content_type="application/json",
             )
         self.assertEqual(last.status_code, 429)
+
+
+@override_settings(CACHES=LOCMEM_CACHE)
+class PasswordResetRevokesTokensTests(TestCase):
+    """Un jeton DRF n'expire jamais : si la reinitialisation du mot de passe
+    ne le revoque pas, la victime d'un vol de jeton ne peut pas evincer
+    l'attaquant — alors que c'est exactement le geste qu'elle fera."""
+
+    def setUp(self):
+        cache.clear()
+        mail.outbox = []
+        self.user = User.objects.create_user(
+            username="victime", email="victime@example.com", password="ancien-mdp",
+        )
+        self.token = Token.objects.create(user=self.user)
+
+    def _reset(self):
+        """Parcours complet : demande du code, puis confirmation."""
+        from engagement.models import PasswordResetToken
+        self.client.post(
+            "/api/auth/password-reset/request", {"email": "victime@example.com"},
+            content_type="application/json",
+        )
+        code = PasswordResetToken.objects.filter(user=self.user, used=False).latest("created_at").code
+        return self.client.post(
+            "/api/auth/password-reset/confirm",
+            {"email": "victime@example.com", "code": code, "new_password": "nouveau-mdp-solide-42"},
+            content_type="application/json",
+        )
+
+    def test_stolen_token_stops_working_after_reset(self):
+        pirate = APIClient()
+        pirate.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+        self.assertEqual(pirate.get("/api/auth/me").status_code, 200)
+
+        r = self._reset()
+        self.assertEqual(r.status_code, 200, r.content)
+
+        # L'attaquant doit etre evince, sans avoir rien fait entre-temps.
+        self.assertEqual(pirate.get("/api/auth/me").status_code, 401)
+        self.assertFalse(Token.objects.filter(user=self.user).exists())
+
+    def test_other_users_tokens_are_untouched(self):
+        """Controle inverse : on ne deconnecte que le compte concerne."""
+        autre = User.objects.create_user(username="autre", email="autre@example.com", password="pw")
+        jeton_autre = Token.objects.create(user=autre)
+
+        self._reset()
+
+        self.assertTrue(Token.objects.filter(key=jeton_autre.key).exists())
+
+
+class SlidingTokenExpiryTests(TestCase):
+    """90 jours depuis la DERNIERE utilisation : un joueur regulier n'est
+    jamais deconnecte, un jeton oublie ou derobe finit par expirer."""
+
+    def setUp(self):
+        from engagement.models import UserProfile
+        self.user = User.objects.create_user(username="joueur_exp", password="pw")
+        self.profil, _ = UserProfile.objects.get_or_create(user=self.user)
+        self.token = Token.objects.create(user=self.user)
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+
+    def _vieillir(self, jours):
+        from engagement.models import UserProfile
+        UserProfile.objects.filter(pk=self.profil.pk).update(
+            token_last_used=timezone.now() - timedelta(days=jours)
+        )
+
+    def test_un_jeton_recemment_utilise_reste_valide(self):
+        self._vieillir(30)
+        self.assertEqual(self.client.get("/api/auth/me").status_code, 200)
+
+    def test_chaque_usage_repousse_l_echeance(self):
+        """Le coeur du caractere glissant : 89 jours puis usage, et on
+        repart pour 90 jours."""
+        self._vieillir(89)
+        self.assertEqual(self.client.get("/api/auth/me").status_code, 200)
+
+        self.profil.refresh_from_db()
+        age = timezone.now() - self.profil.token_last_used
+        self.assertLess(age, timedelta(minutes=1),
+                        "l'usage doit avoir reporte la date de derniere utilisation")
+
+    def test_un_jeton_abandonne_expire_et_est_supprime(self):
+        self._vieillir(91)
+        self.assertEqual(self.client.get("/api/auth/me").status_code, 401)
+        self.assertFalse(Token.objects.filter(pk=self.token.pk).exists(),
+                         "un jeton expire ne doit pas rester en base")
+
+    def test_le_deploiement_ne_deconnecte_personne(self):
+        """Controle inverse decisif : les jetons anterieurs a cette
+        fonctionnalite n'ont pas de date de derniere utilisation. Se fier a
+        leur date de creation deconnecterait d'un coup tous les joueurs dont
+        le jeton a plus de 90 jours."""
+        from engagement.models import UserProfile
+        ancien = User.objects.create_user(username="ancien_joueur", password="pw")
+        jeton = Token.objects.create(user=ancien)
+        Token.objects.filter(pk=jeton.pk).update(
+            created=timezone.now() - timedelta(days=400)
+        )
+        UserProfile.objects.filter(user=ancien).update(token_last_used=None)
+
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f"Token {jeton.key}")
+        self.assertEqual(client.get("/api/auth/me").status_code, 200,
+                         "un jeton de 400 jours doit survivre au deploiement")
+
+        profil = UserProfile.objects.get(user=ancien)
+        self.assertIsNotNone(profil.token_last_used,
+                             "sa fenetre doit demarrer a cette premiere utilisation")
+
+    def test_l_ecriture_est_limitee_pour_ne_pas_marteler_la_base(self):
+        """Sans palier, chaque requete authentifiee serait une ecriture."""
+        from engagement.models import UserProfile
+        UserProfile.objects.filter(pk=self.profil.pk).update(
+            token_last_used=timezone.now() - timedelta(hours=2)  # palier : 24 h
+        )
+        self.profil.refresh_from_db()
+        avant = self.profil.token_last_used
+
+        self.client.get("/api/auth/me")
+
+        self.profil.refresh_from_db()
+        self.assertEqual(self.profil.token_last_used, avant,
+                         "pas de reecriture a l'interieur du palier")
 
 
 class ClientIpResolutionTests(TestCase):

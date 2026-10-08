@@ -149,13 +149,21 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend'
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'engagement.authentication.ExpiringTokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
     'EXCEPTION_HANDLER': 'engagement.exceptions.custom_exception_handler',
 }
+
+# Expiration glissante des jetons d'API : 90 jours depuis la DERNIERE
+# utilisation, pas depuis la creation. Un joueur regulier n'est donc jamais
+# deconnecte, tandis qu'un jeton oublie ou derobe finit par expirer.
+# AUTH_TOKEN_TOUCH_HOURS limite la frequence d'ecriture de la date de
+# derniere utilisation (voir engagement/authentication.py).
+AUTH_TOKEN_TTL_DAYS = 90
+AUTH_TOKEN_TOUCH_HOURS = 24
 
 # django-ratelimit : sans ceci, la clé 'ip' retombe sur REMOTE_ADDR, qui vaut
 # l'adresse de nginx (127.0.0.1) pour toutes les requêtes — toutes les limites
