@@ -207,6 +207,20 @@ SURVEY_NOTIFY_EMAIL = os.getenv('SURVEY_NOTIFY_EMAIL', 'damien.gilbon@gmail.com'
 
 
 
+# Chemin de l'administration Django.
+#
+# Volontairement lu depuis l'environnement et JAMAIS ecrit en dur ici : le
+# depot est public, donc un chemin code dans le fichier serait publie avec
+# lui, ce qui vide la mesure de son sens. Garder la valeur reelle dans le
+# .env du serveur.
+#
+# L'interet est modeste mais reel : le formulaire de connexion de l'admin
+# n'est couvert par aucune des limites de debit du projet (elles protegent
+# l'API), et /admin/ est la premiere chose que balaient les robots. Changer
+# le chemin ne remplace pas un mot de passe solide, il supprime le bruit
+# automatise.
+DJANGO_ADMIN_URL = os.getenv('DJANGO_ADMIN_URL', 'admin/')
+
 # Google OAuth
 GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID')
 

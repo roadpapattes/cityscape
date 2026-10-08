@@ -58,7 +58,10 @@ urlpatterns = [
     path('api/app-config', app_config),
     path('privacy-policy', privacy_policy),
     path('delete-account', delete_account),
-    path('admin/', admin.site.urls),
+    # Chemin defini par DJANGO_ADMIN_URL dans le .env du serveur (defaut
+    # 'admin/'). Voir le commentaire dans settings.py : il ne doit pas etre
+    # ecrit en dur, le depot etant public.
+    path(settings.DJANGO_ADMIN_URL, admin.site.urls),
     path('survey', survey_page),                # page HTML des questionnaires
     path('api/', include('games.urls')),       # puis games (catalogue)
     path('api/', include('engagement.urls')),  # engagement D'ABORD
