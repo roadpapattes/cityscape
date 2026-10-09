@@ -2,6 +2,7 @@
 
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../core/constants.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -118,13 +119,13 @@ class _ListPageState extends State<ListPage> {
 
   Future<void> _loadFavs() async {
     final sp = await SharedPreferences.getInstance();
-    final s = sp.getStringList('fav_ids') ?? <String>[];
+    final s = sp.getStringList(kFavorisKey) ?? <String>[];
     _favorites = s.map((e) => int.tryParse(e) ?? -1).where((e) => e >= 0).toSet();
   }
 
   Future<void> _saveFavs() async {
     final sp = await SharedPreferences.getInstance();
-    await sp.setStringList('fav_ids', _favorites.map((e) => e.toString()).toList());
+    await sp.setStringList(kFavorisKey, _favorites.map((e) => e.toString()).toList());
   }
 
   Future<void> _loadLocation() async {

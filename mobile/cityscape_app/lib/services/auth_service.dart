@@ -95,6 +95,11 @@ class AuthService extends ChangeNotifier {
     final sp = await SharedPreferences.getInstance();
     await sp.remove(_cleJeton);
 
+    // Les favoris ne vivent que sur l'appareil, mais ils appartiennent au
+    // joueur qui se deconnecte : les laisser en place ferait voir au suivant,
+    // sur un telephone partage, les favoris du precedent.
+    await sp.remove(kFavorisKey);
+
     tokenNotifier.value = null;
     meNotifier.value = null;
   }

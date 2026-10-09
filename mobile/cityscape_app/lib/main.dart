@@ -22,6 +22,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 // Import models
 import 'models/escape_game.dart';
 import 'models/game_step.dart';
+import 'models/classement.dart';
+import 'features/classement/classement_page.dart';
 import 'models/comment_item.dart';
 import 'models/user_me.dart';
 import 'models/cache_entry.dart';
@@ -659,7 +661,25 @@ class _EscapeDetailsPageState extends State<EscapeDetailsPage> {
     final e = widget.escape;
 
     return Scaffold(
-      appBar: AppBar(title: Text(e.title)),
+      appBar: AppBar(
+        title: Text(e.title),
+        actions: [
+          // Accessible meme sans avoir joue : voir les temps des autres fait
+          // partie de ce qui donne envie de se lancer.
+          IconButton(
+            tooltip: 'Classement',
+            icon: const Icon(Icons.emoji_events_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ClassementPage(
+                  escapeId: e.id,
+                  titreEscape: e.title,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         top: false,
         child: ListView(
@@ -2967,10 +2987,30 @@ class _VictoryPageState extends State<VictoryPage> {
   int? _myStars;
   String? _myComment;
 
+  /// Rang du joueur sur cette escape, charge en tache de fond. Reste null si
+  /// le classement est vide ou si l'appel echoue : la page de victoire ne
+  /// doit pas dependre de cette information secondaire.
+  EntreeClassement? _monRang;
+  int _totalClasses = 0;
+
   @override
   void initState() {
     super.initState();
     _loadCanRate();
+    _chargerMonRang();
+  }
+
+  Future<void> _chargerMonRang() async {
+    try {
+      final c = await ApiService.instance.fetchClassement(widget.escape.id, limite: 1);
+      if (!mounted) return;
+      setState(() {
+        _monRang = c.moi;
+        _totalClasses = c.totalClasses;
+      });
+    } catch (_) {
+      // Silencieux : l'ecran de victoire se passe tres bien du classement.
+    }
   }
 
   Future<void> _loadCanRate() async {
@@ -3056,6 +3096,26 @@ class _VictoryPageState extends State<VictoryPage> {
                               },
                             ),
                   ),
+
+                  if (_monRang != null) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.emoji_events_outlined),
+                      label: Text(
+                        _totalClasses > 1
+                            ? '${_monRang!.rang}e sur $_totalClasses — voir le classement'
+                            : 'Voir le classement',
+                      ),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ClassementPage(
+                            escapeId: widget.escape.id,
+                            titreEscape: widget.escape.title,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
 
                   const SizedBox(height: 12),
                   TextButton(
