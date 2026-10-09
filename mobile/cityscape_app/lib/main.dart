@@ -4273,6 +4273,9 @@ class _StepEditorPageState extends State<StepEditorPage> {
 
   // Réponses
   late TextEditingController _answerText;
+
+  // Formulations alternatives acceptées (texte libre uniquement)
+  final List<TextEditingController> _altCtrls = <TextEditingController>[];
   late TextEditingController _orderCtrl;
 
   GoogleMapController? _stepMapCtrl;
@@ -4426,6 +4429,13 @@ class _StepEditorPageState extends State<StepEditorPage> {
       );
     }
 
+    // --- Formulations alternatives acceptées : aucune ligne vide d'office,
+    // le créateur en ajoute s'il en a besoin.
+    _altCtrls.addAll(
+      (s?.answerTextAlt ?? const <String>[])
+          .map((r) => TextEditingController(text: r)),
+    );
+
     // --- QCM
     if (s?.options.isNotEmpty ?? false) {
       _options = s!.options.map((o) => TextEditingController(text: o)).toList();
@@ -4483,6 +4493,7 @@ class _StepEditorPageState extends State<StepEditorPage> {
     for (final c in _leftCtrls) c.dispose();
     for (final c in _rightCtrls) c.dispose();
     for (final c in _hintCtrls) c.dispose();
+    for (final c in _altCtrls) c.dispose();
 
     _title.dispose();
     _text.dispose();
@@ -4677,6 +4688,12 @@ class _StepEditorPageState extends State<StepEditorPage> {
       imageCredit: _imageCredit.text.trim(),
       answerType: _answerType,
       answerText: _answerText.text.trim(),
+      answerTextAlt: _answerType == 'text'
+          ? _altCtrls
+              .map((c) => c.text.trim())
+              .where((r) => r.isNotEmpty)
+              .toList()
+          : const <String>[],
       options: _options.map((c) => c.text.trim()).where((s) => s.isNotEmpty).toList(),
       correctIndex: _answerType == 'mcq' ? _correctIndex : null,
 
@@ -5157,11 +5174,61 @@ class _StepEditorPageState extends State<StepEditorPage> {
               decoration: InputDecoration(
                 labelText: 'Réponse attendue',
                 helperText: _answerType == 'cesar'
-                    ? 'Écrivez le message chiffré dans "Description", et le message déchiffré ici.'
-                    : null,
-                helperMaxLines: 2,
+                    ? 'Écrivez le message chiffré dans "Description", et le message déchiffré ici. La comparaison ignore la casse, les accents, les espaces et la ponctuation.'
+                    : 'La comparaison ignore la casse, les accents, les espaces et la ponctuation. Une faute de frappe reste une mauvaise réponse.',
+                helperMaxLines: 3,
               ),
             ),
+            if (_answerType == 'text') ...[
+              const SizedBox(height: 12),
+              const Text(
+                'Autres réponses acceptées',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                "Ajoutez ici les formulations que la comparaison ne peut pas "
+                "deviner : pour « La tour Eiffel », par exemple « tour Eiffel » "
+                "ou « Eiffel ».",
+                style: TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+              for (int i = 0; i < _altCtrls.length; i++)
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _altCtrls[i],
+                        enabled: !widget.readOnly,
+                        maxLength: 255,
+                        decoration: InputDecoration(
+                          labelText: 'Réponse acceptée ${i + 1}',
+                          counterText: '',
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline),
+                      onPressed: widget.readOnly
+                          ? null
+                          : () => setState(() => _altCtrls.removeAt(i).dispose()),
+                    ),
+                  ],
+                ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: widget.readOnly || _altCtrls.length >= 20
+                      ? null
+                      : () => setState(() => _altCtrls.add(TextEditingController())),
+                  icon: const Icon(Icons.add),
+                  label: Text(
+                    _altCtrls.length >= 20
+                        ? 'Maximum atteint (20)'
+                        : 'Ajouter une réponse acceptée',
+                  ),
+                ),
+              ),
+            ],
           ] else if (_answerType == 'numeric') ...[
             TextField(
               controller: _answerText,

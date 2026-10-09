@@ -102,10 +102,47 @@ class GameStepSerializer(serializers.ModelSerializer):
             attrs.pop("hints", None)
             attrs["hint"] = single_hint.strip() if single_hint else ("; ".join(clean_hints) if clean_hints else "")
 
+        # ---- Reponses alternatives acceptees (texte libre uniquement) ----
+        raw_alt = attrs.get(
+            "answer_text_alt", getattr(self.instance, "answer_text_alt", [])
+        ) or []
+        if not isinstance(raw_alt, (list, tuple)):
+            raise serializers.ValidationError(
+                {"answer_text_alt": "Doit etre une liste de chaines."}
+            )
+        alt_clean, deja_vues = [], set()
+        for x in raw_alt:
+            v = str(x).strip()
+            if not v:
+                continue
+            if len(v) > 255:
+                raise serializers.ValidationError(
+                    {"answer_text_alt": "Chaque reponse acceptee est limitee a 255 caracteres."}
+                )
+            # Doublons exacts ecartes en silence : les signaler n'apporterait
+            # rien au createur, qui a juste saisi deux fois la meme chose.
+            cle = v.casefold()
+            if cle in deja_vues:
+                continue
+            deja_vues.add(cle)
+            alt_clean.append(v)
+        if len(alt_clean) > 20:
+            raise serializers.ValidationError(
+                {"answer_text_alt": "20 reponses acceptees au maximum."}
+            )
+        # Defaut : aucune alternative. Seul le texte libre en autorise, et ce
+        # defaut evite d'avoir a vider le champ dans chacune des branches par
+        # type ci-dessous - y compris celles qu'on ajoutera plus tard.
+        attrs["answer_text_alt"] = []
+
         # ---- Validation selon le type ----
         if at in (GameStep.ANSWER_TEXT, getattr(GameStep, "ANSWER_CAESAR", "cesar")):
             if not str(answer_text).strip():
                 raise serializers.ValidationError({"answer_text": 'Requis pour "Texte libre".'})
+            # Le chiffre de Cesar partage cette branche mais n'a qu'une seule
+            # reponse juste : pas d'alternatives pour lui.
+            if at == GameStep.ANSWER_TEXT:
+                attrs["answer_text_alt"] = alt_clean
             attrs["options"] = []
             attrs["correct_index"] = None
             attrs["match_left"] = []

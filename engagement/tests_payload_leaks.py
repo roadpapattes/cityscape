@@ -65,6 +65,19 @@ class TextAnswerLeakTests(PayloadLeakTestCase):
         )
         self._assert_absent(self._current_step_payload(), "Carcassonne", "la réponse")
 
+    def test_alternative_answers_are_never_sent(self):
+        """Les formulations alternatives sont des réponses : les livrer
+        reviendrait à donner la solution, et en plusieurs exemplaires."""
+        GameStep.objects.create(
+            escape=self.escape, order=1, title="Énigme", text="Quel monument ?",
+            answer_type="text", answer_text="La tour Eiffel",
+            answer_text_alt=["tour Eiffel", "Carcassonne"],
+        )
+        payload = self._current_step_payload()
+        self._assert_absent(payload, "La tour Eiffel", "la réponse")
+        self._assert_absent(payload, "Carcassonne", "une réponse acceptée")
+        self.assertNotIn("answer_text_alt", payload)
+
     def test_caesar_answer_is_never_sent(self):
         GameStep.objects.create(
             escape=self.escape, order=1, title="César", text="Fxufxvrqqh",

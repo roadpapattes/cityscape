@@ -19,6 +19,7 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
 
     // Text answer
     answer_text: step?.answer_text || '',
+    answer_text_alt: step?.answer_text_alt || [],
 
     // MCQ
     options: step?.options || ['', '', '', ''],
@@ -95,6 +96,13 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
       // Add answer-specific fields
       if (formData.answer_type === 'text' || formData.answer_type === 'numeric' || formData.answer_type === 'cesar') {
         payload.answer_text = formData.answer_text;
+      }
+
+      // Formulations alternatives : texte libre uniquement. Une enigme a
+      // chiffre de Cesar n'a qu'une seule reponse juste, et le serveur vide
+      // de toute facon la liste pour les autres types.
+      if (formData.answer_type === 'text') {
+        payload.answer_text_alt = formData.answer_text_alt.filter((r) => r.trim() !== '');
       }
 
       if (formData.answer_type === 'mcq') {
@@ -221,9 +229,63 @@ function StepEditor({ escapeId, step, nextOrder, onClose, onSaved }) {
               />
               <p className="form-help">
                 {formData.answer_type === 'cesar'
-                  ? 'Écrivez le message chiffré dans le champ "Énoncé / description" ci-dessus, et le message déchiffré ici. Comparaison insensible à la casse et aux espaces.'
-                  : 'La comparaison est insensible à la casse et aux espaces'}
+                  ? 'Écrivez le message chiffré dans le champ "Énoncé / description" ci-dessus, et le message déchiffré ici. La comparaison ignore la casse, les accents, les espaces et la ponctuation.'
+                  : 'La comparaison ignore la casse, les accents, les espaces et la ponctuation : « Les étoiles » accepte « les etoiles ». En revanche une faute de frappe reste une mauvaise réponse.'}
               </p>
+
+              {formData.answer_type === 'text' && (
+                <div style={{ marginTop: '12px' }}>
+                  <label className="form-label">Autres réponses acceptées</label>
+                  {formData.answer_text_alt.map((reponse, index) => (
+                    <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={reponse}
+                        onChange={(e) => {
+                          const nouvelles = [...formData.answer_text_alt];
+                          nouvelles[index] = e.target.value;
+                          updateField('answer_text_alt', nouvelles);
+                        }}
+                        placeholder={`Réponse acceptée ${index + 1}`}
+                        maxLength={255}
+                        disabled={loading}
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-small"
+                        onClick={() => {
+                          updateField(
+                            'answer_text_alt',
+                            formData.answer_text_alt.filter((_, i) => i !== index)
+                          );
+                        }}
+                        disabled={loading}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-small"
+                    onClick={() =>
+                      updateField('answer_text_alt', [...formData.answer_text_alt, ''])
+                    }
+                    disabled={loading || formData.answer_text_alt.length >= 20}
+                  >
+                    + Ajouter une réponse acceptée
+                  </button>
+                  <p className="form-help">
+                    {formData.answer_text_alt.length >= 20
+                      ? 'Maximum atteint (20 réponses acceptées).'
+                      : 'Utile pour les formulations que la comparaison ne peut pas devi' +
+                        'ner : si la réponse attendue est « La tour Eiffel », ajoutez ici ' +
+                        '« tour Eiffel » ou « Eiffel ». 20 au maximum.'}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
