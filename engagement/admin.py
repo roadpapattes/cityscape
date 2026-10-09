@@ -1,8 +1,12 @@
+from django.utils import timezone
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from .models import PlaySession, EscapeCompletion, Rating, PasswordResetToken, UserProfile, EmailVerificationToken
+from .models import (
+    PlaySession, EscapeCompletion, Rating, PasswordResetToken, UserProfile,
+    EmailVerificationToken, AccountDeletionRequest,
+)
 
 User = get_user_model()
 
@@ -266,3 +270,66 @@ class UserProfileAdmin(admin.ModelAdmin):
             'border-radius: 3px;">✗ Non vérifié</span>'
         )
     email_verified_badge.short_description = 'Email'
+
+
+@admin.register(AccountDeletionRequest)
+class AccountDeletionRequestAdmin(admin.ModelAdmin):
+    """Suivi des demandes de suppression de compte.
+
+    Lecture seule : la liste est une piste d'audit du respect du delai de 30
+    jours. Le traitement passe par la commande `anonymiser_compte`, qui
+    cloture la demande elle-meme - modifier un statut a la main ici
+    laisserait croire qu'un compte a ete traite alors qu'il ne l'est pas.
+    """
+
+    list_display = [
+        "id", "username_au_moment_de_la_demande", "statut_badge",
+        "demandee_le", "echeance_affichee", "traitee_le",
+    ]
+    list_filter = ["statut", "demandee_le"]
+    search_fields = ["username_au_moment_de_la_demande", "email_demande"]
+    date_hierarchy = "demandee_le"
+    ordering = ["-demandee_le"]
+
+    readonly_fields = [
+        "user", "email_demande", "username_au_moment_de_la_demande", "motif",
+        "statut", "demandee_le", "traitee_le", "detail_traitement",
+        "echeance_affichee",
+    ]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Supprimer la trace reviendrait a effacer la preuve du traitement.
+        return False
+
+    def statut_badge(self, obj):
+        if obj.statut == AccountDeletionRequest.STATUT_TRAITEE:
+            couleur, texte = "#28a745", "✓ Traitée"
+        elif obj.en_retard:
+            couleur, texte = "#dc3545", "⚠ En retard"
+        elif obj.statut == AccountDeletionRequest.STATUT_EN_ATTENTE:
+            couleur, texte = "#ffc107", "En attente"
+        else:
+            couleur, texte = "#6c757d", "Annulée"
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 10px; '
+            'border-radius: 3px;">{}</span>',
+            couleur, texte,
+        )
+    statut_badge.short_description = "Statut"
+
+    def echeance_affichee(self, obj):
+        jours = (obj.echeance - timezone.now()).days
+        if obj.statut != AccountDeletionRequest.STATUT_EN_ATTENTE:
+            return obj.echeance.strftime("%d/%m/%Y")
+        if jours < 0:
+            return format_html(
+                '<span style="color: #dc3545; font-weight: bold;">{} ({} jours de retard)</span>',
+                obj.echeance.strftime("%d/%m/%Y"), abs(jours),
+            )
+        return format_html(
+            "{} (dans {} jours)", obj.echeance.strftime("%d/%m/%Y"), jours,
+        )
+    echeance_affichee.short_description = "Échéance (30 jours)"
