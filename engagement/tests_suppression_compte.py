@@ -351,6 +351,17 @@ class PagesLegalesTests(TestCase):
                     f"{chemin} promet un effacement total, que le mecanisme ne fait pas",
                 )
 
+    def test_la_page_dit_la_verite_sur_les_favoris(self):
+        """Les favoris vivent dans les preferences locales du telephone
+        (cle `fav_ids`), jamais sur le serveur. La page annoncait leur
+        suppression, ce qui etait faux dans le sens rassurant : une
+        suppression de compte ne peut pas effacer ce qui est sur
+        l'appareil."""
+        contenu = self.client.get("/delete-account").content.decode("utf-8")
+        self.assertIn("favoris", contenu)
+        self.assertIn("uniquement sur votre téléphone", contenu)
+        self.assertNotIn("La suppression de vos favoris", contenu)
+
     def test_les_pages_annoncent_ce_qui_est_conserve(self):
         """Temoin positif : sans lui, le test precedent passerait aussi bien
         sur une page vide."""
