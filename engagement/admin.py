@@ -21,7 +21,8 @@ class PlaySessionAdmin(admin.ModelAdmin):
         'completion_badge',
         'current_step',
         'penalty_display',
-        'duration'
+        'duration',
+        'temps_compare',
     ]
     list_filter = ['started_at', 'completed_at']
     search_fields = ['user__username', 'user__email', 'escape__title']
@@ -34,7 +35,28 @@ class PlaySessionAdmin(admin.ModelAdmin):
         ('Progression', {
             'fields': ('current_step_index', 'penalty', 'answers_display', 'hints_used_display')
         }),
+        ('Temps de jeu', {
+            'fields': ('play_time_seconds', 'server_play_seconds', 'last_activity_at'),
+            'description': (
+                "play_time_seconds est declare par le client (borne a l'ecoule reel, "
+                "mais sous-declarable) ; server_play_seconds est mesure par le serveur "
+                "et c'est lui qui devra servir de base a un classement."
+            ),
+        }),
     )
+
+    def temps_compare(self, obj):
+        """Client contre serveur. Un temps client tres inferieur au temps
+        mesure signale une sous-declaration : c'est tout l'interet d'avoir
+        les deux cote a cote."""
+        client = int(obj.play_time_seconds or 0)
+        serveur = int(obj.server_play_seconds or 0)
+        couleur = "#dc3545" if serveur > 0 and client < serveur / 2 else "#6c757d"
+        return format_html(
+            '<span style="color: {};">client {} s / serveur {} s</span>',
+            couleur, client, serveur,
+        )
+    temps_compare.short_description = "Temps (client / serveur)"
 
     def user_link(self, obj):
         url = reverse('admin:auth_user_change', args=[obj.user.id])
