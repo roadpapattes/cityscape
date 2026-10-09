@@ -16,6 +16,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../../models/escape_game.dart';
 import '../../models/game_step.dart';
+import '../../models/classement.dart';
 import '../../models/comment_item.dart';
 import '../../models/cache_entry.dart';
 import '../../core/constants.dart';
@@ -1175,5 +1176,27 @@ class ApiService {
     final url = j['url'] as String?;
     if (url == null || url.isEmpty) throw Exception('URL manquante');
     return normalizeImageUrl(url, baseUrl);
+  }
+
+  /// Classement des meilleurs temps sur une escape.
+  ///
+  /// Le serveur calcule les rangs a partir du temps qu'il a lui-meme mesure,
+  /// plus les penalites : l'application n'a rien a recalculer. Un classement
+  /// vide est une reponse normale - les parties anterieures a la mise en
+  /// place du chronometrage serveur en sont volontairement exclues.
+  Future<Classement> fetchClassement(int escapeId, {int limite = 20}) async {
+    final token = await AuthService.instance.getToken();
+    if (token == null) throw Exception('Non connecté');
+
+    final uri = Uri.parse(
+      '$baseUrl/api$kEngagementPrefix/escapes/$escapeId/leaderboard?limite=$limite',
+    );
+    final r = await _get(uri, headers: {'Authorization': 'Token $token'});
+    if (r.statusCode != 200) {
+      throw Exception('Classement: ${r.statusCode} ${r.body}');
+    }
+    return Classement.fromJson(
+      jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>,
+    );
   }
 }

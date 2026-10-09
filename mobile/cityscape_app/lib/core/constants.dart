@@ -11,5 +11,14 @@ const String kEngagementPrefix = ""; // sessions, hints, answers, rating
 const String kAuthPrefix = ""; // auth stays at /api/auth/...
 const double kDefaultRadiusKm = 20;
 
+/// Clé des favoris dans les préférences locales.
+///
+/// Les favoris ne vivent que sur l'appareil et ne sont jamais transmis au
+/// serveur. Déclarée ici parce que deux endroits en dépendent : la liste des
+/// escapes, qui les lit et les écrit, et la déconnexion, qui doit les effacer
+/// — sans quoi le joueur suivant sur un téléphone partagé verrait les favoris
+/// du précédent.
+const String kFavorisKey = 'fav_ids';
+
 // Asset du logo (déclaré dans pubspec.yaml)
 const String kLogoAsset = 'assets/logo.png';
