@@ -30,6 +30,7 @@ from .models import (
     PlaySession, Rating, PasswordResetToken, UserProfile, EmailVerificationToken,
     AccountDeletionRequest,
 )
+from .chronometrage import cumuler_temps_client, enregistrer_activite
 from .serializers import (
     UserSerializer,
     RegisterSerializer,
@@ -859,23 +860,19 @@ class SessionSyncTimeView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Récupérer le temps additionnel envoyé par le client
-        additional_seconds = request.data.get("additional_seconds", 0)
-        try:
-            additional_seconds = int(additional_seconds)
-            if additional_seconds < 0:
-                additional_seconds = 0
-        except (ValueError, TypeError):
-            additional_seconds = 0
+        # Le serveur mesure d'abord son propre temps actif : c'est lui qui
+        # fera foi, le client n'ayant aucune prise sur l'horloge du serveur.
+        enregistrer_activite(sess)
 
-        # Ajouter au temps cumulé
-        current_time = int(getattr(sess, "play_time_seconds", 0) or 0)
-        sess.play_time_seconds = current_time + additional_seconds
-        sess.save(update_fields=["play_time_seconds"])
+        # Le temps declare reste enregistre pour l'affichage, mais borne par
+        # l'ecoule reel : on ne peut pas avoir joue deux heures dans une
+        # fenetre de dix minutes. La validation de la valeur recue est faite
+        # par cumuler_temps_client.
+        total = cumuler_temps_client(sess, request.data.get("additional_seconds", 0))
 
         return Response({
             "ok": True,
-            "play_time_seconds": sess.play_time_seconds,
+            "play_time_seconds": total,
         }, status=status.HTTP_200_OK)
 
 
@@ -1000,6 +997,9 @@ class SessionHintView(APIView):
         if not sess:
             return Response({"detail": "Session inactive. Démarrez d'abord."}, status=400)
 
+        # Demander un indice est une action du joueur.
+        enregistrer_activite(sess)
+
         steps = list(GameStep.objects.filter(escape=escape).order_by("order", "id"))
         idx = int(getattr(sess, "current_step_index", 0) or 0)
         if idx >= len(steps):
@@ -1086,17 +1086,15 @@ class SessionAnswerView(APIView):
         if not sess:
             return Response({"detail": "Session inactive. Démarrez d'abord."}, status=400)
 
-        # Sync du temps de jeu (optionnel, envoyé par le client à chaque réponse)
+        # Repondre est une action du joueur : le serveur l'horodate et cumule
+        # son propre temps actif (voir engagement/chronometrage.py).
+        enregistrer_activite(sess)
+
+        # Sync du temps de jeu declare par le client (optionnel), borne par
+        # l'ecoule reel cote serveur.
         session_seconds = (request.data or {}).get("session_seconds")
         if session_seconds is not None:
-            try:
-                session_seconds = int(session_seconds)
-                if session_seconds > 0:
-                    current_time = int(getattr(sess, "play_time_seconds", 0) or 0)
-                    sess.play_time_seconds = current_time + session_seconds
-                    sess.save(update_fields=["play_time_seconds"])
-            except (ValueError, TypeError):
-                pass  # Ignorer si invalide
+            cumuler_temps_client(sess, session_seconds)
 
         steps = list(GameStep.objects.filter(escape=escape).order_by("order", "id"))
         total = len(steps)
@@ -1349,6 +1347,13 @@ class SessionProximityView(APIView):
                 .first())
         if not sess:
             return Response({"detail": "Session inactive. Démarrez d'abord."}, status=400)
+
+        # Envoyer sa position est une action du joueur - c'est meme la seule
+        # sur une etape « Point a atteindre », ou l'on peut marcher longtemps
+        # sans rien valider. Les pings arrivant jusqu'a soixante fois par
+        # minute, enregistrer_activite n'ecrit qu'au-dela de quelques
+        # secondes d'ecart (voir ECART_MIN_ECRITURE).
+        enregistrer_activite(sess)
 
         steps = list(GameStep.objects.filter(escape=escape).order_by("order", "id"))
         total = len(steps)

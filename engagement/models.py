@@ -21,7 +21,24 @@ class PlaySession(models.Model):
     penalty = models.IntegerField(default=0)  # augmente de 5 par mauvaise réponse + hint_penalty quand indice demandé
     answers = models.JSONField(default=dict, blank=True)
     # Temps de jeu cumulé en secondes (temps réellement passé à jouer)
+    #
+    # ATTENTION : declare par le client, donc non fiable. Conserve parce
+    # qu'il mesure le temps *actif* (l'app sait quand le joueur a mis le jeu
+    # de cote), ce que le serveur ne peut pas deviner. Borne a l'ecoule
+    # reel cote serveur a l'enregistrement, mais rien n'empeche un client
+    # de sous-declarer : ne jamais l'utiliser pour un classement.
     play_time_seconds = models.PositiveIntegerField(default=0)
+
+    # --- Chronometrage cote serveur (non falsifiable par le client) ---
+    #
+    # Le serveur horodate lui-meme chaque action du joueur. En cumulant les
+    # ecarts entre deux actions consecutives, plafonnes a ECART_ACTIVITE_MAX
+    # pour ne pas compter une pause comme du jeu, on obtient un temps actif
+    # qu'un client ne peut ni gonfler ni retrecir : il faut interagir pour
+    # jouer, et c'est le serveur qui lit l'horloge. C'est cette valeur, et
+    # non play_time_seconds, qui devra servir de base a un classement.
+    server_play_seconds = models.PositiveIntegerField(default=0)
+    last_activity_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ('user', 'escape')
