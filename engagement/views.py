@@ -577,6 +577,34 @@ def _normalize(s: str) -> str:
     return s
 
 
+def _reponse_texte_acceptee(saisie, step) -> bool:
+    """La saisie du joueur correspond-elle a la reponse attendue ?
+
+    Compare a `answer_text` et, pour le texte libre uniquement, aux
+    formulations alternatives declarees par le createur : la normalisation
+    rattrape les differences de forme, pas de formulation. Un chiffre de
+    Cesar n'a qu'une seule reponse juste, donc ses alternatives sont
+    ignorees meme si la base en contient (cas d'une etape creee hors de
+    l'interface createur, par l'admin ou un import).
+
+    Une saisie vide ne valide jamais : sans ce garde-fou, une etape dont la
+    reponse attendue serait vide validerait n'importe quelle saisie vide,
+    puisque les deux se normalisent en chaine vide.
+    """
+    candidat = _normalize(saisie)
+    if not candidat:
+        return False
+
+    attendues = {_normalize(getattr(step, "answer_text", "") or "")}
+    if getattr(step, "answer_type", None) == GameStep.ANSWER_TEXT:
+        attendues.update(
+            _normalize(x) for x in (getattr(step, "answer_text_alt", []) or [])
+        )
+    attendues.discard("")
+
+    return candidat in attendues
+
+
 def _step_payload(step: GameStep, hints_used_map: Dict[str, Any]) -> Dict[str, Any]:
     # ---- Rassemble la liste d'indices ----
     all_hints = list(getattr(step, "hints", []) or [])
@@ -1079,7 +1107,7 @@ class SessionAnswerView(APIView):
         # --- Vérification de la réponse ---
         if st.answer_type in (GameStep.ANSWER_TEXT, getattr(GameStep, "ANSWER_CAESAR", "cesar")):
             user_answer = (request.data or {}).get("answer", "")
-            ok = _normalize(user_answer) == _normalize(st.answer_text)
+            ok = _reponse_texte_acceptee(user_answer, st)
 
         elif st.answer_type == GameStep.ANSWER_MCQ:
             sel = (request.data or {}).get("selected_index")

@@ -25,6 +25,10 @@ class GameStep {
   // Texte libre / numérique (stock côté back dans answer_text)
   String answerText;
 
+  // Formulations alternatives acceptées, en plus de answerText. Texte libre
+  // uniquement : une énigme à chiffre de César n'a qu'une seule réponse juste.
+  List<String> answerTextAlt;
+
   // QCM
   List<String> options;
   int? correctIndex;
@@ -58,6 +62,7 @@ class GameStep {
     this.imageUrl,
     this.imageCredit = '',
     this.answerText = '',
+    this.answerTextAlt = const <String>[],
     List<String>? options,
     this.correctIndex,
     this.matchLeft = const [],
@@ -123,6 +128,8 @@ class GameStep {
       imageCredit: (j['image_credit'] ?? '') as String,
       answerType: (j['answer_type'] ?? 'text') as String,
       answerText: (j['answer_text'] ?? '') as String,
+      answerTextAlt:
+          ((j['answer_text_alt'] as List?) ?? const []).map((e) => '$e').toList(),
       options: ((j['options'] as List?) ?? const []).map((e) => '$e').toList(),
       correctIndex: j['correct_index'] == null ? null : (j['correct_index'] as num).toInt(),
 
@@ -172,10 +179,18 @@ class GameStep {
       m['hint']  = hint.trim().isNotEmpty ? hint : '';
     }
 
+    // Défaut : aucune formulation alternative. Seul le texte libre en
+    // autorise, et ce défaut évite d'avoir à vider le champ dans chacune
+    // des branches ci-dessous.
+    m['answer_text_alt'] = <String>[];
+
     switch (answerType) {
       case 'text':
       case 'cesar':
         m['answer_text']   = answerText;   // requis
+        if (answerType == 'text') {
+          m['answer_text_alt'] = answerTextAlt;
+        }
         m['options']       = <String>[];
         m['correct_index'] = null;
         m['match_left']    = <String>[];

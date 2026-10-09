@@ -160,6 +160,14 @@ class GameStep(models.Model):
     # --- Texte libre
     answer_text = models.CharField(max_length=255, blank=True)
 
+    # Formulations alternatives acceptees, en plus de answer_text, qui reste
+    # la reponse canonique affichee au createur. La comparaison ignore deja
+    # la casse, les accents et la ponctuation (voir engagement.views._normalize) ;
+    # cette liste sert a ce qu'aucune normalisation ne peut deviner, comme
+    # « la tour Eiffel » / « tour Eiffel ». Reserve au texte libre : une
+    # enigme a chiffre de Cesar n'a qu'une seule reponse juste.
+    answer_text_alt = models.JSONField(default=list, blank=True)
+
     # --- QCM
     options = models.JSONField(default=list, blank=True)         # liste de strings
     correct_index = models.PositiveIntegerField(blank=True, null=True)
