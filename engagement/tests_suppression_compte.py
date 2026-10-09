@@ -307,3 +307,54 @@ class CommandeAnonymiserCompteTests(CompteGarniTestCase):
         self.assertIn("--id", str(ctx.exception))
         self.user.refresh_from_db()
         self.assertEqual(self.user.username, "marie", "rien ne doit avoir ete touche")
+
+
+class PagesLegalesTests(TestCase):
+    """Les pages servies a l'utilisateur, et ce qu'elles promettent.
+
+    Ces tests existent a cause d'un defaut constate le 2026-10-09 : les
+    deux pages etaient lues depuis `static_html/`, ou le depot ne les
+    contenait pas - les copies versionnees etaient a la racine et n'etaient
+    donc jamais servies, tandis que les fichiers reellement servis sur le
+    serveur n'etaient suivis par aucun versionnement. Un simple appel les
+    aurait mis en evidence.
+    """
+
+    def test_la_politique_de_confidentialite_est_servie(self):
+        r = self.client.get("/privacy-policy")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(b"Conservation des", r.content)
+
+    def test_la_page_de_suppression_est_servie(self):
+        r = self.client.get("/delete-account")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(b"Supprimer mon compte", r.content)
+
+    def test_aucune_page_ne_promet_un_effacement_total(self):
+        """Garde-fou contre une regression du texte.
+
+        L'anonymisation conserve volontairement les etoiles des notes et les
+        escapes publiees. Promettre que « toutes vos donnees » seront
+        supprimees serait donc inexact, et c'est un engagement envers
+        l'utilisateur, pas une formule de style.
+        """
+        formules_interdites = [
+            "toutes vos données seront supprimés",
+            "toutes vos données seront supprimées",
+            "toutes mes données seront définitivement supprimées",
+        ]
+        for chemin in ("/privacy-policy", "/delete-account"):
+            contenu = self.client.get(chemin).content.decode("utf-8")
+            for formule in formules_interdites:
+                self.assertNotIn(
+                    formule, contenu,
+                    f"{chemin} promet un effacement total, que le mecanisme ne fait pas",
+                )
+
+    def test_les_pages_annoncent_ce_qui_est_conserve(self):
+        """Temoin positif : sans lui, le test precedent passerait aussi bien
+        sur une page vide."""
+        for chemin in ("/privacy-policy", "/delete-account"):
+            contenu = self.client.get(chemin).content.decode("utf-8")
+            self.assertIn("sans mention de leur", contenu, chemin)
+            self.assertIn("30 jours", contenu, chemin)
