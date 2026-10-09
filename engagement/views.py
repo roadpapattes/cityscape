@@ -69,10 +69,6 @@ def _playable_escape(user, escape_id):
         raise PermissionDenied("Cette escape n'est pas accessible.")
     return escape
 
-def _normalize(s: str) -> str:
-    return (s or "").strip().lower()
-
-
 def _haversine_m(lat1, lon1, lat2, lon2):
     """Distance en mètres entre deux points GPS (réutilise le calcul de games.api)."""
     return _haversine_km(lat1, lon1, lat2, lon2) * 1000.0
@@ -561,7 +557,18 @@ L'équipe CityScape
 # -------------- Gameplay utils --------------
 
 def _normalize(s: str) -> str:
-    """Normalisation pour comparer des réponses texte: insensible aux accents/espaces/casse."""
+    """Normalise une réponse pour la comparer : insensible à la casse, aux
+    accents, aux espaces et à la ponctuation.
+
+    Contrat volontaire, vérifié par engagement/tests_reponses.py : « Les
+    étoiles » accepte « les etoiles », « LES ETOILES », « les-etoiles » et
+    « les étoiles ! », mais refuse « les etoils ». Aucune tolérance aux
+    fautes de frappe : une lettre de différence reste une mauvaise réponse.
+
+    Ne pas remplacer par un simple strip().lower() — c'est exactement ce
+    que faisait une seconde définition de cette fonction, qui écrasait
+    celle-ci dans ce module et a été supprimée.
+    """
     if not s:
         return ""
     s = s.strip().lower()
