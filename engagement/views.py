@@ -26,7 +26,10 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import PlaySession, Rating, PasswordResetToken, UserProfile, EmailVerificationToken
+from .models import (
+    PlaySession, Rating, PasswordResetToken, UserProfile, EmailVerificationToken,
+    AccountDeletionRequest,
+)
 from .serializers import (
     UserSerializer,
     RegisterSerializer,
@@ -1711,6 +1714,24 @@ class AccountDeletionRequestView(APIView):
         except User.DoesNotExist:
             return Response(self.GENERIC_RESPONSE, status=status.HTTP_200_OK)
 
+        # Trace en base, AVANT l'envoi des emails : une panne SMTP ne doit pas
+        # faire perdre la demande. Sans cette trace, l'engagement des 30 jours
+        # ne tenait que par la vigilance de l'administrateur et le suivi
+        # reposait sur sa boite mail.
+        #
+        # get_or_create sur (user, en attente) : une demande deja ouverte n'est
+        # pas dupliquee, et surtout sa date n'est pas repoussee - sans quoi un
+        # tiers pourrait, en rejouant l'appel, reculer indefiniment l'echeance.
+        demande, _ = AccountDeletionRequest.objects.get_or_create(
+            user=user,
+            statut=AccountDeletionRequest.STATUT_EN_ATTENTE,
+            defaults={
+                "email_demande": user.email or email,
+                "username_au_moment_de_la_demande": user.username,
+                "motif": reason,
+            },
+        )
+
         # Send confirmation email
         try:
             subject = "Demande de suppression de compte - CityScape"
@@ -1749,7 +1770,13 @@ Username : {user.username}
 Raison : {reason if reason else "Non spécifiée"}
 Date : {timezone.now().strftime('%d/%m/%Y à %H:%M')}
 
-Action requise : Supprimer le compte dans les 30 jours.
+Echeance : {demande.echeance.strftime('%d/%m/%Y')} (30 jours)
+
+Pour traiter, sur le serveur :
+  python manage.py anonymiser_compte --id {user.id}              # simulation
+  python manage.py anonymiser_compte --id {user.id} --confirmer  # applique
+
+La commande cloture automatiquement la demande #{demande.id}.
 """
             send_mail(
                 "CityScape - Demande de suppression de compte",
