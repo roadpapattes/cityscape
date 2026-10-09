@@ -1,117 +1,136 @@
-# Déploiement manuel de l'interface React
+# Déploiement de l'interface créateur (React)
 
-## Pré-requis: Installer Node.js sur le serveur
+L'interface créateur web est une application Vite/React servie en fichiers
+statiques par nginx, sous `https://api.cityscape.ovh/creator`.
+
+Le serveur possède déjà le dépôt dans `/srv/cityscape/app`, et `deploy.sh` l'y
+met à jour à chaque déploiement backend. **On construit donc directement sur le
+serveur**, à partir du code déjà présent : il n'y a rien à copier depuis la
+machine de développement.
+
+## Déploiement
+
+### 1. Mettre le code à jour sur le serveur
+
+Soit par `bash deploy.sh` depuis la machine de développement (qui fait le
+`git pull`), soit à la main :
 
 ```bash
-# 1. Se connecter au serveur
 ssh deploy@api.cityscape.ovh
-
-# 2. Installer Node.js (version LTS 20.x)
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# 3. Vérifier l'installation
-node --version  # Devrait afficher v20.x.x
-npm --version   # Devrait afficher 10.x.x
+cd /srv/cityscape/app && git pull origin main
 ```
 
-## Déploiement de l'interface React
-
-### Étape 1: Copier les fichiers sources sur le serveur
+### 2. Construire
 
 ```bash
-# Sur ta machine locale
-cd /c/Users/lougi/cityscape-monorepo
-scp -r creator-web deploy@api.cityscape.ovh:/tmp/
-```
-
-### Étape 2: Builder l'application sur le serveur
-
-```bash
-# Sur le serveur
-ssh deploy@api.cityscape.ovh
-
-# Aller dans le dossier temporaire
-cd /tmp/creator-web
-
-# Installer les dépendances
-npm install
-
-# Builder pour la production
+cd /srv/cityscape/app/creator-web
+npm install   # seulement si package.json a changé
 npm run build
-
-# Les fichiers buildés sont dans dist/
-ls -lh dist/
 ```
 
-### Étape 3: Déployer les fichiers statiques
+Le résultat est dans `dist/`. Le nom des fichiers JS et CSS contient une
+empreinte du contenu (`index-DgiE08jk.js`), qui change à chaque modification :
+c'est ce qui permet le cache long côté navigateur.
+
+Aucun privilège n'est requis pour ces deux étapes : `dist/` appartient à
+`deploy`.
+
+### 3. Publier
 
 ```bash
-# Créer le dossier de destination
-sudo mkdir -p /var/www/cityscape/creator-web
-
-# Copier les fichiers buildés
-sudo cp -r dist/* /var/www/cityscape/creator-web/
-
-# Définir les permissions
+sudo rsync -a --delete /srv/cityscape/app/creator-web/dist/ /var/www/cityscape/creator-web/
 sudo chown -R www-data:www-data /var/www/cityscape/creator-web
 sudo chmod -R 755 /var/www/cityscape/creator-web
 ```
 
-### Étape 4: Configurer Nginx
+**Ne pas utiliser `cp -r dist/*`.** C'était la procédure précédente, et comme
+`cp` ajoute sans jamais retirer, chaque déploiement laissait derrière lui le
+bundle de la fois d'avant. En octobre 2026 le répertoire contenait quatorze
+bundles obsolètes, soit 6 Mo de fichiers que plus rien ne référençait.
+
+`rsync -a --delete` fait du répertoire publié le miroir exact du build : le
+nouveau bundle arrive, les anciens partent, et le problème ne revient pas.
+Attention toutefois : `--delete` supprime tout ce qui n'est pas dans `dist/`.
+Ne jamais déposer de fichier à la main dans `/var/www/cityscape/creator-web/`,
+il serait effacé au déploiement suivant.
+
+### 4. Vérifier
 
 ```bash
-# Éditer la configuration Nginx
-sudo nano /etc/nginx/sites-available/cityscape
-
-# Ajouter cette section dans le block server {}:
-#
-# location /creator {
-#     alias /var/www/cityscape/creator-web;
-#     try_files $uri $uri/ /creator/index.html;
-#
-#     # Headers pour les fichiers statiques
-#     add_header Cache-Control "public, max-age=31536000, immutable";
-# }
-#
-# # Fallback pour le routing React
-# location /creator/ {
-#     alias /var/www/cityscape/creator-web/;
-#     try_files $uri $uri/ /creator/index.html;
-# }
-
-# Tester la configuration
-sudo nginx -t
-
-# Recharger Nginx
-sudo systemctl reload nginx
+curl -s https://api.cityscape.ovh/creator/ | grep -oE 'assets/[A-Za-z0-9._-]+'
 ```
 
-### Étape 5: Vérification
+Les noms affichés doivent être ceux que `npm run build` vient de produire. Si
+c'est encore l'ancien bundle, la copie n'a pas abouti.
 
-Accéder à: https://api.cityscape.ovh/creator
+## Configuration nginx
 
-Tu devrais voir l'interface React de création d'escapes.
+Déjà en place dans `/etc/nginx/sites-available/cityscape`, reproduite ici pour
+mémoire :
 
-## Troubleshooting
+```nginx
+location /creator {
+  alias /var/www/cityscape/creator-web;
+  try_files $uri $uri/ /creator/index.html;
+  index index.html;
+
+  # Fichiers hashés (nom change à chaque build) : cache long sans risque
+  location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+  }
+
+  # index.html : jamais de cache navigateur, sinon les déploiements
+  # suivants restent invisibles tant que le cache n'expire pas
+  location = /creator/index.html {
+    add_header Cache-Control "no-cache, must-revalidate";
+  }
+}
+```
+
+La distinction entre les deux blocs est essentielle et ne doit pas être
+simplifiée. `index.html` porte le nom du bundle courant : s'il était mis en
+cache comme les autres fichiers, un navigateur continuerait de demander
+l'ancien JS pendant un an. Inversement, les fichiers hashés peuvent être mis en
+cache sans limite, puisqu'un changement de contenu change leur nom.
+
+Rappel sur `add_header` dans nginx : il n'est **pas** cumulatif. Dès qu'un bloc
+`location` en déclare un, il perd tous ceux hérités du bloc parent. Ajouter un
+en-tête dans l'un de ces deux sous-blocs oblige donc à y recopier les autres.
+
+Après toute modification :
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+## En cas de problème
 
 ### Les fichiers CSS/JS ne se chargent pas
 
-Vérifie que le chemin de base est correct dans `vite.config.js`:
+Le chemin de base doit correspondre à l'emplacement servi. Dans
+`creator-web/vite.config.js` :
 
 ```javascript
 export default {
   base: '/creator/',
-  // ...
 }
 ```
 
-Si ce n'est pas le cas, tu devras rebuild avec la bonne configuration.
+### Erreur 404 sur une route interne de l'application
 
-### Erreur 404 sur les routes React
+C'est le `try_files ... /creator/index.html` qui renvoie le routage à React. Le
+vérifier dans la configuration nginx.
 
-Assure-toi que la directive `try_files` dans Nginx redirige vers `index.html`.
+### L'ancien contenu s'affiche encore
+
+Comparer le bundle référencé par la page servie avec celui du dernier build
+(étape 4). Si les noms diffèrent, la copie a échoué. S'ils sont identiques et
+que l'affichage reste ancien, vider le cache du navigateur — mais c'est
+inattendu, `index.html` étant servi en `no-cache`.
 
 ### Problèmes de CORS
 
-Vérifie que `VITE_API_BASE_URL` dans `.env.production` pointe bien vers `https://api.cityscape.ovh`.
+`VITE_API_BASE_URL` dans `.env.production` doit pointer vers
+`https://api.cityscape.ovh`. Côté serveur, `CORS_ALLOWED_ORIGINS` est lu depuis
+le `.env` (voir `backend/settings.py`).
