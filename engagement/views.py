@@ -31,6 +31,7 @@ from .models import (
     AccountDeletionRequest,
 )
 from .chronometrage import cumuler_temps_client, enregistrer_activite
+from .classement import LIMITE_DEFAUT, classement_escape
 from .serializers import (
     UserSerializer,
     RegisterSerializer,
@@ -874,6 +875,34 @@ class SessionSyncTimeView(APIView):
             "ok": True,
             "play_time_seconds": total,
         }, status=status.HTTP_200_OK)
+
+
+class ClassementEscapeView(APIView):
+    """Meilleurs temps sur une escape, et place du joueur qui consulte.
+
+    Le controle d'acces passe par `_playable_escape` : on ne lit pas le
+    classement d'une escape qu'on n'a pas le droit de jouer - brouillon d'un
+    autre createur, escape privee dont on n'est pas invite.
+
+    Le rang repose sur le temps mesure par le serveur plus les penalites,
+    jamais sur le temps declare par le client (voir engagement/classement.py).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, escape_id: int):
+        escape = _playable_escape(request.user, escape_id)
+
+        # Une limite illisible ne doit pas faire echouer la requete : le
+        # module la borne de toute facon.
+        try:
+            limite = int(request.query_params.get("limite", LIMITE_DEFAUT))
+        except (TypeError, ValueError):
+            limite = LIMITE_DEFAUT
+
+        return Response(
+            classement_escape(escape, limite=limite, pour_utilisateur=request.user),
+            status=status.HTTP_200_OK,
+        )
 
 
 class SessionHistoryView(APIView):
